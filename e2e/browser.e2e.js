@@ -229,3 +229,19 @@ test("you vs your friend: their total matches their own bill, labels in the curr
   assert.deepEqual(pg.errors, []);
   await pg.close();
 });
+
+test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {
+  const pg = await browser.newPage(); await pg.setViewport({ width: 1280, height: 900 });
+  const errors = []; pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.evaluateOnNewDocument(() => { window.__picker = []; window.showDirectoryPicker = (o) => { window.__picker.push(o && o.id); return new Promise(() => {}); }; });
+  await pg.goto(`${PAGE}?lang=en`); await sleep(300);
+  await pg.click("#pick-claude"); await sleep(200);
+  assert.match(await text(pg, "#st-claude"), /Copied ~\/\.claude/);
+  await pg.click("#web"); await sleep(300);
+  await (await pg.$(".call-drop input")).uploadFile(zipPath); await sleep(1200);
+  await pg.click(".go-recalc"); await sleep(300);
+  await pg.click("#pick-codex"); await sleep(200);
+  assert.deepEqual(await pg.evaluate(() => window.__picker), ["claude", "codex"]);
+  assert.deepEqual(errors, []);
+  await pg.close();
+});

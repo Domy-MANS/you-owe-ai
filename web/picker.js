@@ -47,7 +47,7 @@
       cli: "习惯用终端？", lang: "EN",
       importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）",
       phoneNote: "在手机上，导入 ChatGPT 或 Claude 的聊天记录就能算账。Claude Code 和 Codex 的记录在电脑上，要用电脑打开。",
-      phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", copied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
+      phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
       webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
     },
     en: {
@@ -62,7 +62,7 @@
       cli: "Prefer the terminal?", lang: "中文",
       importWeb: "📦 Import web chats (ChatGPT / Claude, optional)",
       phoneNote: "On a phone, import your ChatGPT or Claude chats to get your bill. Claude Code and Codex logs live on your computer, so open this there for those.",
-      phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", copied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
+      phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
       webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
     },
   };
@@ -202,7 +202,7 @@
         if (navigator.share) { await navigator.share({ title: "You Owe AI", text: L.title, url: url }); return; }
       } catch (e) { if (e && e.name === "AbortError") return; }
       try { await navigator.clipboard.writeText(url); } catch (e) {}
-      var st = document.getElementById("st-pc"); st.textContent = L.copied; st.className = "st ok";
+      var st = document.getElementById("st-pc"); st.textContent = L.pcCopied; st.className = "st ok";
     };
   }
 
