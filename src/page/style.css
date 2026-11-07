@@ -265,3 +265,28 @@ canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
 .chip.seg { display: inline-flex; padding: 3px; gap: 2px; }
 .chip.seg span { padding: 3px 9px; border-radius: 999px; color: var(--dim); }
 .chip.seg span.on { background: var(--ink); color: #f1e2b8; }
+
+/* ===== small phones ===== */
+/* long values go under their label; each item stays on one line, wrapping only between items */
+.rc-row.stack { flex-direction: column; align-items: flex-start; gap: 3px; }
+.rc-row.stack b { text-align: left; font-weight: 700; line-height: 1.5; }
+.nw { white-space: nowrap; }
+.rc-traits { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-traits .nw { font-size: 13px; font-weight: 700; background: rgba(110,80,30,0.12); border-radius: 999px; padding: 3px 10px; }
+/* a page taller than the screen scrolls instead of being cut off top and bottom */
+.slide { justify-content: safe center; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
+.slide::-webkit-scrollbar { display: none; }
+/* the IOU card shrinks to fit short screens, with room for the title and buttons */
+canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
+@media (max-height: 760px) {
+  .slide { padding-top: 64px; padding-bottom: 24px; }
+  .slide .sub[style] { margin-bottom: 8px !important; font-size: 14px; }
+  .actions { margin-top: 12px; gap: 8px; }
+  .actions .btn { padding: 10px 16px; font-size: 14px; }
+  .rc-total { font-size: clamp(44px, 13vw, 76px); }
+}
+@media (max-width: 380px) {
+  .rc-item { font-size: 15px; }
+  .rc-item .amt { font-size: 15px; }
+  .rc-fact span { font-size: 10px; }
+}

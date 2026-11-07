@@ -418,7 +418,7 @@ window.VWReport = function (DATA) {
   /** All line items, computed once so every page and the card agree. */
   function charges() {
     var R = roastL(), r = RATES[lang], q = b().qty, list = [];
-    var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: qty, amount: n * r[k] }); };
+    var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: String(qty).replace(/ /g, "\u00a0"), amount: n * r[k] }); };
     item("wage", D.workHours, (D.workHours >= 10 ? Math.round(D.workHours) : D.workHours.toFixed(1)) + " " + q.hours);
     if (R) {
       item("deny", R.you.deny, R.you.deny + " " + q.times);
@@ -522,9 +522,10 @@ window.VWReport = function (DATA) {
       att += '<div class="clock rc-clock">' + D.hours.map(function (v, i) { return '<i class="' + (i === D.peakHour ? "peak" : "") + '" data-h="' + Math.max(2, (v / hmax) * 100) + '"></i>'; }).join("") + '</div><div class="clock-axis rc-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div>';
     }
     var hl = [];
-    if (D.toolCalls) hl.push([L.habitL[0], D.categories.slice(0, 3).map(function (r) { return (L.cats[r.name] || r.name) + " " + Math.round((r.count / D.toolCalls) * 100) + "%"; }).join(" · ")]);
-    if (D.topModels.length) hl.push([L.habitL[2], esc(D.topModels.slice(0, 2).map(function (m) { return m.name; }).join(" · "))]);
-    att += hl.map(function (l) { return '<div class="rc-row"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("");
+    var nw = function (list) { return list.map(function (x) { return '<span class="nw">' + x + "</span>"; }).join(" · "); };
+    if (D.toolCalls) hl.push([L.habitL[0], nw(D.categories.slice(0, 3).map(function (r) { return (L.cats[r.name] || r.name) + " " + Math.round((r.count / D.toolCalls) * 100) + "%"; }))]);
+    if (D.topModels.length) hl.push([L.habitL[2], nw(D.topModels.slice(0, 2).map(function (m) { return esc(m.name); }))]);
+    att += hl.map(function (l) { return '<div class="rc-row stack"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("");
     var homeNote = D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "";
     add('<div class="pop"><div class="kicker">' + K.attendK + "</div>" + receipt(D.peakHour !== null ? L.habitsH(D.peakHour) : "", att + '<div class="rc-meme">' + L.nightMeme() + homeNote + "</div>") + "</div>",
       7, giant(D.peakHour === null ? "⏰" : D.peakHour >= 14 && D.peakHour < 18 ? "🐟" : D.peakHour >= 22 || D.peakHour < 5 ? "🦉" : D.peakHour < 9 ? "🐓" : "☕", "right:-14%;bottom:-6%"));
@@ -542,7 +543,7 @@ window.VWReport = function (DATA) {
       '<div class="rc-persona"><span class="persona-emoji">' + me.e + "</span><div><small>" + K.ptype + "</small><b>" + esc(me.name) + "</b></div></div>" +
       '<div class="rc-meme">' + esc(me.desc) + "</div>" +
       '<div class="rc-row"><span>' + K.credit + '</span><b class="credit c' + cr + '">' + cr + "</b></div>" +
-      (me.traits.length ? '<div class="rc-row"><span>' + K.traitsL + "</span><b>" + esc(me.traits.join(" · ")) + "</b></div>" : "")) + "</div>",
+      (me.traits.length ? '<div class="rc-row stack"><span>' + K.traitsL + '</span><div class="rc-traits">' + me.traits.map(function (x) { return '<span class="nw">' + esc(x) + "</span>"; }).join("") + "</div></div>" : "")) + "</div>",
       7, tile(me.e, 70, "46px"));
 
     // 9. the IOU (share card)
@@ -662,6 +663,7 @@ window.VWReport = function (DATA) {
 
   function go(i) {
     idx = Math.max(0, Math.min(list_.length - 1, i));
+    document.getElementById("hint").style.visibility = idx === 0 ? "" : "hidden";
     var secs = stage.children;
     for (var k = 0; k < secs.length; k++) {
       secs[k].classList.toggle("on", k === idx);

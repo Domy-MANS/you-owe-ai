@@ -78,3 +78,9 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .call-lang span { color: rgba(255,255,255,0.6); }
 .call-lang span.on { background: #fff; color: #111; }
 .bubble.still { animation: none; }
+@media (max-height: 760px), (max-width: 380px) {
+  .land { padding-top: 56px; }
+  .land h1 { font-size: clamp(30px, 8.5vw, 40px); margin-bottom: 18px; }
+  .pick { padding: 14px; font-size: 16px; }
+  .steps .btn.go { margin-top: 4px; }
+}

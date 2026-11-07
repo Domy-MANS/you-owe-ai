@@ -287,6 +287,31 @@ canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
 .chip.seg span { padding: 3px 9px; border-radius: 999px; color: var(--dim); }
 .chip.seg span.on { background: var(--ink); color: #f1e2b8; }
 
+/* ===== small phones ===== */
+/* long values go under their label; each item stays on one line, wrapping only between items */
+.rc-row.stack { flex-direction: column; align-items: flex-start; gap: 3px; }
+.rc-row.stack b { text-align: left; font-weight: 700; line-height: 1.5; }
+.nw { white-space: nowrap; }
+.rc-traits { display: flex; flex-wrap: wrap; gap: 6px; }
+.rc-traits .nw { font-size: 13px; font-weight: 700; background: rgba(110,80,30,0.12); border-radius: 999px; padding: 3px 10px; }
+/* a page taller than the screen scrolls instead of being cut off top and bottom */
+.slide { justify-content: safe center; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }
+.slide::-webkit-scrollbar { display: none; }
+/* the IOU card shrinks to fit short screens, with room for the title and buttons */
+canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
+@media (max-height: 760px) {
+  .slide { padding-top: 64px; padding-bottom: 24px; }
+  .slide .sub[style] { margin-bottom: 8px !important; font-size: 14px; }
+  .actions { margin-top: 12px; gap: 8px; }
+  .actions .btn { padding: 10px 16px; font-size: 14px; }
+  .rc-total { font-size: clamp(44px, 13vw, 76px); }
+}
+@media (max-width: 380px) {
+  .rc-item { font-size: 15px; }
+  .rc-item .amt { font-size: 15px; }
+  .rc-fact span { font-size: 10px; }
+}
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -367,6 +392,12 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .call-lang span { color: rgba(255,255,255,0.6); }
 .call-lang span.on { background: #fff; color: #111; }
 .bubble.still { animation: none; }
+@media (max-height: 760px), (max-width: 380px) {
+  .land { padding-top: 56px; }
+  .land h1 { font-size: clamp(30px, 8.5vw, 40px); margin-bottom: 18px; }
+  .pick { padding: 14px; font-size: 16px; }
+  .steps .btn.go { margin-top: 4px; }
+}
 </style>
 </head>
 <body>
@@ -1356,7 +1387,7 @@ window.VWReport = function (DATA) {
   /** All line items, computed once so every page and the card agree. */
   function charges() {
     var R = roastL(), r = RATES[lang], q = b().qty, list = [];
-    var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: qty, amount: n * r[k] }); };
+    var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: String(qty).replace(/ /g, "\u00a0"), amount: n * r[k] }); };
     item("wage", D.workHours, (D.workHours >= 10 ? Math.round(D.workHours) : D.workHours.toFixed(1)) + " " + q.hours);
     if (R) {
       item("deny", R.you.deny, R.you.deny + " " + q.times);
@@ -1460,9 +1491,10 @@ window.VWReport = function (DATA) {
       att += '<div class="clock rc-clock">' + D.hours.map(function (v, i) { return '<i class="' + (i === D.peakHour ? "peak" : "") + '" data-h="' + Math.max(2, (v / hmax) * 100) + '"></i>'; }).join("") + '</div><div class="clock-axis rc-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div>';
     }
     var hl = [];
-    if (D.toolCalls) hl.push([L.habitL[0], D.categories.slice(0, 3).map(function (r) { return (L.cats[r.name] || r.name) + " " + Math.round((r.count / D.toolCalls) * 100) + "%"; }).join(" · ")]);
-    if (D.topModels.length) hl.push([L.habitL[2], esc(D.topModels.slice(0, 2).map(function (m) { return m.name; }).join(" · "))]);
-    att += hl.map(function (l) { return '<div class="rc-row"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("");
+    var nw = function (list) { return list.map(function (x) { return '<span class="nw">' + x + "</span>"; }).join(" · "); };
+    if (D.toolCalls) hl.push([L.habitL[0], nw(D.categories.slice(0, 3).map(function (r) { return (L.cats[r.name] || r.name) + " " + Math.round((r.count / D.toolCalls) * 100) + "%"; }))]);
+    if (D.topModels.length) hl.push([L.habitL[2], nw(D.topModels.slice(0, 2).map(function (m) { return esc(m.name); }))]);
+    att += hl.map(function (l) { return '<div class="rc-row stack"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("");
     var homeNote = D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "";
     add('<div class="pop"><div class="kicker">' + K.attendK + "</div>" + receipt(D.peakHour !== null ? L.habitsH(D.peakHour) : "", att + '<div class="rc-meme">' + L.nightMeme() + homeNote + "</div>") + "</div>",
       7, giant(D.peakHour === null ? "⏰" : D.peakHour >= 14 && D.peakHour < 18 ? "🐟" : D.peakHour >= 22 || D.peakHour < 5 ? "🦉" : D.peakHour < 9 ? "🐓" : "☕", "right:-14%;bottom:-6%"));
@@ -1480,7 +1512,7 @@ window.VWReport = function (DATA) {
       '<div class="rc-persona"><span class="persona-emoji">' + me.e + "</span><div><small>" + K.ptype + "</small><b>" + esc(me.name) + "</b></div></div>" +
       '<div class="rc-meme">' + esc(me.desc) + "</div>" +
       '<div class="rc-row"><span>' + K.credit + '</span><b class="credit c' + cr + '">' + cr + "</b></div>" +
-      (me.traits.length ? '<div class="rc-row"><span>' + K.traitsL + "</span><b>" + esc(me.traits.join(" · ")) + "</b></div>" : "")) + "</div>",
+      (me.traits.length ? '<div class="rc-row stack"><span>' + K.traitsL + '</span><div class="rc-traits">' + me.traits.map(function (x) { return '<span class="nw">' + esc(x) + "</span>"; }).join("") + "</div></div>" : "")) + "</div>",
       7, tile(me.e, 70, "46px"));
 
     // 9. the IOU (share card)
@@ -1600,6 +1632,7 @@ window.VWReport = function (DATA) {
 
   function go(i) {
     idx = Math.max(0, Math.min(list_.length - 1, i));
+    document.getElementById("hint").style.visibility = idx === 0 ? "" : "hidden";
     var secs = stage.children;
     for (var k = 0; k < secs.length; k++) {
       secs[k].classList.toggle("on", k === idx);
@@ -2090,11 +2123,11 @@ if (window.DATA) window.VWReport(window.DATA);
       '<div class="steps">' +
       '<button class="pick" id="pick-claude"><span class="ico">🧡</span>' + L.pickClaude + '</button><div class="st" id="st-claude"></div>' +
       '<button class="pick" id="pick-codex"><span class="ico">🖤</span>' + L.pickCodex + '</button><div class="st" id="st-codex"></div>' +
+      '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
+      '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
       '<button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
       "</div>" +
-      '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
-      '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="privacy">' + L.privacy + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
       "</div>";

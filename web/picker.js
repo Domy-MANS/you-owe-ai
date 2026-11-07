@@ -166,11 +166,11 @@
       '<div class="steps">' +
       '<button class="pick" id="pick-claude"><span class="ico">🧡</span>' + L.pickClaude + '</button><div class="st" id="st-claude"></div>' +
       '<button class="pick" id="pick-codex"><span class="ico">🖤</span>' + L.pickCodex + '</button><div class="st" id="st-codex"></div>' +
+      '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
+      '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
       '<button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
       "</div>" +
-      '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
-      '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="privacy">' + L.privacy + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
       "</div>";
