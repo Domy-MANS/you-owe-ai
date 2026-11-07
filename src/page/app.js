@@ -34,6 +34,8 @@ window.VWReport = function (DATA) {
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
       empty: "今年还没有找到 Claude Code 或 Codex 的使用记录。",
+      factsK: "你的年度数字", factL: ["条指令", "次对话", "活跃天数", "AI 工作小时", "token", "最长连续天数"],
+      habitsK: "你的习惯", habitL: ["最常让 AI", "最常折腾", "最常用模型"],
       vsK: "你 vs AI", vsH: "相爱相杀",
       vs: [["你否定了 AI", "次"], ["AI 跟你道歉", "次"], ["你说了谢谢", "次"], ["AI 宣布「搞定了」", "次"]],
       vsS: function (R) { return "你还迷茫了 <b>" + R.you.lost + "</b> 次，问了 <b>" + R.you.why + "</b> 次「为什么」"; },
@@ -79,6 +81,8 @@ window.VWReport = function (DATA) {
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
       empty: "No Claude Code or Codex activity found for this year yet.",
+      factsK: "Your year in numbers", factL: ["prompts", "sessions", "active days", "AI hours", "tokens", "day streak"],
+      habitsK: "Your habits", habitL: ["Mostly asked AI to", "Top projects", "Top models"],
       vsK: "You vs AI", vsH: "It's complicated",
       vs: [["You told AI it was wrong", "times"], ["AI apologized", "times"], ["You said thanks", "times"], ["AI said \"done\"", "times"]],
       vsS: function (R) { return "You were lost <b>" + R.you.lost + "</b> times and asked \"why\" <b>" + R.you.why + "</b> times"; },
@@ -156,36 +160,7 @@ window.VWReport = function (DATA) {
 
     add('<div class="pop"><div class="kicker">Claude Code × Codex</div><div class="big">' + D.year + "</div><h1>" + L.title + '</h1><div class="privacy">' + L.privacy + "</div></div>", 5);
 
-    add('<div class="pop"><div class="kicker">' + L.promptsK + '</div><div class="big">' + count(D.prompts) + '</div><div class="unit">' + L.promptsU + '</div><div class="sub">' + L.promptsS() + "</div></div>");
-
-    var h = D.workHours, minutes = h < 1;
-    add('<div class="pop"><div class="kicker">' + L.workK + '</div><div class="big">' + count(minutes ? Math.round(h * 60) : Math.round(h * 10) / 10) + '</div><div class="unit">' + L.workU(h) + '</div><div class="sub">' + L.workS(h) + "</div></div>");
-
-    var books = (D.tokens.output / 100000).toFixed(D.tokens.output >= 1e6 ? 0 : 1);
-    add('<div class="pop"><div class="kicker">' + L.tokK + '</div><div class="big">' + fmt(D.totalTokens) + '</div><div class="unit">' + L.tokU + '</div><div class="sub">' + L.tokS(books) + "</div></div>");
-
-    var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
-    add('<div class="pop"><div class="kicker">' + L.splitK + "</div><h1>" + L.splitH(c) + '</h1><div class="split"><div class="c" data-w="' + c * 100 + '">' + (c >= 0.12 ? Math.round(c * 100) + "%" : "") + '</div><div class="x" data-w="' + (1 - c) * 100 + '">' + (1 - c >= 0.12 ? Math.round((1 - c) * 100) + "%" : "") + '</div></div><div class="legend"><span>' + L.claude + "</span><span>" + L.codex + '</span></div><div class="sub">' + L.splitS() + "</div></div>");
-
-    if (D.toolCalls) {
-      var max = D.categories[0].count;
-      var rows = D.categories.map(function (r, i) {
-        return '<div class="row"><span class="n">' + (i + 1) + '</span><span class="name">' + (L.cats[r.name] || r.name) + '</span><span class="v">' + fmt(r.count) + '</span><span class="meter"><b data-w="' + (r.count / max) * 100 + '"></b></span></div>';
-      }).join("");
-      add('<div class="pop"><div class="kicker">' + L.toolsK + "</div><h1>" + L.toolsH(D.toolCalls) + '</h1><div class="rows">' + rows + "</div></div>");
-    }
-
-    if (D.peakHour !== null) {
-      var hmax = Math.max.apply(null, D.hours) || 1;
-      var bars = D.hours.map(function (v, i) { return '<i class="' + (i === D.peakHour ? "peak" : "") + '" data-h="' + Math.max(2, (v / hmax) * 100) + '"></i>'; }).join("");
-      add('<div class="pop"><div class="kicker">' + L.clockK + "</div><h1>" + L.clockH(D.peakHour) + '</h1><div><div class="clock">' + bars + '</div><div class="clock-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div></div><div class="sub">' + L.clockS() + "</div></div>");
-    }
-
-    add('<div class="pop"><div class="kicker">' + L.calK + "</div><h1>" + L.calH(D.streak.days) + '</h1><div class="heat">' + heat() + '</div><div class="sub">' + L.calS() + "</div></div>");
-
-    if (D.topProjects.length) add(list(L.projK, D.topProjects));
-    if (D.topModels.length) add(list(L.modelK, D.topModels));
-
+    // ---- the fun part first ----
     var R = D.roast;
     if (R) {
       var v = [R.you.deny, R.ai.sorry, R.you.thanks, R.ai.done];
@@ -198,15 +173,34 @@ window.VWReport = function (DATA) {
       if (R.angriestDay || R.latest) {
         add('<div class="pop"><div class="kicker">' + L.moodK + "</div>" + (R.angriestDay ? '<h1 class="mood">' + L.angry(R.angriestDay) + "</h1>" : "") + (R.latest ? '<div class="sub" style="font-size:clamp(18px,4vw,24px)">' + L.late(R.latest) + "</div>" : "") + "</div>");
       }
+      var lines = L.roast(R).map(function (l) { return '<p class="roast-line">' + esc(l) + "</p>"; }).join("");
+      add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10);
     }
 
     var P = PERSONAS[D.persona];
     add('<div class="pop"><div class="kicker">' + L.personaK + '</div><div class="persona-emoji">' + P.e + "</div><h1>" + P[lang][0] + '</h1><div class="sub">' + P[lang][1] + "</div></div>", 6);
 
-    if (R) {
-      var lines = L.roast(R).map(function (l) { return '<p class="roast-line">' + esc(l) + "</p>"; }).join("");
-      add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10);
+    // ---- the numbers, compressed into two pages ----
+    var h = D.workHours;
+    var facts = [
+      [fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]],
+      [h >= 10 ? String(Math.round(h)) : h.toFixed(1), L.factL[3]], [fmt(D.totalTokens), L.factL[4]], [String(D.streak.days), L.factL[5]],
+    ].map(function (f) { return '<div class="fact"><div class="fact-n">' + f[0] + '</div><div class="fact-l">' + f[1] + "</div></div>"; }).join("");
+    var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
+    var split = '<div class="split slim"><div class="c" data-w="' + c * 100 + '">' + (c >= 0.15 ? "Claude " + Math.round(c * 100) + "%" : "") + '</div><div class="x" data-w="' + (1 - c) * 100 + '">' + (1 - c >= 0.15 ? "Codex " + Math.round((1 - c) * 100) + "%" : "") + "</div></div>";
+    add('<div class="pop"><div class="kicker">' + L.factsK + "</div><h1>" + L.splitH(c) + '</h1><div class="facts">' + facts + "</div>" + split + '<div class="sub">' + L.calS() + "</div></div>");
+
+    var habit = "";
+    if (D.peakHour !== null) {
+      var hmax = Math.max.apply(null, D.hours) || 1;
+      habit += '<div><div class="clock short">' + D.hours.map(function (v, i) { return '<i class="' + (i === D.peakHour ? "peak" : "") + '" data-h="' + Math.max(2, (v / hmax) * 100) + '"></i>'; }).join("") + '</div><div class="clock-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div></div>';
     }
+    var lines2 = [];
+    if (D.toolCalls) lines2.push([L.habitL[0], D.categories.slice(0, 3).map(function (r) { return (L.cats[r.name] || r.name) + " " + Math.round((r.count / D.toolCalls) * 100) + "%"; }).join(" · ")]);
+    if (D.topProjects.length) lines2.push([L.habitL[1], esc(D.topProjects.slice(0, 3).map(function (p) { return p.name; }).join(" · "))]);
+    if (D.topModels.length) lines2.push([L.habitL[2], esc(D.topModels.slice(0, 2).map(function (m) { return m.name; }).join(" · "))]);
+    habit += '<div class="habits">' + lines2.map(function (l) { return '<div class="habit"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("") + "</div>";
+    add('<div class="pop"><div class="kicker">' + L.habitsK + "</div><h1>" + (D.peakHour !== null ? L.clockH(D.peakHour) : "") + "</h1>" + habit + '<div class="sub">' + L.clockS() + "</div></div>");
 
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + L.shareK + '</div><canvas id="card" width="1080" height="1350"></canvas><div class="actions"><button class="btn" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button></div></div>", 0);
     return out;

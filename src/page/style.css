@@ -97,3 +97,15 @@ canvas#card { width: min(100%, 360px); aspect-ratio: 4 / 5; border-radius: 18px;
 .quote.first b { color: #fff; font-size: 24px; }
 h1.mood { font-size: clamp(26px, 6vw, 40px); line-height: 1.3; }
 .roast-line { font-size: clamp(18px, 4.4vw, 23px); font-weight: 700; line-height: 1.45; margin-top: 14px; }
+
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 22px; }
+.fact { border-radius: 14px; padding: 14px 12px; background: rgba(0,0,0,0.22); }
+.fact-n { font-size: clamp(24px, 6.4vw, 36px); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.fact-l { font-size: 13px; color: var(--dim); margin-top: 6px; }
+.split.slim { height: 40px; margin: 14px 0 0; border-radius: 12px; }
+.split.slim div { font-size: 14px; }
+.clock.short { height: 110px; margin-top: 20px; }
+.habits { display: grid; gap: 10px; margin-top: 22px; }
+.habit { display: grid; grid-template-columns: 7.5em 1fr; gap: 10px; font-size: 16px; align-items: baseline; }
+.habit span { color: var(--dim); }
+.habit b { font-weight: 700; overflow-wrap: anywhere; }
