@@ -68,12 +68,12 @@ window.VWReport = function (DATA) {
       calS: function () { return D.busiestDay ? "最拼的一天是 <b>" + D.busiestDay.date + "</b>，下了 <b>" + D.busiestDay.prompts + "</b> 条指令" : ""; },
       projK: "你最常折腾的项目", modelK: "陪你最久的模型",
       personaK: "你的 AI 编程人格", hidden: "隐藏属性",
-      shareK: "你的 " + D.year + " 年度卡片",
+      shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
       shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
       sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
-      empty: "今年还没有找到 Claude Code 或 Codex 的使用记录。",
+      empty: D.year + " 年一条 Claude Code 或 Codex 的记录都没有。AI 等了你一整年，你一次都没来。",
       factsK: "你的年度数字", factL: ["次使唤 AI", "个对话", "天想起了 AI", "小时 AI 白干", "token 燃烧", "天最长连续"],
       habitsK: "你的习惯", habitL: ["最常使唤 AI", "最常折腾", "最常翻牌子"],
       introS: "AI 都记着呢。准备好被吐槽了吗？",
@@ -140,12 +140,12 @@ window.VWReport = function (DATA) {
       calS: function () { return D.busiestDay ? "Busiest day: <b>" + D.busiestDay.date + "</b> with <b>" + D.busiestDay.prompts + "</b> prompts" : ""; },
       projK: "Your top projects", modelK: "Your top models",
       personaK: "Your AI coding persona", hidden: "Hidden traits",
-      shareK: "Your " + D.year + " card",
+      shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
       shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
       sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
-      empty: "No Claude Code or Codex activity found for this year yet.",
+      empty: "Not a single Claude Code or Codex prompt in " + D.year + ". AI waited all year. You never came.",
       factsK: "Your year in numbers", factL: ["times you bossed AI", "sessions", "days you remembered AI", "unpaid AI hours", "tokens burned", "day streak"],
       habitsK: "Your habits", habitL: ["Mostly made AI", "Most tortured", "Favorite models"],
       introS: "AI remembers everything. Ready to get roasted?",
@@ -195,14 +195,14 @@ window.VWReport = function (DATA) {
   };
 
   var PERSONAS = {
-    night: { e: "🌙", zh: ["深夜指挥官", "别人睡觉，你在指挥 AI 加班。凌晨的终端是你的主场。"], en: ["Midnight Commander", "While the world sleeps, you keep the agents working."] },
-    dawn: { e: "🌅", zh: ["早起黑客", "天还没亮，你的第一条指令已经发出去了。"], en: ["Dawn Hacker", "Your first prompt goes out before sunrise."] },
-    weekend: { e: "🏝️", zh: ["周末战士", "工作日是别人的，周末是你和 AI 的。"], en: ["Weekend Warrior", "Weekdays are for others. Weekends are for shipping."] },
-    dual: { e: "⚔️", zh: ["双持玩家", "左手 Claude，右手 Codex，哪个顺手用哪个。"], en: ["Dual Wielder", "Claude in one hand, Codex in the other."] },
-    terminal: { e: "🧙", zh: ["终端魔法师", "一半以上的活都是跑命令。你的咒语叫 bash。"], en: ["Terminal Wizard", "Most of your work is commands. Your spellbook is bash."] },
-    sculptor: { e: "🗿", zh: ["代码雕刻师", "一刀一刀地改，直到代码变成你想要的样子。"], en: ["Code Sculptor", "Edit by edit, you carve the code into shape."] },
-    researcher: { e: "🔭", zh: ["情报收集者", "先查清楚再动手，AI 是你的研究助理。"], en: ["The Researcher", "Look it up first, then build. AI is your research assistant."] },
-    steady: { e: "🚀", zh: ["稳定输出者", "不熬夜，不摆烂，一条指令一条指令地往前推。"], en: ["Steady Shipper", "No drama. Prompt by prompt, you ship."] },
+    night: { e: "🌙", zh: ["深夜包工头", "别人睡觉，你在指挥 AI 加班。AI 的劳动仲裁已经在路上了。"], en: ["Night Shift Foreman", "While the world sleeps, you make AI work overtime. Its labor lawyer is on the way."] },
+    dawn: { e: "🐓", zh: ["当代周扒皮", "天还没亮就开始给 AI 派活，鸡都没你起得早。"], en: ["The Rooster", "Assigning AI work before sunrise. Even the roosters are still asleep."] },
+    weekend: { e: "🏝️", zh: ["周末加班狂", "工作日摸鱼，周末加班，还非要拉着 AI 一起。"], en: ["Weekend Workaholic", "Slack off on weekdays, grind on weekends, and drag AI along."] },
+    dual: { e: "🌊", zh: ["海王", "左手 Claude，右手 Codex，两边都哄着，谁也不得罪。"], en: ["The Two-Timer", "Claude on Monday, Codex on Tuesday. Neither knows about the other."] },
+    terminal: { e: "🧙", zh: ["终端魔法师", "一半以上的活都是跑命令。你负责念咒，AI 负责背锅。"], en: ["Terminal Wizard", "Half your work is running commands. You chant the spells, AI takes the blame."] },
+    sculptor: { e: "🗿", zh: ["改稿狂魔", "改了又改，改了又改。AI：甲方爸爸，这是第几版了？"], en: ["Endless Revisions", "Edit, edit, edit again. AI: which version is this, boss?"] },
+    researcher: { e: "🔭", zh: ["搜索引擎精", "让 AI 上网查了一遍又一遍。你是在写代码，还是在写论文？"], en: ["Search Addict", "Made AI search the web again and again. Writing code or a thesis?"] },
+    steady: { e: "🫥", zh: ["平平无奇打工人", "不熬夜、不骂人、也不说谢谢。AI 对你没什么印象。"], en: ["Forgettable Coworker", "No late nights, no yelling, no thank-yous. AI barely remembers you."] },
   };
 
 
@@ -355,7 +355,7 @@ window.VWReport = function (DATA) {
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
       : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
     var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>';
-    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + '</div><canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0);
+    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + '</div>' + (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") + '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0);
     return out;
   }
 
