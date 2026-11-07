@@ -76,7 +76,7 @@ async function main() {
     try {
       const w = await readExport(fs.readFileSync(file));
       data.sessions.push(...w.sessions); data.prompts.push(...w.prompts); texts.push(...w.texts); replies.push(...w.replies);
-      console.log(`+ ${w.sessions.length} ${w.kind === "chatgpt" ? "ChatGPT" : "Claude.ai"} conversations from ${path.basename(file)}`);
+      console.error(`+ ${w.sessions.length} ${w.kind === "chatgpt" ? "ChatGPT" : "Claude.ai"} conversations from ${path.basename(file)}`);
     } catch (e) {
       console.error(`Couldn't read ${file}: ${e.message}`);
       process.exit(1);
