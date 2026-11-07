@@ -1,30 +1,9 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const zlib = require("node:zlib");
 const W = require("../src/core/webchat");
 const { computeStats } = require("../src/core/stats");
 
-/** Build a real .zip (deflate) in memory, like the export emails. */
-function makeZip(files) {
-  const locals = [], centrals = [];
-  let offset = 0;
-  for (const [name, text] of Object.entries(files)) {
-    const nameBuf = Buffer.from(name), raw = Buffer.from(text), comp = zlib.deflateRawSync(raw);
-    const lh = Buffer.alloc(30);
-    lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(8, 8);
-    lh.writeUInt32LE(comp.length, 18); lh.writeUInt32LE(raw.length, 22); lh.writeUInt16LE(nameBuf.length, 26);
-    const ch = Buffer.alloc(46);
-    ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(8, 10);
-    ch.writeUInt32LE(comp.length, 20); ch.writeUInt32LE(raw.length, 24); ch.writeUInt16LE(nameBuf.length, 28); ch.writeUInt32LE(offset, 42);
-    locals.push(lh, nameBuf, comp);
-    centrals.push(ch, nameBuf);
-    offset += 30 + nameBuf.length + comp.length;
-  }
-  const cd = Buffer.concat(centrals), eocd = Buffer.alloc(22);
-  eocd.writeUInt32LE(0x06054b50, 0); eocd.writeUInt16LE(Object.keys(files).length, 8); eocd.writeUInt16LE(Object.keys(files).length, 10);
-  eocd.writeUInt32LE(cd.length, 12); eocd.writeUInt32LE(offset, 16);
-  return Buffer.concat([...locals, cd, eocd]);
-}
+const { makeZip } = require("./helpers/zip");
 
 const t = (iso) => Date.parse(iso) / 1000;
 const chatgpt = [{

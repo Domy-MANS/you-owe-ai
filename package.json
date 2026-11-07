@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "test": "node --test test/",
-    "build:web": "node scripts/build-web.js"
+    "build:web": "node scripts/build-web.js",
+    "test:e2e": "node --test --test-concurrency=1 e2e/browser.e2e.js"
   },
   "engines": {
     "node": ">=18"
@@ -38,5 +39,8 @@
   "homepage": "https://github.com/Domy-MANS/you-owe-ai#readme",
   "bugs": {
     "url": "https://github.com/Domy-MANS/you-owe-ai/issues"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1"
   }
 }

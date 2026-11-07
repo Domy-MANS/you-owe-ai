@@ -37,7 +37,7 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 | Attendance record | When you clock in, and what you mostly make AI do |
 | Client review | Your AI employee rates you, one to five stars |
 | Client file | Your persona (Cyber Overlord, The Client From Hell, Human Broken Record and more), credit rating and hidden traits |
-| IOU | A 1080 × 1350 receipt with every charge, ready to post |
+| IOU | A 1080 × 1350 receipt with every charge and a QR code back to the site, ready to post |
 
 Rates are in US dollars at the federal minimum wage. The Chinese version bills in yuan at McDonald's hourly pay.
 
@@ -89,7 +89,8 @@ src/page/    The invoice: slides, share card, share links
 web/         The home page, folder picker and incoming call
 bin/         The command line
 docs/        The built web page (GitHub Pages) and README images
-test/        node --test
+test/        Unit tests: node --test test/
+e2e/         Browser tests in real Chrome at phone sizes: npm run test:e2e
 ```
 
 ## License
