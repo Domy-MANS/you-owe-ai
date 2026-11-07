@@ -1751,7 +1751,7 @@ if (window.DATA) window.VWReport(window.DATA);
         "但你在网页上跟我聊的那些，还一分钱没算呢。",
         "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
       ]; },
-      declined: "你挂了 AI 的电话", missed: "未接来电", callBack: "回拨",
+      declined: "你挂了 AI 的电话", missed: "未接来电", laterTag: "随时回拨", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
       gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
       claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件到了以后下载 zip。",
@@ -1768,7 +1768,7 @@ if (window.DATA) window.VWReport(window.DATA);
         "But everything you said to me on the web? Not billed yet.",
         "Export your chats and send them over. Don't worry, the data never leaves your browser.",
       ]; },
-      declined: "You hung up on AI", missed: "Missed call", callBack: "Call back",
+      declined: "You hung up on AI", missed: "Missed call", laterTag: "Call back anytime", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
       gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
       claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. Download the zip from the email.",
@@ -1843,8 +1843,9 @@ if (window.DATA) window.VWReport(window.DATA);
   /** A little phone with a red "1" on the right edge. Tap to call back. */
   function missedBadge(how, onImported) {
     var old = document.querySelector(".call-missed"); if (old) old.remove();
-    var m = el('<button class="call-missed"><span class="ph">📞</span><span class="dot">1</span><span class="tag"></span></button>');
-    var relabel = onLang(function () { var L = t(); m.setAttribute("aria-label", L.callBack); m.querySelector(".tag").textContent = how === "declined" ? L.declined : L.missed; });
+    // a red "1" only for calls you never picked up; after a real call it's just a way back
+    var m = el('<button class="call-missed"><span class="ph">📞</span>' + (how === "later" ? "" : '<span class="dot">1</span>') + '<span class="tag"></span></button>');
+    var relabel = onLang(function () { var L = t(); m.setAttribute("aria-label", L.callBack); m.querySelector(".tag").textContent = how === "later" ? L.laterTag : L[how]; });
     document.body.appendChild(m);
     setTimeout(function () { m.classList.add("quiet"); }, 3500); // the label fades, the badge stays
     m.onclick = function (e) { e.stopPropagation(); offLang(relabel); m.remove(); answer(onImported); };
@@ -1886,7 +1887,11 @@ if (window.DATA) window.VWReport(window.DATA);
       else if (st.drop === "bad") label.textContent = L.bad;
       else {
         label.innerHTML = L.got(st.result.sessions.length, st.result.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
-        label.querySelector(".go-recalc").onclick = function (e) { e.preventDefault(); end(); onImported(st.result); };
+        label.querySelector(".go-recalc").onclick = function (e) {
+          e.preventDefault(); end();
+          var b = document.querySelector(".call-missed"); if (b) b.remove();
+          onImported(st.result);
+        };
       }
     });
     ov.querySelector(".call-lang").onclick = function () { if (window.VWToggleLang) window.VWToggleLang(); };
@@ -1910,7 +1915,8 @@ if (window.DATA) window.VWReport(window.DATA);
     drop.ondragleave = function () { drop.classList.remove("over"); };
     drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) take(e.dataTransfer.files[0]); };
     function end() { clearInterval(clock); timers.forEach(clearTimeout); offLang(relabel); ov.remove(); }
-    ov.querySelector(".end").onclick = end;
+    // hanging up without importing leaves the phone in the corner, to come back after the report
+    ov.querySelector(".end").onclick = function () { end(); if (!quiet) missedBadge("later", onImported); };
   }
 
   window.VWCall = { incoming: incoming, answer: answer, toast: toast };
