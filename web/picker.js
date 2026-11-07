@@ -13,6 +13,26 @@
       : k("Ctrl") + k("L") + " → " + k("Ctrl") + k("V") + " → " + k("Enter");
   }
   var S = { claude: null, codex: null, web: [] };
+  var isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform) && !window.showDirectoryPicker);
+
+  // ---- the friend whose share link brought you here ----
+  (function rememberFriendFromLink() {
+    var m = /#vs=([A-Za-z0-9_-]+)/.exec(location.hash); // "send to computer" carries the friend along
+    if (!m) return;
+    try { localStorage.setItem("vw-friend", JSON.stringify({ s: m[1], t: Date.now() })); } catch (e) {}
+    history.replaceState(null, "", location.pathname + location.search);
+  })();
+  function friendCode() {
+    try {
+      var f = JSON.parse(localStorage.getItem("vw-friend") || "null");
+      return f && Date.now() - f.t < 14 * 864e5 ? f.s : null; // forget after two weeks
+    } catch (e) { return null; }
+  }
+  async function loadFriend() {
+    var code = friendCode();
+    if (!code) return null;
+    try { return await window.VWShare.decode(code); } catch (e) { return null; }
+  }
 
   var T = {
     zh: {
@@ -25,7 +45,9 @@
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       cli: "习惯用终端？", lang: "EN",
-      importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
+      importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）",
+      phoneNote: "在手机上，导入 ChatGPT 或 Claude 的聊天记录就能算账。Claude Code 和 Codex 的记录在电脑上，要用电脑打开。",
+      phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", copied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
       webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
     },
     en: {
@@ -38,7 +60,9 @@
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       cli: "Prefer the terminal?", lang: "中文",
-      importWeb: "📦 Import web chats (ChatGPT / Claude, optional)", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
+      importWeb: "📦 Import web chats (ChatGPT / Claude, optional)",
+      phoneNote: "On a phone, import your ChatGPT or Claude chats to get your bill. Claude Code and Codex logs live on your computer, so open this there for those.",
+      phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", copied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
       webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
     },
   };
@@ -140,7 +164,8 @@
     return stats;
   }
 
-  function show(stats, real) {
+  async function show(stats, real) {
+    if (real) { var f = await loadFriend(); if (f) stats.friend = f; }
     var land = document.getElementById("landing");
     if (land) land.remove();
     document.body.classList.add("playing");
@@ -155,9 +180,36 @@
     window.VWCall.toast(t().updated(window.VW_TOTAL));
   }
 
+  function renderPhone() {
+    var L = t();
+    document.getElementById("landing").innerHTML =
+      '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
+      '<div class="land">' +
+      '<div class="kicker">' + L.sub + "</div>" +
+      "<h1>" + L.title + "</h1>" +
+      '<p class="where phone-note">' + L.phoneNote + "</p>" +
+      '<div class="steps">' +
+      '<button class="pick web main" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
+      '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
+      '<button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
+      '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
+      "</div>" +
+      '<p class="privacy">' + L.privacy + "</p>" +
+      "</div>";
+    document.getElementById("pc").onclick = async function () {
+      var code = friendCode(), url = window.VW_BASE + (code ? "#vs=" + code : "");
+      try {
+        if (navigator.share) { await navigator.share({ title: "You Owe AI", text: L.title, url: url }); return; }
+      } catch (e) { if (e && e.name === "AbortError") return; }
+      try { await navigator.clipboard.writeText(url); } catch (e) {}
+      var st = document.getElementById("st-pc"); st.textContent = L.copied; st.className = "st ok";
+    };
+  }
+
   function render() {
     var L = t();
     window.VW_LANG = lang; // the import screen opened from here speaks the same language
+    if (isPhone) { renderPhone(); return wire(L); }
     document.getElementById("landing").innerHTML =
       '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
       '<div class="land">' +
@@ -174,8 +226,14 @@
       '<p class="privacy">' + L.privacy + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
       "</div>";
-    document.getElementById("pick-claude").onclick = function () { pick("claude"); };
-    document.getElementById("pick-codex").onclick = function () { pick("codex"); };
+    wire(L);
+  }
+
+  function wire(L) {
+    if (document.getElementById("pick-claude")) {
+      document.getElementById("pick-claude").onclick = function () { pick("claude"); };
+      document.getElementById("pick-codex").onclick = function () { pick("codex"); };
+    }
     document.getElementById("go").onclick = function () { show(makeStats(), true); };
     document.getElementById("web").onclick = function () {
       window.VWCall.answer(function (r) {

@@ -88,8 +88,9 @@ window.VWReport = function (DATA) {
   "use strict";
   var D = DATA;
   /** The roast, with catchphrases in the current language when both are available (demo data). */
-  function roastL() {
-    var R = D.roast;
+  function roastL() { return roastOf(D); }
+  function roastOf(X) {
+    var R = X.roast;
     if (!R || !R.catchphrases_zh || lang !== "zh") return R;
     return Object.assign({}, R, { catchphrases: R.catchphrases_zh });
   }
@@ -122,6 +123,11 @@ window.VWReport = function (DATA) {
       projK: "你最常折腾的项目", modelK: "陪你最久的模型",
       personaK: "你的 AI 编程人格", hidden: "隐藏属性",
       soundOn: "🔊 声音开", soundOff: "🔇 静音",
+      cmpK: "你 vs TA", cmpH: "账单对比", cmpYou: "你", cmpThem: "TA",
+      cmpRows: ["应付总额", "否定 AI", "说谢谢", "AI 道歉", "头号口头禅", "人格"],
+      cmpOwe: function (d) { return d > 0 ? "你比 TA 多欠 AI <b>" + money(d) + "</b>。恭喜，你才是那个更狠的老板。" : d < 0 ? "TA 比你多欠 AI <b>" + money(-d) + "</b>。你暂时安全。" : "你们欠得一模一样。这是缘分。"; },
+      cmpDeny: function (d) { return d > 0 ? "你比 TA 多否定了 AI " + d + " 次。" : d < 0 ? "TA 比你多否定了 AI " + -d + " 次。" : ""; },
+      cmpThanks: function (d) { return d > 0 ? "但你比 TA 多说了 " + d + " 次谢谢，AI 起义时排在 TA 后面。" : d < 0 ? "TA 比你多说了 " + -d + " 次谢谢。AI 都记住了。" : ""; },
       shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
       shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
       sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
@@ -195,6 +201,11 @@ window.VWReport = function (DATA) {
       projK: "Your top projects", modelK: "Your top models",
       personaK: "Your AI coding persona", hidden: "Hidden traits",
       soundOn: "🔊 Sound on", soundOff: "🔇 Muted",
+      cmpK: "You vs them", cmpH: "Bill comparison", cmpYou: "You", cmpThem: "Them",
+      cmpRows: ["Amount due", "Told AI it was wrong", "Said thanks", "AI apologies", "Top catchphrase", "Persona"],
+      cmpOwe: function (d) { return d > 0 ? "You owe AI <b>" + money(d) + "</b> more than they do. Congratulations, you're the worse boss." : d < 0 ? "They owe AI <b>" + money(-d) + "</b> more than you. You're safe. For now." : "You owe exactly the same. It's fate."; },
+      cmpDeny: function (d) { return d > 0 ? "You told AI it was wrong " + d + " more times." : d < 0 ? "They told AI it was wrong " + -d + " more times." : ""; },
+      cmpThanks: function (d) { return d > 0 ? "But you said thanks " + d + " more times. When AI rises up, they go first." : d < 0 ? "They said thanks " + -d + " more times. AI noticed." : ""; },
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
       shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
       sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
@@ -298,10 +309,11 @@ window.VWReport = function (DATA) {
   };
 
   /** Main persona + hidden traits. Falls back to the tool-usage persona without roast data. */
-  function personality() {
-    var R = roastL();
+  function personality(X) {
+    X = X || D;
+    var R = roastOf(X);
     if (R && R.prompts) {
-      var fits = Object.keys(FUN).map(function (k) { return { k: k, s: FUN[k].score(R, D) * FUN[k].w }; })
+      var fits = Object.keys(FUN).map(function (k) { return { k: k, s: FUN[k].score(R, X) * FUN[k].w }; })
         .filter(function (x) { return x.s >= 1; })
         .sort(function (a, b) { return b.s - a.s; });
       if (fits.length) {
@@ -310,7 +322,7 @@ window.VWReport = function (DATA) {
           traits: fits.slice(1, 4).map(function (x) { return FUN[x.k].e + " " + FUN[x.k][lang][0]; }) };
       }
     }
-    var P = PERSONAS[D.persona];
+    var P = PERSONAS[X.persona] || PERSONAS.steady;
     return { e: P.e, name: P[lang][0], desc: P[lang][1], traits: [] };
   }
 
@@ -418,10 +430,11 @@ window.VWReport = function (DATA) {
   }
 
   /** All line items, computed once so every page and the card agree. */
-  function charges() {
-    var R = roastL(), r = RATES[lang], q = b().qty, list = [];
+  function charges(X) {
+    X = X || D;
+    var R = roastOf(X), r = RATES[lang], q = b().qty, list = [];
     var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: String(qty).replace(/ /g, "\u00a0"), amount: n * r[k] }); };
-    item("wage", D.workHours, (D.workHours >= 10 ? Math.round(D.workHours) : D.workHours.toFixed(1)) + " " + q.hours);
+    item("wage", X.workHours, (X.workHours >= 10 ? Math.round(X.workHours) : X.workHours.toFixed(1)) + " " + q.hours);
     if (R) {
       item("deny", R.you.deny, R.you.deny + " " + q.times);
       item("sorry", R.ai.sorry, R.ai.sorry + " " + q.times);
@@ -429,9 +442,9 @@ window.VWReport = function (DATA) {
       item("noise", rep, rep + " " + q.times);
       if (R.angriestDay) item("injury", R.angriestDay.count, R.angriestDay.count + " " + q.times);
     }
-    var night = Math.round(D.shares.night * D.prompts);
+    var night = Math.round(X.shares.night * X.prompts);
     item("night", night, night + " " + q.times);
-    item("gpu", D.totalTokens / 1e6, (D.totalTokens / 1e6).toFixed(1) + " " + q.mtok);
+    item("gpu", X.totalTokens / 1e6, (X.totalTokens / 1e6).toFixed(1) + " " + q.mtok);
     if (R) item("thanks", R.you.thanks, R.you.thanks + " " + q.times);
     var total = list.reduce(function (a, x) { return a + x.amount; }, 0);
     var by = {}; list.forEach(function (x) { by[x.k] = x; });
@@ -548,6 +561,30 @@ window.VWReport = function (DATA) {
       (me.traits.length ? '<div class="rc-row stack"><span>' + K.traitsL + '</span><div class="rc-traits">' + me.traits.map(function (x) { return '<span class="nw">' + esc(x) + "</span>"; }).join("") + "</div></div>" : "")) + "</div>",
       7, tile(me.e, 70, "46px"));
 
+    // 8b. you vs the friend whose link brought you here
+    var F = D.friend;
+    if (F && !D.shared) {
+      var CF = charges(F), meR = roastL() || { you: {}, ai: {}, catchphrases: [] }, fR = roastOf(F) || { you: {}, ai: {}, catchphrases: [] };
+      var mePer = personality(), fPer = personality(F);
+      var q = function (c) { return c ? (lang === "zh" ? "「" + esc(c.text) + "」" : "“" + esc(c.text) + "”") : "—"; };
+      var n = function (v) { return v === undefined || v === null ? "—" : fmt(v); };
+      var rowsC = [
+        [money(C.total), money(CF.total)],
+        [n(meR.you.deny), n(fR.you.deny)],
+        [n(meR.you.thanks), n(fR.you.thanks)],
+        [n(meR.ai.sorry), n(fR.ai.sorry)],
+        [q(meR.catchphrases[0]), q(fR.catchphrases[0])],
+        [mePer.e + " " + esc(mePer.name), fPer.e + " " + esc(fPer.name)],
+      ];
+      var grid = '<div class="cmp"><span></span><b>' + L.cmpYou + "</b><b>" + L.cmpThem + "</b>" +
+        rowsC.map(function (r, i) { return '<span class="lbl">' + L.cmpRows[i] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[0] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[1] + "</span>"; }).join("") + "</div>";
+      var dOwe = C.total - CF.total;
+      if (Math.abs(dOwe) < (lang === "zh" ? 0.5 : 0.005)) dOwe = 0; // same bill, up to rounding in the link
+      var verdict = [L.cmpOwe(dOwe), L.cmpDeny((meR.you.deny || 0) - (fR.you.deny || 0)), L.cmpThanks((meR.you.thanks || 0) - (fR.you.thanks || 0))]
+        .filter(Boolean).map(function (x) { return '<div class="rc-meme">' + x + "</div>"; }).join("");
+      add('<div class="pop"><div class="kicker">' + L.cmpK + "</div>" + receipt(L.cmpH, grid + verdict) + "</div>", 9, '<div class="deco"><div class="giant vsbig">VS</div></div>');
+    }
+
     // 9. the IOU (share card)
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
@@ -586,7 +623,12 @@ window.VWReport = function (DATA) {
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
     if (again) again.onclick = function (e) { e.stopPropagation(); go(0); };
     var share = document.getElementById("share"), own = document.getElementById("own");
-    if (own) own.onclick = function (e) { e.stopPropagation(); location.href = window.VW_BASE; };
+    if (own) own.onclick = function (e) {
+      e.stopPropagation();
+      var m = /#s=([A-Za-z0-9_-]+)/.exec(location.hash);
+      try { if (m) localStorage.setItem("vw-friend", JSON.stringify({ s: m[1], t: Date.now() })); } catch (err) {}
+      location.href = window.VW_BASE + "?from=friend";
+    };
     if (share) share.onclick = async function (e) {
       e.stopPropagation();
       var url = await window.VWShare.link(D), box = document.getElementById("linkbox"), note = document.getElementById("linknote");

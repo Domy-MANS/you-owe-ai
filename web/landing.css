@@ -84,3 +84,5 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
   .pick { padding: 14px; font-size: 16px; }
   .steps .btn.go { margin-top: 4px; }
 }
+.pick.web.main { border-style: solid; border-width: 2px; font-size: 17px; background: rgba(110,80,30,0.14); margin-top: 0; }
+.phone-note { margin: -6px 0 18px; font-size: 15px; }

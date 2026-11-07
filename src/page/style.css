@@ -292,3 +292,10 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 }
 /* "backwards": hidden while waiting to print, and once printed no clip is left behind
    (a leftover clip-path cut off the bottom of large glyphs like the total) */
+
+/* you vs friend */
+.cmp { display: grid; grid-template-columns: auto 1fr 1fr; gap: 8px 10px; align-items: baseline; margin: 4px 0 6px; }
+.cmp > b { font-size: 13px; color: var(--dim); text-align: right; }
+.cmp .lbl { font-size: 13px; color: #7a6a52; }
+.cmp .v { text-align: right; font-weight: 800; font-size: 15px; overflow-wrap: anywhere; }
+.cmp .v.big { font: 900 clamp(18px, 5vw, 24px) var(--font); }

@@ -178,3 +178,54 @@ test("the page cannot reach the network", async () => {
   for (const d of ["connect-src", "img-src"]) assert.ok(blocked.includes(d), `${d} blocked (${blocked})`);
   await pg.close();
 });
+
+const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+
+test("on a phone: no folder buttons, import is the way in, 'send to computer' carries the friend", async () => {
+  const pg = await browser.newPage();
+  await pg.setUserAgent(IPHONE);
+  await pg.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const errors = []; pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.evaluateOnNewDocument(() => { navigator.share = (d) => { window.__shared = d.url; return Promise.resolve(); }; });
+  await pg.goto(`${PAGE}?lang=en`);
+  const friend = await pg.evaluate(() => window.VWShare.link(window.VW_DEMO));
+  await pg.evaluate((code) => localStorage.setItem("vw-friend", JSON.stringify({ s: code, t: Date.now() })), friend.split("#s=")[1]);
+  await pg.goto(`${PAGE}?lang=en&from=friend`); await sleep(300);
+  assert.equal(await exists(pg, "#pick-claude"), false, "no folder buttons on a phone");
+  assert.match(await text(pg, "#web"), /Import ChatGPT/);
+  assert.equal(await pg.$eval("#go", (e) => e.disabled), true);
+  await pg.click("#pc"); await sleep(200);
+  assert.match(await pg.evaluate(() => window.__shared), /#vs=y/, "the link sent to the computer carries the friend");
+  await pg.click("#web"); await sleep(300);
+  await (await pg.$(".call-drop input")).uploadFile(zipPath); await sleep(1200);
+  await pg.click(".go-recalc"); await sleep(300);
+  assert.equal(await pg.$eval("#go", (e) => e.disabled), false);
+  await pg.click("#go"); await sleep(1500);
+  assert.equal(await pg.$$eval(".slide", (s) => s.some((x) => /You vs them/.test(x.textContent))), true, "comparison page added");
+  assert.deepEqual(errors, []);
+  await pg.close();
+});
+
+test("you vs your friend: their total matches their own bill, labels in the current language", async () => {
+  const pg = await open(`${PAGE}?lang=zh`);
+  const link = await pg.evaluate(() => window.VWShare.link(window.VW_DEMO));
+  const theirs = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1200);
+  const theirTotal = await theirs.evaluate(() => window.VW_TOTAL); await theirs.close();
+  await pg.evaluate((code) => localStorage.setItem("vw-friend", JSON.stringify({ s: code, t: Date.now() })), link.split("#s=")[1]);
+  await pg.goto(`${PAGE}?lang=zh&still`);
+  await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; me.workHours = 3; me.roast.you.deny = 7; window.__vw.show(me, true); });
+  await sleep(1200);
+  const cmp = await pg.$$eval(".slide", (s) => { const x = s.find((e) => /你 vs TA/.test(e.textContent)); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
+  assert.ok(cmp.includes(theirTotal), `their total ${theirTotal} in: ${cmp.slice(0, 120)}`);
+  assert.doesNotMatch(cmp, /undefined/);
+  assert.match(cmp, /「继续」/, "friend's catchphrase in Chinese");
+  assert.match(cmp, /TA 比你多否定了 AI/);
+  // a friend saved more than two weeks ago is forgotten
+  await pg.evaluate((code) => localStorage.setItem("vw-friend", JSON.stringify({ s: code, t: Date.now() - 15 * 864e5 })), link.split("#s=")[1]);
+  await pg.goto(`${PAGE}?lang=zh&still`);
+  await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); });
+  await sleep(1000);
+  assert.equal(await pg.$$eval(".slide", (s) => s.some((e) => /你 vs TA/.test(e.textContent))), false);
+  assert.deepEqual(pg.errors, []);
+  await pg.close();
+});
