@@ -618,8 +618,25 @@ window.VWReport = function (DATA) {
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
       empty: "今年还没有找到 Claude Code 或 Codex 的使用记录。",
-      factsK: "你的年度数字", factL: ["条指令", "次对话", "活跃天数", "AI 工作小时", "token", "最长连续天数"],
-      habitsK: "你的习惯", habitL: ["最常让 AI", "最常折腾", "最常用模型"],
+      factsK: "你的年度数字", factL: ["次使唤 AI", "个对话", "天想起了 AI", "小时 AI 白干", "token 燃烧", "天最长连续"],
+      habitsK: "你的习惯", habitL: ["最常使唤 AI", "最常折腾", "最常翻牌子"],
+      introS: "AI 都记着呢。准备好被吐槽了吗？",
+      vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "否定和谢谢的比例是 <b>" + R.you.deny + " : " + R.you.thanks + "</b>。这不是合作，这是 PUA。" : R.you.thanks >= R.you.deny ? "你谢谢说得比骂得多，AI 很感动。" : "否定 <b>" + R.you.deny + "</b> 次，谢谢 <b>" + R.you.thanks + "</b> 次。勉强算是个好老板。"; },
+      catchMeme: function (c) { return "AI 第 " + c.count + " 次听到「" + esc(c.text) + "」时的表情：😐"; },
+      angryMeme: "那天 AI 还以为自己要被裁了。",
+      lateMeme: "这个点，连外卖小哥都下班了。",
+      factsH: function (c) { return c <= 0.3 ? "Codex 是正宫，Claude 只是备胎 🖤" : c >= 0.7 ? "Claude 是正宫，Codex 只是备胎 🧡" : "脚踏两条船 ⚔️"; },
+      factMeme: function () {
+        var n = D.streak.days, a = n <= 3 ? "最长连续 " + n + " 天，然后就三天打鱼两天晒网。" : n >= 14 ? "连续 " + n + " 天没放过 AI，它想请假。" : "最长连续 " + n + " 天，偶尔也让 AI 歇歇。";
+        return a + (D.busiestDay ? "<br>最拼的一天是 <b>" + D.busiestDay.date + "</b>，下了 <b>" + D.busiestDay.prompts + "</b> 条指令，那天显卡在冒烟。" : "");
+      },
+      habitsH: function (h) {
+        var p = h + ":00";
+        return h < 5 ? "凌晨 " + p + "，最佳 debug 时间（并不是）" : h < 9 ? "早上 " + p + "，你比公鸡还勤快" : h < 12 ? "上午 " + p + "，标准打工人" : h < 14 ? "中午 " + p + "，饭都不吃也要写" : h < 18 ? "下午 " + p + "，摸鱼黄金时段，你选择让 AI 替你干活" : h < 22 ? "晚上 " + p + "，下班了，但没完全下班" : "晚上 " + p + "，夜猫子开始营业";
+      },
+      homeJoke: "~ 是你的家目录。在家目录里放 AI 跑命令，胆子真大。",
+      nightMeme: function () { var n = Math.round(D.shares.night * 100); return n >= 20 ? "<b>" + n + "%</b> 的指令在晚上 10 点后发出。肝，是有极限的。" : "作息健康，AI 都羡慕你。"; },
+
       vsK: "你 vs AI", vsH: "相爱相杀",
       vs: [["你否定了 AI", "次"], ["AI 跟你道歉", "次"], ["你说了谢谢", "次"], ["AI 宣布「搞定了」", "次"]],
       vsS: function (R) { return "你还迷茫了 <b>" + R.you.lost + "</b> 次，问了 <b>" + R.you.why + "</b> 次「为什么」"; },
@@ -668,8 +685,25 @@ window.VWReport = function (DATA) {
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
       empty: "No Claude Code or Codex activity found for this year yet.",
-      factsK: "Your year in numbers", factL: ["prompts", "sessions", "active days", "AI hours", "tokens", "day streak"],
-      habitsK: "Your habits", habitL: ["Mostly asked AI to", "Top projects", "Top models"],
+      factsK: "Your year in numbers", factL: ["times you bossed AI", "sessions", "days you remembered AI", "unpaid AI hours", "tokens burned", "day streak"],
+      habitsK: "Your habits", habitL: ["Mostly made AI", "Most tortured", "Favorite models"],
+      introS: "AI remembers everything. Ready to get roasted?",
+      vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "Rejections to thank-yous: <b>" + R.you.deny + " : " + R.you.thanks + "</b>. That's not teamwork, that's a hostage situation." : R.you.thanks >= R.you.deny ? "You thanked it more than you scolded it. AI is touched." : "<b>" + R.you.deny + "</b> rejections, <b>" + R.you.thanks + "</b> thank-yous. A tolerable boss."; },
+      catchMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + c.count + "th time: 😐"; },
+      angryMeme: "AI thought it was getting laid off.",
+      lateMeme: "Even the delivery drivers had gone home.",
+      factsH: function (c) { return c <= 0.3 ? "Codex is the one. Claude is the backup 🖤" : c >= 0.7 ? "Claude is the one. Codex is the backup 🧡" : "Two-timing Claude and Codex ⚔️"; },
+      factMeme: function () {
+        var n = D.streak.days, a = n <= 3 ? "Longest streak: " + n + " days. Then you ghosted it." : n >= 14 ? n + " days straight. AI would like a vacation." : "Longest streak: " + n + " days. You let AI rest. Sometimes.";
+        return a + (D.busiestDay ? "<br>Busiest day: <b>" + D.busiestDay.date + "</b>, <b>" + D.busiestDay.prompts + "</b> prompts. The GPUs were sweating." : "");
+      },
+      habitsH: function (h) {
+        var p = h + ":00";
+        return h < 5 ? p + ". Debugging at the witching hour" : h < 9 ? p + ". Up before the roosters" : h < 12 ? p + ". Textbook nine-to-fiver" : h < 14 ? p + ". Coding through lunch" : h < 18 ? p + ". Prime slacking hours, and you made AI do the work" : h < 22 ? p + ". Clocked out. Not really." : p + ". The night owl shift begins";
+      },
+      homeJoke: "~ is your home folder. Letting AI loose in there? Brave.",
+      nightMeme: function () { var n = Math.round(D.shares.night * 100); return n >= 20 ? "<b>" + n + "%</b> of your prompts came after 10pm. Your liver has limits." : "Healthy sleep schedule. Even AI is jealous."; },
+
       vsK: "You vs AI", vsH: "It's complicated",
       vs: [["You told AI it was wrong", "times"], ["AI apologized", "times"], ["You said thanks", "times"], ["AI said \"done\"", "times"]],
       vsS: function (R) { return "You were lost <b>" + R.you.lost + "</b> times and asked \"why\" <b>" + R.you.why + "</b> times"; },
@@ -802,20 +836,20 @@ window.VWReport = function (DATA) {
       return out;
     }
 
-    add('<div class="pop"><div class="kicker">Claude Code × Codex</div><div class="big">' + D.year + "</div><h1>" + L.title + '</h1><div class="privacy">' + L.privacy + "</div></div>", 5);
+    add('<div class="pop"><div class="kicker">Claude Code × Codex</div><div class="big">' + D.year + "</div><h1>" + L.title + '</h1><div class="sub">' + L.introS + '</div><div class="privacy">' + L.privacy + "</div></div>", 5);
 
     // ---- the fun part first ----
     var R = D.roast;
     if (R) {
       var v = [R.you.deny, R.ai.sorry, R.you.thanks, R.ai.done];
       var cells = L.vs.map(function (x, i) { return '<div class="vs-cell ' + (i % 2 ? "ai" : "me") + '"><div class="vs-n">' + count(v[i]) + '</div><div class="vs-l">' + x[0] + "</div></div>"; }).join("");
-      add('<div class="pop"><div class="kicker">' + L.vsK + "</div><h1>" + L.vsH + '</h1><div class="vs">' + cells + '</div><div class="sub">' + L.vsS(R) + "</div></div>");
+      add('<div class="pop"><div class="kicker">' + L.vsK + "</div><h1>" + L.vsH + '</h1><div class="vs">' + cells + '</div><div class="sub">' + L.vsMeme(R) + "<br>" + L.vsS(R) + "</div></div>");
       if (R.catchphrases.length) {
         var q = R.catchphrases.map(function (c, i) { return '<div class="quote' + (i === 0 ? " first" : "") + '"><span>「' + esc(c.text) + '」</span><b>×' + c.count + "</b></div>"; }).join("");
-        add('<div class="pop"><div class="kicker">' + L.catchK + '</div><div class="quotes">' + q + '</div><div class="sub">' + L.catchS + "</div></div>");
+        add('<div class="pop"><div class="kicker">' + L.catchK + '</div><div class="quotes">' + q + '</div><div class="sub">' + L.catchMeme(R.catchphrases[0]) + "</div></div>");
       }
       if (R.angriestDay || R.latest) {
-        add('<div class="pop"><div class="kicker">' + L.moodK + "</div>" + (R.angriestDay ? '<h1 class="mood">' + L.angry(R.angriestDay) + "</h1>" : "") + (R.latest ? '<div class="sub" style="font-size:clamp(18px,4vw,24px)">' + L.late(R.latest) + "</div>" : "") + "</div>");
+        add('<div class="pop"><div class="kicker">' + L.moodK + "</div>" + (R.angriestDay ? '<h1 class="mood">' + L.angry(R.angriestDay) + '</h1><div class="sub">' + L.angryMeme + "</div>" : "") + (R.latest ? '<div class="sub" style="font-size:clamp(18px,4vw,24px)">' + L.late(R.latest) + "<br>" + L.lateMeme + "</div>" : "") + "</div>");
       }
       var lines = L.roast(R).map(function (l) { return '<p class="roast-line">' + esc(l) + "</p>"; }).join("");
       add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10);
@@ -833,7 +867,7 @@ window.VWReport = function (DATA) {
     ].map(function (f) { return '<div class="fact"><div class="fact-n">' + f[0] + '</div><div class="fact-l">' + f[1] + "</div></div>"; }).join("");
     var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
     var split = '<div class="split slim"><div class="c" data-w="' + c * 100 + '">' + (c >= 0.15 ? "Claude " + Math.round(c * 100) + "%" : "") + '</div><div class="x" data-w="' + (1 - c) * 100 + '">' + (1 - c >= 0.15 ? "Codex " + Math.round((1 - c) * 100) + "%" : "") + "</div></div>";
-    add('<div class="pop"><div class="kicker">' + L.factsK + "</div><h1>" + L.splitH(c) + '</h1><div class="facts">' + facts + "</div>" + split + '<div class="sub">' + L.calS() + "</div></div>");
+    add('<div class="pop"><div class="kicker">' + L.factsK + "</div><h1>" + L.factsH(c) + '</h1><div class="facts">' + facts + "</div>" + split + '<div class="sub">' + L.factMeme() + "</div></div>");
 
     var habit = "";
     if (D.peakHour !== null) {
@@ -845,7 +879,7 @@ window.VWReport = function (DATA) {
     if (D.topProjects.length) lines2.push([L.habitL[1], esc(D.topProjects.slice(0, 3).map(function (p) { return p.name; }).join(" · "))]);
     if (D.topModels.length) lines2.push([L.habitL[2], esc(D.topModels.slice(0, 2).map(function (m) { return m.name; }).join(" · "))]);
     habit += '<div class="habits">' + lines2.map(function (l) { return '<div class="habit"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("") + "</div>";
-    add('<div class="pop"><div class="kicker">' + L.habitsK + "</div><h1>" + (D.peakHour !== null ? L.clockH(D.peakHour) : "") + "</h1>" + habit + '<div class="sub">' + L.clockS() + "</div></div>");
+    add('<div class="pop"><div class="kicker">' + L.habitsK + "</div><h1>" + (D.peakHour !== null ? L.habitsH(D.peakHour) : "") + "</h1>" + habit + '<div class="sub">' + L.nightMeme() + (D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "") + "</div></div>");
 
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + L.shareK + '</div><canvas id="card" width="1080" height="1350"></canvas><div class="actions"><button class="btn" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button></div></div>", 0);
     return out;
