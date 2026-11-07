@@ -117,3 +117,19 @@ h1.mood { font-size: clamp(26px, 6vw, 40px); line-height: 1.3; }
 .link-note { text-align: center; font-size: 13px; color: var(--dim); margin-top: 12px; }
 .link-note.ok { color: #fff; font-weight: 700; }
 .link-box { width: 100%; margin-top: 10px; font: 12px var(--mono); padding: 10px; border-radius: 10px; border: 1px solid var(--faint); background: rgba(0,0,0,0.3); color: #fff; }
+
+/* meme backgrounds */
+.slide > .pop { position: relative; z-index: 1; }
+.deco { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.deco.tile { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 0.35em 0.9em;
+  font-size: var(--fs, 28px); font-weight: 900; line-height: 1.25; opacity: 0.1; transform: rotate(-14deg) scale(1.6); }
+.giant { position: absolute; right: -10%; bottom: -6%; font-size: min(78vw, 560px); line-height: 1; opacity: 0.18; transform: rotate(-10deg); }
+.giant.vsbig { right: auto; bottom: auto; left: 50%; top: 52%; transform: translate(-50%, -50%) rotate(-8deg) skewX(-8deg);
+  font-weight: 900; color: #fff; opacity: 0.13; font-size: min(62vw, 440px); letter-spacing: -0.06em; }
+.stamp { position: absolute; top: 13%; right: 7%; transform: rotate(-14deg); border: 5px solid rgba(255,255,255,0.9); color: rgba(255,255,255,0.95);
+  font: 900 clamp(26px, 7vw, 44px) var(--font); padding: 4px 16px; border-radius: 12px; letter-spacing: 0.1em; }
+.slide.on .stamp { animation: stamp 0.5s cubic-bezier(.2,1.6,.4,1) 0.9s both; }
+@keyframes stamp { from { transform: rotate(-14deg) scale(2.4); opacity: 0; } to { transform: rotate(-14deg) scale(1); opacity: 1; } }
+.still .stamp { animation: none; }
+.deco.spot { background: radial-gradient(ellipse 55% 55% at 50% -5%, rgba(255,250,210,0.42), transparent 70%),
+  radial-gradient(ellipse 100% 35% at 50% 105%, rgba(0,0,0,0.45), transparent 70%); }

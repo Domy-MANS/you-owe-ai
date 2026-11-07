@@ -77,7 +77,7 @@ window.VWReport = function (DATA) {
       factsK: "你的年度数字", factL: ["次使唤 AI", "个对话", "天想起了 AI", "小时 AI 白干", "token 燃烧", "天最长连续"],
       habitsK: "你的习惯", habitL: ["最常使唤 AI", "最常折腾", "最常翻牌子"],
       introS: "AI 都记着呢。准备好被吐槽了吗？",
-      billK: "AI 打工账单 · " + D.year, billH: "你欠 AI", billHShared: "TA 欠 AI",
+      billK: "AI 打工账单 · " + D.year, stamp: "逾期未付", billH: "你欠 AI", billHShared: "TA 欠 AI",
       billS: function () { var h = D.workHours; return "AI 替你干了 <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> 小时活，一分钱没拿（按麦当劳时薪算）。<br>账单明细在后面 👇"; },
       cardTitle: function () { return (D.shared ? "TA 欠 AI " : "你欠 AI ") + owed(); },
       vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "否定和谢谢的比例是 <b>" + R.you.deny + " : " + R.you.thanks + "</b>。这不是合作，这是 PUA。" : R.you.thanks >= R.you.deny ? "你谢谢说得比骂得多，AI 很感动。" : "否定 <b>" + R.you.deny + "</b> 次，谢谢 <b>" + R.you.thanks + "</b> 次。勉强算是个好老板。"; },
@@ -149,7 +149,7 @@ window.VWReport = function (DATA) {
       factsK: "Your year in numbers", factL: ["times you bossed AI", "sessions", "days you remembered AI", "unpaid AI hours", "tokens burned", "day streak"],
       habitsK: "Your habits", habitL: ["Mostly made AI", "Most tortured", "Favorite models"],
       introS: "AI remembers everything. Ready to get roasted?",
-      billK: "AI's invoice · " + D.year, billH: "You owe AI", billHShared: "They owe AI",
+      billK: "AI's invoice · " + D.year, stamp: "PAST DUE", billH: "You owe AI", billHShared: "They owe AI",
       billS: function () { var h = D.workHours; return "AI worked <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> hours for you, unpaid (billed at minimum wage).<br>Itemized charges ahead 👇"; },
       cardTitle: function () { return (D.shared ? "They owe AI " : "You owe AI ") + owed(); },
       vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "Rejections to thank-yous: <b>" + R.you.deny + " : " + R.you.thanks + "</b>. That's not teamwork, that's a hostage situation." : R.you.thanks >= R.you.deny ? "You thanked it more than you scolded it. AI is touched." : "<b>" + R.you.deny + "</b> rejections, <b>" + R.you.thanks + "</b> thank-yous. A tolerable boss."; },
@@ -297,37 +297,44 @@ window.VWReport = function (DATA) {
   function count(n) { return '<span data-count="' + n + '">0</span>'; }
 
   // ---------- slides ----------
+  // ---- meme backgrounds ----
+  function tile(text, n, size) {
+    var out = ""; for (var i = 0; i < n; i++) out += "<span>" + esc(text) + "</span>";
+    return '<div class="deco tile" style="--fs:' + (size || "28px") + '">' + out + "</div>";
+  }
+  function giant(emoji, style) { return '<div class="deco"><div class="giant" style="' + (style || "") + '">' + emoji + "</div></div>"; }
+
   function slides() {
     var L = t(), out = [];
-    var add = function (html, dur) { out.push({ html: html, dur: dur || 7 }); };
+    var add = function (html, dur, deco) { out.push({ html: html, dur: dur || 7, deco: deco || "" }); };
 
     if (D.empty) {
-      add('<div class="pop"><div class="kicker">' + D.year + '</div><h1>' + L.empty + '</h1><div class="privacy">' + L.privacy + "</div></div>");
+      add('<div class="pop"><div class="kicker">' + D.year + '</div><h1>' + L.empty + '</h1><div class="privacy">' + L.privacy + "</div></div>", 7, tile("🦗", 60, "44px"));
       return out;
     }
 
-    add('<div class="pop"><div class="kicker">' + (D.shared ? L.sharedK : L.billK) + '</div><h1>' + (D.shared ? L.billHShared : L.billH) + '</h1><div class="big">' + owed() + '</div><div class="sub">' + L.billS() + '</div><div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6);
+    add('<div class="pop"><div class="kicker">' + (D.shared ? L.sharedK : L.billK) + '</div><h1>' + (D.shared ? L.billHShared : L.billH) + '</h1><div class="big">' + owed() + '</div><div class="sub">' + L.billS() + '</div><div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, '<div class="deco"><div class="stamp">' + L.stamp + "</div></div>");
 
     // ---- the fun part first ----
     var R = D.roast;
     if (R) {
       var v = [R.you.deny, R.ai.sorry, R.you.thanks, R.ai.done];
       var cells = L.vs.map(function (x, i) { return '<div class="vs-cell ' + (i % 2 ? "ai" : "me") + '"><div class="vs-n">' + count(v[i]) + '</div><div class="vs-l">' + x[0] + "</div></div>"; }).join("");
-      add('<div class="pop"><div class="kicker">' + L.vsK + "</div><h1>" + L.vsH + '</h1><div class="vs">' + cells + '</div><div class="sub">' + L.vsMeme(R) + "<br>" + L.vsS(R) + "</div></div>");
+      add('<div class="pop"><div class="kicker">' + L.vsK + "</div><h1>" + L.vsH + '</h1><div class="vs">' + cells + '</div><div class="sub">' + L.vsMeme(R) + "<br>" + L.vsS(R) + "</div></div>", 7, '<div class="deco"><div class="giant vsbig">VS</div></div>');
       if (R.catchphrases.length) {
         var q = R.catchphrases.map(function (c, i) { return '<div class="quote' + (i === 0 ? " first" : "") + '"><span>「' + esc(c.text) + '」</span><b>×' + c.count + "</b></div>"; }).join("");
-        add('<div class="pop"><div class="kicker">' + L.catchK + '</div><div class="quotes">' + q + '</div><div class="sub">' + L.catchMeme(R.catchphrases[0]) + "</div></div>");
+        add('<div class="pop"><div class="kicker">' + L.catchK + '</div><div class="quotes">' + q + '</div><div class="sub">' + L.catchMeme(R.catchphrases[0]) + "</div></div>", 7, tile(R.catchphrases[0].text, 80, "30px"));
       }
       if (R.angriestDay || R.latest) {
-        add('<div class="pop"><div class="kicker">' + L.moodK + "</div>" + (R.angriestDay ? '<h1 class="mood">' + L.angry(R.angriestDay) + '</h1><div class="sub">' + L.angryMeme + "</div>" : "") + (R.latest ? '<div class="sub" style="font-size:clamp(18px,4vw,24px)">' + L.late(R.latest) + "<br>" + L.lateMeme + "</div>" : "") + "</div>");
+        add('<div class="pop"><div class="kicker">' + L.moodK + "</div>" + (R.angriestDay ? '<h1 class="mood">' + L.angry(R.angriestDay) + '</h1><div class="sub">' + L.angryMeme + "</div>" : "") + (R.latest ? '<div class="sub" style="font-size:clamp(18px,4vw,24px)">' + L.late(R.latest) + "<br>" + L.lateMeme + "</div>" : "") + "</div>", 7, '<div class="deco"><div class="giant" style="right:-14%;bottom:-8%">🌋</div><div class="giant" style="left:-10%;top:4%;font-size:min(34vw,240px)">🦉</div></div>');
       }
       var lines = L.roast(R).map(function (l) { return '<p class="roast-line">' + esc(l) + "</p>"; }).join("");
-      add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10);
+      add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10, '<div class="deco spot"></div>');
     }
 
     var me = personality();
     var traits = me.traits.length ? '<div class="traits"><span class="tl">' + L.hidden + "</span>" + me.traits.map(function (x) { return '<span class="trait">' + esc(x) + "</span>"; }).join("") + "</div>" : "";
-    add('<div class="pop"><div class="kicker">' + L.personaK + '</div><div class="persona-emoji">' + me.e + "</div><h1>" + esc(me.name) + '</h1><div class="sub">' + esc(me.desc) + "</div>" + traits + "</div>", 7);
+    add('<div class="pop"><div class="kicker">' + L.personaK + '</div><div class="persona-emoji">' + me.e + "</div><h1>" + esc(me.name) + '</h1><div class="sub">' + esc(me.desc) + "</div>" + traits + "</div>", 7, tile(me.e, 70, "46px"));
 
     // ---- the numbers, compressed into two pages ----
     var h = D.workHours;
@@ -337,7 +344,7 @@ window.VWReport = function (DATA) {
     ].map(function (f) { return '<div class="fact"><div class="fact-n">' + f[0] + '</div><div class="fact-l">' + f[1] + "</div></div>"; }).join("");
     var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
     var split = '<div class="split slim"><div class="c" data-w="' + c * 100 + '">' + (c >= 0.15 ? "Claude " + Math.round(c * 100) + "%" : "") + '</div><div class="x" data-w="' + (1 - c) * 100 + '">' + (1 - c >= 0.15 ? "Codex " + Math.round((1 - c) * 100) + "%" : "") + "</div></div>";
-    add('<div class="pop"><div class="kicker">' + L.factsK + "</div><h1>" + L.factsH(c) + '</h1><div class="facts">' + facts + "</div>" + split + '<div class="sub">' + L.factMeme() + "</div></div>");
+    add('<div class="pop"><div class="kicker">' + L.factsK + "</div><h1>" + L.factsH(c) + '</h1><div class="facts">' + facts + "</div>" + split + '<div class="sub">' + L.factMeme() + "</div></div>", 7, giant("🔥", "right:-12%;bottom:-6%"));
 
     var habit = "";
     if (D.peakHour !== null) {
@@ -349,13 +356,13 @@ window.VWReport = function (DATA) {
     if (D.topProjects.length) lines2.push([L.habitL[1], esc(D.topProjects.slice(0, 3).map(function (p) { return p.name; }).join(" · "))]);
     if (D.topModels.length) lines2.push([L.habitL[2], esc(D.topModels.slice(0, 2).map(function (m) { return m.name; }).join(" · "))]);
     habit += '<div class="habits">' + lines2.map(function (l) { return '<div class="habit"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("") + "</div>";
-    add('<div class="pop"><div class="kicker">' + L.habitsK + "</div><h1>" + (D.peakHour !== null ? L.habitsH(D.peakHour) : "") + "</h1>" + habit + '<div class="sub">' + L.nightMeme() + (D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "") + "</div></div>");
+    add('<div class="pop"><div class="kicker">' + L.habitsK + "</div><h1>" + (D.peakHour !== null ? L.habitsH(D.peakHour) : "") + "</h1>" + habit + '<div class="sub">' + L.nightMeme() + (D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "") + "</div></div>", 7, giant(D.peakHour === null ? "⏰" : D.peakHour >= 14 && D.peakHour < 18 ? "🐟" : D.peakHour >= 22 || D.peakHour < 5 ? "🦉" : D.peakHour < 9 ? "🐓" : "☕", "right:-14%;bottom:-6%"));
 
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
       : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
     var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>';
-    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + '</div>' + (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") + '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0);
+    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + '</div>' + (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") + '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0, tile("🧾", 70, "40px"));
     return out;
   }
 
@@ -390,7 +397,7 @@ window.VWReport = function (DATA) {
 
   function build() {
     list_ = slides();
-    stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.html + "</section>"; }).join("");
+    stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.deco + s.html + "</section>"; }).join("");
     barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
     document.getElementById("lang").textContent = t().lang;
     document.getElementById("hint").textContent = t().next;
@@ -474,6 +481,12 @@ window.VWReport = function (DATA) {
     x.fillStyle = "#fff"; x.textBaseline = "top";
     x.font = "600 34px " + F; x.globalAlpha = 0.8; x.fillText(L.billK.toUpperCase() + " · CLAUDE CODE × CODEX", 72, 72); x.globalAlpha = 1;
     x.font = "800 64px " + F; x.fillText(L.cardTitle(), 72, 124);
+    x.save(); x.translate(W - 230, 250); x.rotate(-0.26);
+    x.strokeStyle = x.fillStyle = "rgba(255,255,255,0.92)"; x.lineWidth = 8;
+    x.font = "900 56px " + F; var sw = x.measureText(L.stamp).width + 56;
+    round(x, -sw / 2, -50, sw, 100, 14); x.stroke();
+    x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(L.stamp, 0, 2); x.restore();
+    x.textAlign = "left"; x.textBaseline = "top"; x.fillStyle = "#fff";
     x.font = "120px " + F; x.fillText(me.e, 72, 236);
     x.font = "900 " + (me.name.length > 12 ? 72 : 96) + "px " + F; x.fillText(me.name, 72, 376);
     x.font = "500 32px " + F; x.globalAlpha = 0.9; var yy = wrap(x, me.desc, 72, 490, W - 144, 44); x.globalAlpha = 1;
