@@ -1,96 +1,96 @@
-# you-owe-ai 💸
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/img/logo-dark.svg" />
+    <img src="docs/img/logo-light.svg" width="560" alt="You Owe AI" />
+  </picture>
+</p>
 
-**Your AI just sent you an invoice.** A year of Claude Code and Codex, itemized: emotional damages for every time you told it it was wrong, noise pollution for your catchphrases, night-shift pay, GPU wear and tear, and a politeness discount for every "thanks". Plus a client review, your client profile and credit rating, and a receipt you can share.
+# You Owe AI: your AI just sent you an invoice
 
-### 👉 [Find out how much you owe AI](https://domy-mans.github.io/you-owe-ai/)
+**English** | [简体中文](README.zh-CN.md)
 
-Pick your `.claude` and `.codex` folders and it builds your report right in the page. Nothing to install.
+A year of Claude Code and Codex, itemized and billed back to you. Every time you told the AI it was wrong is an emotional damages charge, every repeated catchphrase is noise pollution, every prompt after 10pm is night-shift pay, and every "thanks" is a discount. The bill comes with a client review, your client file and credit rating, and an IOU you can share. It runs entirely in your browser.
 
-**Use ChatGPT or Claude.ai in the browser too?** A few seconds into your bill, the web AI calls you 📞. Answer it, drop in your official data export (Settings → Export data), and your web chats get added to the bill.
+[![The cover of the invoice, the noise pollution charge for your catchphrases, and your client file](docs/img/hero-en.png)](https://domy-mans.github.io/you-owe-ai/)
 
-Prefer the terminal?
+▶ [Get your invoice](https://domy-mans.github.io/you-owe-ai/)
 
-```bash
-npx github:Domy-MANS/you-owe-ai
-```
+## How it works
 
-![Slides](docs/slides-en.png)
+1. Open the page and choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**.
+2. Your browser reads the session logs, counts everything, and prints the invoice.
+3. Tap through the pages. On the last one, download the IOU as an image or copy a share link.
 
-<p align="center"><img src="docs/card-en.png" width="300" alt="Share card"></p>
+Anyone who opens your share link sees your whole invoice, with a button to make their own. The numbers travel inside the link itself, so no server ever stores them.
 
-> 🌏 [中文说明](#中文)
+## The invoice
 
-## What you get
+![Item 1 emotional damages, the client review, and the shareable IOU](docs/img/bill-en.png)
 
-- **How much you vibed**: prompts, sessions, active days, and hours AI spent working for you
-- **Tokens** processed, and how many books' worth the AI wrote for you
-- **Claude Code vs Codex**: which one you actually use more
-- **What you made AI do**: run commands, edit code, search the web, spawn helpers…
-- **Your golden hour**, a year heatmap, your longest streak and busiest day
-- Top projects and top models
-- **You vs AI**: how often you told it it was wrong, how often it apologized, how many times it said "done"
-- **Your catchphrases**, your angriest day, your latest 3am prompt
-- **An AI roast** of your year ("At minimum wage you owe it $26.82")
-- **Your AI persona**: 🫅 Cyber Overlord · 🧑‍💼 The Client From Hell · 🙇 Certified Polite · 🦜 Human Broken Record · 🧘 Sleep Is Optional · 📟 Telegraph Operator · ❓ The Why Machine · 🌋 Rage Coder, plus your hidden traits
-- A downloadable 1080×1350 share card
+| Page | What's on it |
+|---|---|
+| Invoice | The amount due, with a PAST DUE stamp |
+| Item 1: Emotional damages | Times you told AI it was wrong, AI apologies, and a discount for every "thanks" |
+| Item 2: Noise pollution | Your most repeated prompts, billed per repeat |
+| Item 3: Night shifts and injuries | Prompts after 10pm, your angriest day, and your latest prompt |
+| Item 4: Wages and supplies | Hours AI worked for you at minimum wage, GPU wear per million tokens |
+| Attendance record | When you clock in, and what you mostly make AI do |
+| Client review | Your AI employee rates you, one to five stars |
+| Client file | Your persona (Cyber Overlord, The Client From Hell, Human Broken Record and more), credit rating and hidden traits |
+| IOU | A 1080 × 1350 receipt with every charge, ready to post |
 
-## Private by design
+Rates are in US dollars at the federal minimum wage. The Chinese version bills in yuan at McDonald's hourly pay.
 
-- Runs **100% locally**, in your terminal or in your browser tab. No account, no API key, no uploads.
-- **The report can't phone home even if it wanted to.** It ships with a Content-Security-Policy that blocks every network request, enforced by your browser. Open DevTools → Network and check.
-- To find catchphrases and moods it scans your prompt text **on your machine** and keeps only counts and short repeated phrases. Your conversations are never saved or uploaded. Use `--no-text` to skip this entirely.
-- The share card shows numbers only: no catchphrases, project names or conversation titles.
-- Add `--hide-projects` to leave folder names out of the report.
+## The web AI calls you
 
-## Options
+![An incoming call from the web AI, and the call screen where it asks for your chat export](docs/img/call-en.png)
 
-```
---year <yyyy>     Year to summarize (default: this year)
---out <file>      Output path (default: ./you-owe-ai-<year>.html)
---demo            Preview with made-up data
---hide-projects   Leave project names out
---no-text         Don't scan prompt text (no catchphrases or roast)
---import <file>   Add a ChatGPT / Claude.ai data export (.zip or conversations.json)
---json            Print raw stats as JSON
---no-open         Don't open the browser
-```
+A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. You can also import an export later from the home page.
 
-Reads `~/.claude/projects` (respects `CLAUDE_CONFIG_DIR`) and `~/.codex/sessions` (respects `CODEX_HOME`). Needs Node 18+.
+## Privacy
 
----
+- **Nothing leaves your computer.** The page ships with a Content-Security-Policy that blocks every network request, and the browser enforces it. Open the Network tab in DevTools to check.
+- **Only counts are kept.** To find catchphrases and moods, prompt text is scanned in your browser. The report keeps counts and short repeated phrases, never your conversations.
+- **The IOU shows numbers only.** No project names, no conversation titles.
+- **Share links leave out** project names and day-by-day history.
 
-## 中文
+## Where are the folders?
 
-**你的 AI 给你寄来了一张账单。** 把你一年来用 Claude Code 和 Codex 的记录，算成一笔笔收费：被你否定的精神损失费、口头禅复读的噪音污染费、夜班补贴、显卡损耗费，说谢谢还能抵扣。最后附上 AI 员工对你的评价、你的客户档案和信用等级，以及一张可以分享的欠条。
+| System | Claude Code | Codex |
+|---|---|---|
+| macOS, Linux | `~/.claude` | `~/.codex` |
+| Windows | `%USERPROFILE%\.claude` | `%USERPROFILE%\.codex` |
 
-### 👉 [看看你欠 AI 多少钱](https://domy-mans.github.io/you-owe-ai/)
+Both folders are hidden. On macOS, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd> in the file window and paste the path. Claude Code deletes detailed session logs after about 30 days, so older months come from its prompt history and count prompts only.
 
-选一下 `.claude` 和 `.codex` 文件夹，报告就在网页里生成，不用安装任何东西。
-
-**也在网页上用 ChatGPT 或 Claude？** 看账单看到几秒，网页版 AI 会给你打电话 📞。接听后把官方导出的聊天记录（设置 → 导出数据）拖进来，网页聊天也会算进账单。
-
-习惯用终端的话：
+## Command line
 
 ```bash
 npx github:Domy-MANS/you-owe-ai
 ```
 
-![幻灯片](docs/slides-zh.png)
+This reads both folders directly, writes the invoice to an HTML file and opens it.
 
-<p align="center"><img src="docs/card-zh.png" width="300" alt="分享卡片"></p>
+| Option | What it does |
+|---|---|
+| `--import <file>` | Add a ChatGPT or Claude.ai export (`.zip` or `conversations.json`). Can be repeated. |
+| `--year <yyyy>` | Bill a different year |
+| `--demo` | Preview with made-up data |
+| `--hide-projects` | Leave project names out |
+| `--no-text` | Don't scan prompt text, which skips catchphrases and the review |
+| `--json` | Print the raw numbers |
+| `--out <file>`, `--no-open` | Choose the output file, and don't open the browser |
 
-- 你给 AI 下了多少条指令、开了多少次对话、AI 替你干了几个小时的活
-- 一共处理了多少 token，AI 亲手写的字相当于几本书
-- 你是 Claude 派、Codex 派，还是双持玩家
-- 你最常让 AI 干什么：跑命令、改代码、上网查……
-- 你几点最爱写代码、年度日历热力图、最长连续天数
-- **你 vs AI**：你否定了它几次、它道歉了几次、它说了几次「搞定了」
-- **你的年度口头禅**、最暴躁的一天、凌晨最晚的一条指令
-- **AI 对你的年度锐评**（「按麦当劳时薪算，你欠它 ¥90」）
-- 你的 **AI 人格**：🫅 赛博奴隶主 · 🧑‍💼 甲方附体 · 🙇 礼貌标兵 · 🦜 人类复读机 · 🧘 修仙党 · 📟 发电报选手 · ❓ 十万个为什么 · 🌋 暴躁老哥，外加隐藏属性
-- 一键下载分享图
+## Repository layout
 
-**隐私**：全部在本地统计，不用登录、不需要 API key。报告页面自带浏览器级别的联网封锁，**就算想上传也传不出去**。统计口头禅时只在你电脑上扫描指令文字，只留下次数和重复的短句，不保存、不上传；加 `--no-text` 可以完全关掉。分享卡片上只有数字。
+```text
+src/core/    Log parsing, stats, the roast and export import (shared by the web page and the CLI)
+src/page/    The invoice: slides, share card, share links
+web/         The home page, folder picker and incoming call
+bin/         The command line
+docs/        The built web page (GitHub Pages) and README images
+test/        node --test
+```
 
 ## License
 

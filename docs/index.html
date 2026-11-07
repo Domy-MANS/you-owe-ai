@@ -259,6 +259,9 @@ canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
 .deco.spot { display: none; }
 .stamp.red { top: -6px; right: 0; }
 
+/* header left-aligned so the stamp in the corner never covers it */
+.rc-head { text-align: left; padding-right: 110px; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -332,7 +335,7 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 <main id="stage"></main>
 <div class="hint" id="hint"></div>
 <div id="landing"></div>
-<script>var VW_DEMO = {"year":2026,"empty":false,"firstDay":"2026-01-08","sessions":348,"prompts":5219,"workHours":142.4211173676937,"tokens":{"input":15657000,"output":9394200,"cacheRead":469710000,"cacheWrite":41752000},"totalTokens":536513200,"byTool":{"claude":{"sessions":217,"prompts":3086,"tokens":317240800},"codex":{"sessions":131,"prompts":2133,"tokens":219272400}},"toolCalls":15657,"topTools":[{"name":"exec","count":3305},{"name":"Bash","count":2585},{"name":"apply_patch","count":2051},{"name":"Edit","count":1744},{"name":"Read","count":1586}],"categories":[{"name":"shell","count":5890},{"name":"edit","count":4591},{"name":"read","count":2386},{"name":"web","count":1884},{"name":"agents","count":906}],"topModels":[{"name":"gpt-6-astra","count":2133},{"name":"claude-opus-5-5","count":2040},{"name":"claude-sonnet-5-5","count":1046}],"topProjects":[{"name":"robot-arm-firmware","count":1067},{"name":"portfolio-site","count":1029},{"name":"ml-homework","count":933},{"name":"discord-bot","count":851},{"name":"dotfiles","count":815}],"hours":[805,434,492,301,19,0,0,0,0,0,209,173,10,0,160,322,373,192,14,0,188,420,418,689],"weekdays":[968,777,571,890,737,588,688],"days":{"2026-01-08":19,"2026-01-09":12,"2026-01-11":46,"2026-01-15":19,"2026-01-16":13,"2026-01-17":36,"2026-01-18":47,"2026-01-22":36,"2026-01-24":36,"2026-01-25":7,"2026-01-26":22,"2026-01-27":6,"2026-01-28":37,"2026-01-29":65,"2026-01-31":45,"2026-02-01":42,"2026-02-03":24,"2026-02-04":21,"2026-02-06":29,"2026-02-11":5,"2026-02-12":34,"2026-02-14":8,"2026-02-15":37,"2026-02-16":23,"2026-02-17":11,"2026-02-19":23,"2026-02-20":13,"2026-02-21":24,"2026-02-23":20,"2026-03-01":37,"2026-03-02":30,"2026-03-04":23,"2026-03-05":10,"2026-03-06":28,"2026-03-07":6,"2026-03-08":52,"2026-03-09":30,"2026-03-15":16,"2026-03-16":31,"2026-03-17":66,"2026-03-21":13,"2026-03-22":48,"2026-03-23":31,"2026-03-28":41,"2026-04-04":26,"2026-04-05":29,"2026-04-06":52,"2026-04-08":48,"2026-04-10":51,"2026-04-12":44,"2026-04-13":15,"2026-04-14":32,"2026-04-15":30,"2026-04-16":13,"2026-04-17":16,"2026-04-18":50,"2026-04-19":35,"2026-04-21":55,"2026-04-22":53,"2026-04-23":10,"2026-04-25":15,"2026-04-26":18,"2026-04-27":17,"2026-04-28":37,"2026-04-30":12,"2026-05-01":9,"2026-05-02":31,"2026-05-06":36,"2026-05-10":39,"2026-05-13":46,"2026-05-14":32,"2026-05-18":22,"2026-05-20":32,"2026-05-22":22,"2026-05-25":40,"2026-05-26":23,"2026-05-27":42,"2026-05-28":34,"2026-05-30":22,"2026-05-31":54,"2026-06-05":40,"2026-06-06":8,"2026-06-10":41,"2026-06-11":14,"2026-06-13":10,"2026-06-14":44,"2026-06-15":14,"2026-06-24":27,"2026-06-25":7,"2026-06-27":7,"2026-07-01":3,"2026-07-04":26,"2026-07-06":52,"2026-07-13":31,"2026-07-15":13,"2026-07-16":25,"2026-07-19":38,"2026-07-21":3,"2026-07-22":28,"2026-07-23":13,"2026-07-24":19,"2026-07-25":10,"2026-07-26":25,"2026-07-27":5,"2026-07-29":25,"2026-07-30":18,"2026-07-31":37,"2026-08-01":41,"2026-08-02":18,"2026-08-03":13,"2026-08-05":15,"2026-08-06":43,"2026-08-07":4,"2026-08-08":20,"2026-08-09":23,"2026-08-10":5,"2026-08-11":49,"2026-08-13":26,"2026-08-14":28,"2026-08-15":35,"2026-08-16":12,"2026-08-17":44,"2026-08-18":32,"2026-08-19":37,"2026-08-20":50,"2026-08-21":27,"2026-08-22":30,"2026-08-23":26,"2026-08-25":15,"2026-08-26":43,"2026-08-27":28,"2026-08-28":26,"2026-08-29":9,"2026-08-30":44,"2026-08-31":38,"2026-09-01":34,"2026-09-03":30,"2026-09-04":22,"2026-09-06":5,"2026-09-07":2,"2026-09-08":14,"2026-09-09":34,"2026-09-11":68,"2026-09-12":32,"2026-09-13":36,"2026-09-14":58,"2026-09-15":4,"2026-09-16":61,"2026-09-19":6,"2026-09-20":12,"2026-09-21":34,"2026-09-22":40,"2026-09-23":11,"2026-09-24":34,"2026-09-25":36,"2026-09-26":17,"2026-09-27":6,"2026-09-28":10,"2026-09-30":24,"2026-10-01":29,"2026-10-02":18,"2026-10-03":13,"2026-10-04":4,"2026-10-05":18,"2026-10-06":37,"2026-10-07":34,"2026-10-09":7,"2026-10-10":7,"2026-10-11":22,"2026-10-12":29,"2026-10-13":34,"2026-10-14":21,"2026-10-15":10,"2026-10-16":8,"2026-10-17":13,"2026-10-18":39,"2026-10-19":17,"2026-10-20":24,"2026-10-21":34,"2026-10-22":3,"2026-10-23":22,"2026-10-24":29,"2026-10-25":10,"2026-10-26":27,"2026-10-27":31,"2026-10-28":35,"2026-10-29":50,"2026-10-30":11,"2026-10-31":22,"2026-11-01":53,"2026-11-02":47,"2026-11-04":31,"2026-11-05":50,"2026-11-06":22},"activeDays":194,"busiestDay":{"date":"2026-09-11","prompts":68},"peakHour":0,"streak":{"days":25,"end":"2026-11-02"},"biggestSession":{"project":"startup-mvp","prompts":27,"tool":"codex"},"shares":{"night":0.6050967618317685,"dawn":0,"weekend":0.31730216516574056},"persona":"night","roast":{"prompts":5219,"you":{"deny":412,"again":97,"why":230,"thanks":61,"please":18,"swear":23,"lost":388,"whatNext":74,"lazyYes":301},"ai":{"sorry":156,"flatter":89,"done":1204},"catchphrases":[{"text":"继续","count":188},{"text":"还是不行","count":41},{"text":"然后呢","count":37},{"text":"为什么又报错了","count":12},{"text":"能不能快点","count":9}],"angriestDay":{"date":"2026-10-07","count":34},"latest":{"time":"4:54","day":"2026-08-11"},"tinyShare":0.31,"medianLength":22},"demo":true};</script>
+<script>var VW_DEMO = {"year":2026,"empty":false,"firstDay":"2026-01-08","sessions":348,"prompts":5219,"workHours":142.4211173676937,"tokens":{"input":15657000,"output":9394200,"cacheRead":469710000,"cacheWrite":41752000},"totalTokens":536513200,"byTool":{"claude":{"sessions":217,"prompts":3086,"tokens":317240800},"codex":{"sessions":131,"prompts":2133,"tokens":219272400}},"toolCalls":15657,"topTools":[{"name":"exec","count":3305},{"name":"Bash","count":2585},{"name":"apply_patch","count":2051},{"name":"Edit","count":1744},{"name":"Read","count":1586}],"categories":[{"name":"shell","count":5890},{"name":"edit","count":4591},{"name":"read","count":2386},{"name":"web","count":1884},{"name":"agents","count":906}],"topModels":[{"name":"gpt-6-astra","count":2133},{"name":"claude-opus-5-5","count":2040},{"name":"claude-sonnet-5-5","count":1046}],"topProjects":[{"name":"robot-arm-firmware","count":1067},{"name":"portfolio-site","count":1029},{"name":"ml-homework","count":933},{"name":"discord-bot","count":851},{"name":"dotfiles","count":815}],"hours":[805,434,492,301,19,0,0,0,0,0,209,173,10,0,160,322,373,192,14,0,188,420,418,689],"weekdays":[968,777,571,890,737,588,688],"days":{"2026-01-08":19,"2026-01-09":12,"2026-01-11":46,"2026-01-15":19,"2026-01-16":13,"2026-01-17":36,"2026-01-18":47,"2026-01-22":36,"2026-01-24":36,"2026-01-25":7,"2026-01-26":22,"2026-01-27":6,"2026-01-28":37,"2026-01-29":65,"2026-01-31":45,"2026-02-01":42,"2026-02-03":24,"2026-02-04":21,"2026-02-06":29,"2026-02-11":5,"2026-02-12":34,"2026-02-14":8,"2026-02-15":37,"2026-02-16":23,"2026-02-17":11,"2026-02-19":23,"2026-02-20":13,"2026-02-21":24,"2026-02-23":20,"2026-03-01":37,"2026-03-02":30,"2026-03-04":23,"2026-03-05":10,"2026-03-06":28,"2026-03-07":6,"2026-03-08":52,"2026-03-09":30,"2026-03-15":16,"2026-03-16":31,"2026-03-17":66,"2026-03-21":13,"2026-03-22":48,"2026-03-23":31,"2026-03-28":41,"2026-04-04":26,"2026-04-05":29,"2026-04-06":52,"2026-04-08":48,"2026-04-10":51,"2026-04-12":44,"2026-04-13":15,"2026-04-14":32,"2026-04-15":30,"2026-04-16":13,"2026-04-17":16,"2026-04-18":50,"2026-04-19":35,"2026-04-21":55,"2026-04-22":53,"2026-04-23":10,"2026-04-25":15,"2026-04-26":18,"2026-04-27":17,"2026-04-28":37,"2026-04-30":12,"2026-05-01":9,"2026-05-02":31,"2026-05-06":36,"2026-05-10":39,"2026-05-13":46,"2026-05-14":32,"2026-05-18":22,"2026-05-20":32,"2026-05-22":22,"2026-05-25":40,"2026-05-26":23,"2026-05-27":42,"2026-05-28":34,"2026-05-30":22,"2026-05-31":54,"2026-06-05":40,"2026-06-06":8,"2026-06-10":41,"2026-06-11":14,"2026-06-13":10,"2026-06-14":44,"2026-06-15":14,"2026-06-24":27,"2026-06-25":7,"2026-06-27":7,"2026-07-01":3,"2026-07-04":26,"2026-07-06":52,"2026-07-13":31,"2026-07-15":13,"2026-07-16":25,"2026-07-19":38,"2026-07-21":3,"2026-07-22":28,"2026-07-23":13,"2026-07-24":19,"2026-07-25":10,"2026-07-26":25,"2026-07-27":5,"2026-07-29":25,"2026-07-30":18,"2026-07-31":37,"2026-08-01":41,"2026-08-02":18,"2026-08-03":13,"2026-08-05":15,"2026-08-06":43,"2026-08-07":4,"2026-08-08":20,"2026-08-09":23,"2026-08-10":5,"2026-08-11":49,"2026-08-13":26,"2026-08-14":28,"2026-08-15":35,"2026-08-16":12,"2026-08-17":44,"2026-08-18":32,"2026-08-19":37,"2026-08-20":50,"2026-08-21":27,"2026-08-22":30,"2026-08-23":26,"2026-08-25":15,"2026-08-26":43,"2026-08-27":28,"2026-08-28":26,"2026-08-29":9,"2026-08-30":44,"2026-08-31":38,"2026-09-01":34,"2026-09-03":30,"2026-09-04":22,"2026-09-06":5,"2026-09-07":2,"2026-09-08":14,"2026-09-09":34,"2026-09-11":68,"2026-09-12":32,"2026-09-13":36,"2026-09-14":58,"2026-09-15":4,"2026-09-16":61,"2026-09-19":6,"2026-09-20":12,"2026-09-21":34,"2026-09-22":40,"2026-09-23":11,"2026-09-24":34,"2026-09-25":36,"2026-09-26":17,"2026-09-27":6,"2026-09-28":10,"2026-09-30":24,"2026-10-01":29,"2026-10-02":18,"2026-10-03":13,"2026-10-04":4,"2026-10-05":18,"2026-10-06":37,"2026-10-07":34,"2026-10-09":7,"2026-10-10":7,"2026-10-11":22,"2026-10-12":29,"2026-10-13":34,"2026-10-14":21,"2026-10-15":10,"2026-10-16":8,"2026-10-17":13,"2026-10-18":39,"2026-10-19":17,"2026-10-20":24,"2026-10-21":34,"2026-10-22":3,"2026-10-23":22,"2026-10-24":29,"2026-10-25":10,"2026-10-26":27,"2026-10-27":31,"2026-10-28":35,"2026-10-29":50,"2026-10-30":11,"2026-10-31":22,"2026-11-01":53,"2026-11-02":47,"2026-11-04":31,"2026-11-05":50,"2026-11-06":22},"activeDays":194,"busiestDay":{"date":"2026-09-11","prompts":68},"peakHour":0,"streak":{"days":25,"end":"2026-11-02"},"biggestSession":{"project":"startup-mvp","prompts":27,"tool":"codex"},"shares":{"night":0.6050967618317685,"dawn":0,"weekend":0.31730216516574056},"persona":"night","roast":{"prompts":5219,"you":{"deny":412,"again":97,"why":230,"thanks":61,"please":18,"swear":23,"lost":388,"whatNext":74,"lazyYes":301},"ai":{"sorry":156,"flatter":89,"done":1204},"catchphrases":[{"text":"continue","count":188},{"text":"still broken","count":41},{"text":"what next","count":37},{"text":"why is it erroring again","count":12},{"text":"can you hurry up","count":9}],"catchphrases_zh":[{"text":"继续","count":188},{"text":"还是不行","count":41},{"text":"然后呢","count":37},{"text":"为什么又报错了","count":12},{"text":"能不能快点","count":9}],"angriestDay":{"date":"2026-10-07","count":34},"latest":{"time":"4:54","day":"2026-08-11"},"tinyShare":0.31,"medianLength":22},"demo":true};</script>
 <script>/**
  * Log parsing that runs in both Node and the browser.
  * Input is already-read files: [{ path, records: [...parsed JSON lines] }].
@@ -923,6 +926,12 @@ window.VWShare = (function () {
 window.VWReport = function (DATA) {
   "use strict";
   var D = DATA;
+  /** The roast, with catchphrases in the current language when both are available (demo data). */
+  function roastL() {
+    var R = D.roast;
+    if (!R || !R.catchphrases_zh || lang !== "zh") return R;
+    return Object.assign({}, R, { catchphrases: R.catchphrases_zh });
+  }
   var lang = (function () {
     var q = /[?&]lang=(zh|en)/.exec(location.search);
     if (q) return q[1];
@@ -1127,7 +1136,7 @@ window.VWReport = function (DATA) {
 
   /** Main persona + hidden traits. Falls back to the tool-usage persona without roast data. */
   function personality() {
-    var R = D.roast;
+    var R = roastL();
     if (R && R.prompts) {
       var fits = Object.keys(FUN).map(function (k) { return { k: k, s: FUN[k].score(R, D) * FUN[k].w }; })
         .filter(function (x) { return x.s >= 1; })
@@ -1240,13 +1249,13 @@ window.VWReport = function (DATA) {
   function money(v) {
     var neg = v < 0, a = Math.abs(v), s;
     if (lang === "zh") s = "¥" + (a < 10 ? a.toFixed(1) : Math.round(a).toLocaleString());
-    else s = "$" + a.toFixed(2);
+    else s = "$" + a.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return (neg ? "-" : "") + s;
   }
 
   /** All line items, computed once so every page and the card agree. */
   function charges() {
-    var R = D.roast, r = RATES[lang], q = b().qty, list = [];
+    var R = roastL(), r = RATES[lang], q = b().qty, list = [];
     var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: qty, amount: n * r[k] }); };
     item("wage", D.workHours, (D.workHours >= 10 ? Math.round(D.workHours) : D.workHours.toFixed(1)) + " " + q.hours);
     if (R) {
@@ -1298,7 +1307,7 @@ window.VWReport = function (DATA) {
       return out;
     }
 
-    var C = charges(), R = D.roast, by = C.by;
+    var C = charges(), R = roastL(), by = C.by;
     window.VW_TOTAL = money(C.total); window.VW_LANG = lang;
     var invNo = "No." + D.year + "-" + String(D.prompts).padStart(5, "0");
 
@@ -1323,7 +1332,7 @@ window.VWReport = function (DATA) {
       if (R.catchphrases.length) {
         var rate = RATES[lang].noise;
         var rows = R.catchphrases.map(function (c, i) {
-          return '<div class="rc-item' + (i === 0 ? " big" : "") + '"><div>「' + esc(c.text) + "」<small>× " + c.count + '</small></div><div class="amt">' + money(c.count * rate) + "</div></div>";
+          return '<div class="rc-item' + (i === 0 ? " big" : "") + '"><div>' + (lang === "zh" ? "「" + esc(c.text) + "」" : "“" + esc(c.text) + "”") + "<small>× " + c.count + '</small></div><div class="amt">' + money(c.count * rate) + "</div></div>";
         }).join("");
         add('<div class="pop"><div class="kicker">' + K.itemNo(2) + "</div>" + receipt(K.p2, rows + subtotal([by.noise]) + '<div class="rc-meme">' + K.noiseMeme(R.catchphrases[0]) + "</div>") + "</div>",
           8, tile(R.catchphrases[0].text, 80, "30px"));
@@ -1479,9 +1488,8 @@ window.VWReport = function (DATA) {
 
     var cx = px + 56, right = px + pw - 56, y = py + 56;
     x.textBaseline = "top"; x.fillStyle = "#111";
-    x.textAlign = "center"; x.font = "900 54px " + F; x.fillText(K.company, W / 2, y); y += 70;
-    x.font = "500 26px " + M; x.fillStyle = "#777"; x.fillText(K.companySub + " · " + D.year, W / 2, y); y += 56;
-    x.textAlign = "left";
+    x.textAlign = "left"; x.font = "900 54px " + F; x.fillText(K.company, cx, y); y += 70;
+    x.font = "500 26px " + M; x.fillStyle = "#777"; x.fillText(K.companySub + " · " + D.year, cx, y); y += 56;
     var dash = function () { x.strokeStyle = "#bbb"; x.lineWidth = 3; x.setLineDash([12, 10]); x.beginPath(); x.moveTo(cx, y); x.lineTo(right, y); x.stroke(); x.setLineDash([]); y += 26; };
     dash();
 

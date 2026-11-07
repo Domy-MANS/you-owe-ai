@@ -47,6 +47,13 @@ function demoRoast() {
     you: { deny: 412, again: 97, why: 230, thanks: 61, please: 18, swear: 23, lost: 388, whatNext: 74, lazyYes: 301 },
     ai: { sorry: 156, flatter: 89, done: 1204 },
     catchphrases: [
+      { text: "continue", count: 188 },
+      { text: "still broken", count: 41 },
+      { text: "what next", count: 37 },
+      { text: "why is it erroring again", count: 12 },
+      { text: "can you hurry up", count: 9 },
+    ],
+    catchphrases_zh: [
       { text: "继续", count: 188 },
       { text: "还是不行", count: 41 },
       { text: "然后呢", count: 37 },

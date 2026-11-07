@@ -40,6 +40,12 @@ window.VWShare = (function () {
 window.VWReport = function (DATA) {
   "use strict";
   var D = DATA;
+  /** The roast, with catchphrases in the current language when both are available (demo data). */
+  function roastL() {
+    var R = D.roast;
+    if (!R || !R.catchphrases_zh || lang !== "zh") return R;
+    return Object.assign({}, R, { catchphrases: R.catchphrases_zh });
+  }
   var lang = (function () {
     var q = /[?&]lang=(zh|en)/.exec(location.search);
     if (q) return q[1];
@@ -244,7 +250,7 @@ window.VWReport = function (DATA) {
 
   /** Main persona + hidden traits. Falls back to the tool-usage persona without roast data. */
   function personality() {
-    var R = D.roast;
+    var R = roastL();
     if (R && R.prompts) {
       var fits = Object.keys(FUN).map(function (k) { return { k: k, s: FUN[k].score(R, D) * FUN[k].w }; })
         .filter(function (x) { return x.s >= 1; })
@@ -357,13 +363,13 @@ window.VWReport = function (DATA) {
   function money(v) {
     var neg = v < 0, a = Math.abs(v), s;
     if (lang === "zh") s = "¥" + (a < 10 ? a.toFixed(1) : Math.round(a).toLocaleString());
-    else s = "$" + a.toFixed(2);
+    else s = "$" + a.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return (neg ? "-" : "") + s;
   }
 
   /** All line items, computed once so every page and the card agree. */
   function charges() {
-    var R = D.roast, r = RATES[lang], q = b().qty, list = [];
+    var R = roastL(), r = RATES[lang], q = b().qty, list = [];
     var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: qty, amount: n * r[k] }); };
     item("wage", D.workHours, (D.workHours >= 10 ? Math.round(D.workHours) : D.workHours.toFixed(1)) + " " + q.hours);
     if (R) {
@@ -415,7 +421,7 @@ window.VWReport = function (DATA) {
       return out;
     }
 
-    var C = charges(), R = D.roast, by = C.by;
+    var C = charges(), R = roastL(), by = C.by;
     window.VW_TOTAL = money(C.total); window.VW_LANG = lang;
     var invNo = "No." + D.year + "-" + String(D.prompts).padStart(5, "0");
 
@@ -440,7 +446,7 @@ window.VWReport = function (DATA) {
       if (R.catchphrases.length) {
         var rate = RATES[lang].noise;
         var rows = R.catchphrases.map(function (c, i) {
-          return '<div class="rc-item' + (i === 0 ? " big" : "") + '"><div>「' + esc(c.text) + "」<small>× " + c.count + '</small></div><div class="amt">' + money(c.count * rate) + "</div></div>";
+          return '<div class="rc-item' + (i === 0 ? " big" : "") + '"><div>' + (lang === "zh" ? "「" + esc(c.text) + "」" : "“" + esc(c.text) + "”") + "<small>× " + c.count + '</small></div><div class="amt">' + money(c.count * rate) + "</div></div>";
         }).join("");
         add('<div class="pop"><div class="kicker">' + K.itemNo(2) + "</div>" + receipt(K.p2, rows + subtotal([by.noise]) + '<div class="rc-meme">' + K.noiseMeme(R.catchphrases[0]) + "</div>") + "</div>",
           8, tile(R.catchphrases[0].text, 80, "30px"));
@@ -596,9 +602,8 @@ window.VWReport = function (DATA) {
 
     var cx = px + 56, right = px + pw - 56, y = py + 56;
     x.textBaseline = "top"; x.fillStyle = "#111";
-    x.textAlign = "center"; x.font = "900 54px " + F; x.fillText(K.company, W / 2, y); y += 70;
-    x.font = "500 26px " + M; x.fillStyle = "#777"; x.fillText(K.companySub + " · " + D.year, W / 2, y); y += 56;
-    x.textAlign = "left";
+    x.textAlign = "left"; x.font = "900 54px " + F; x.fillText(K.company, cx, y); y += 70;
+    x.font = "500 26px " + M; x.fillStyle = "#777"; x.fillText(K.companySub + " · " + D.year, cx, y); y += 56;
     var dash = function () { x.strokeStyle = "#bbb"; x.lineWidth = 3; x.setLineDash([12, 10]); x.beginPath(); x.moveTo(cx, y); x.lineTo(right, y); x.stroke(); x.setLineDash([]); y += 26; };
     dash();
 
