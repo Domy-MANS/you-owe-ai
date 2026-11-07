@@ -278,7 +278,7 @@ canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
 .still .slide.on .stamp { animation: none; }
 
 /* receipt printer */
-.printed { animation: printin 0.2s steps(3, end) both; animation-delay: var(--d, 0s); }
+.printed { animation: printin 0.2s steps(3, end) backwards; animation-delay: var(--d, 0s); }
 @keyframes printin { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-5px); } to { opacity: 1; clip-path: inset(0); transform: none; } }
 .still .printed { animation: none; }
 
@@ -311,6 +311,8 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
   .rc-item .amt { font-size: 15px; }
   .rc-fact span { font-size: 10px; }
 }
+/* "backwards": hidden while waiting to print, and once printed no clip is left behind
+   (a leftover clip-path cut off the bottom of large glyphs like the total) */
 
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
