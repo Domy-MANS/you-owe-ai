@@ -4,7 +4,11 @@
 
 ### 👉 [Find out how much you owe AI](https://domy-mans.github.io/you-owe-ai/)
 
-Pick your `.claude` and `.codex` folders and it builds your report right in the page. Nothing to install. Prefer the terminal?
+Pick your `.claude` and `.codex` folders and it builds your report right in the page. Nothing to install.
+
+**Use ChatGPT or Claude.ai in the browser too?** A few seconds into your bill, the web AI calls you 📞. Answer it, drop in your official data export (Settings → Export data), and your web chats get added to the bill.
+
+Prefer the terminal?
 
 ```bash
 npx github:Domy-MANS/you-owe-ai
@@ -46,6 +50,7 @@ npx github:Domy-MANS/you-owe-ai
 --demo            Preview with made-up data
 --hide-projects   Leave project names out
 --no-text         Don't scan prompt text (no catchphrases or roast)
+--import <file>   Add a ChatGPT / Claude.ai data export (.zip or conversations.json)
 --json            Print raw stats as JSON
 --no-open         Don't open the browser
 ```
@@ -60,7 +65,11 @@ Reads `~/.claude/projects` (respects `CLAUDE_CONFIG_DIR`) and `~/.codex/sessions
 
 ### 👉 [看看你欠 AI 多少钱](https://domy-mans.github.io/you-owe-ai/)
 
-选一下 `.claude` 和 `.codex` 文件夹，报告就在网页里生成，不用安装任何东西。习惯用终端的话：
+选一下 `.claude` 和 `.codex` 文件夹，报告就在网页里生成，不用安装任何东西。
+
+**也在网页上用 ChatGPT 或 Claude？** 看账单看到几秒，网页版 AI 会给你打电话 📞。接听后把官方导出的聊天记录（设置 → 导出数据）拖进来，网页聊天也会算进账单。
+
+习惯用终端的话：
 
 ```bash
 npx github:Domy-MANS/you-owe-ai

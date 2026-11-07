@@ -37,7 +37,9 @@ ${read("web/landing.css")}</style>
 <script>${read("src/core/parse.js")}</script>
 <script>${read("src/core/stats.js")}</script>
 <script>${read("src/core/roast.js")}</script>
+<script>${read("src/core/webchat.js")}</script>
 <script>${read("src/page/app.js")}</script>
+<script>${read("web/call.js")}</script>
 <script>${read("web/picker.js")}</script>
 </body>
 </html>

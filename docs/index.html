@@ -290,6 +290,40 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .chip.lang { position: fixed; top: 16px; right: 16px; z-index: 60; }
 .st.hint { color: #2a1f12; background: rgba(110,80,30,0.1); border-radius: 8px; padding: 8px 10px; margin: 2px 0 8px; line-height: 1.7; }
 .st code { font-size: 12px; }
+.pick.web { border-style: solid; font-size: 15px; margin-top: 10px; }
+
+/* ===== incoming call ===== */
+.call-bar { position: fixed; top: 10px; left: 50%; z-index: 100; width: min(94vw, 420px); transform: translate(-50%, -140%);
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 22px; background: rgba(28,28,30,0.92); color: #fff;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4); transition: transform 0.45s cubic-bezier(.2,1.2,.4,1); backdrop-filter: blur(12px); }
+.call-bar.in { transform: translate(-50%, 0); animation: buzz 0.5s 0.5s 4; }
+@keyframes buzz { 0%,100% { margin-left: 0 } 20% { margin-left: -6px } 40% { margin-left: 6px } 60% { margin-left: -4px } 80% { margin-left: 4px } }
+.call-av { width: 44px; height: 44px; border-radius: 50%; background: #3a3a3c; display: grid; place-items: center; font-size: 24px; flex: none; animation: pulse 1.3s infinite; }
+.call-av.big { width: 96px; height: 96px; font-size: 54px; margin: 0 auto 10px; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(52,199,89,0.6) } 70% { box-shadow: 0 0 0 14px rgba(52,199,89,0) } 100% { box-shadow: 0 0 0 0 rgba(52,199,89,0) } }
+.call-who { flex: 1; display: flex; flex-direction: column; font-family: var(--font); }
+.call-who b { font-size: 17px; } .call-who span { font-size: 13px; color: rgba(255,255,255,0.65); }
+.call-btn { width: 46px; height: 46px; border-radius: 50%; border: 0; font-size: 20px; color: #fff; cursor: pointer; flex: none; }
+.call-btn.no { background: #ff3b30; } .call-btn.yes { background: #34c759; }
+.call-toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(28,28,30,0.92); color: #fff;
+  font: 600 14px var(--font); padding: 10px 16px; border-radius: 999px; transition: opacity 0.5s; }
+.call-toast.out { opacity: 0; }
+.call-ov { position: fixed; inset: 0; z-index: 90; background: linear-gradient(180deg, #2c2c2e, #111); color: #fff; font-family: var(--font);
+  display: flex; flex-direction: column; align-items: center; padding: 56px 16px 32px; overflow-y: auto; }
+.call-top { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.call-top b { font-size: 26px; } .call-time { font: 14px var(--mono); color: rgba(255,255,255,0.6); }
+.call-lines { width: min(100%, 440px); margin-top: 22px; display: grid; gap: 10px; }
+.bubble { background: #3a3a3c; padding: 10px 14px; border-radius: 18px 18px 18px 4px; font-size: 16px; line-height: 1.45; justify-self: start; max-width: 92%; animation: up 0.35s both; }
+.call-import { width: min(100%, 440px); margin-top: 16px; }
+.call-pick { display: flex; gap: 8px; }
+.call-opt { flex: 1; padding: 12px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #fff; font: 700 15px var(--font); cursor: pointer; }
+.call-steps { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,0.8); margin: 10px 2px; }
+.call-drop { display: block; border: 2px dashed rgba(255,255,255,0.35); border-radius: 16px; padding: 22px 14px; text-align: center; font-size: 15px; cursor: pointer; }
+.call-drop.over { background: rgba(52,199,89,0.15); border-color: #34c759; }
+.call-drop .btn { margin-top: 12px; background: #34c759; color: #fff; }
+.call-later { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 10px; line-height: 1.5; }
+.call-btn.end { margin-top: auto; width: 64px; height: 64px; font-size: 26px; flex: none; }
+.call-ov.quiet .call-av, .call-ov.quiet .call-time { display: none; }
 </style>
 </head>
 <body>
@@ -554,6 +588,7 @@ function computeStats({ sessions, prompts }, { year }) {
   prompts = prompts.filter((p) => !Number.isNaN(p.ts) && inYear(p.ts));
 
   const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+  // claude/codex always present; other sources (chatgpt, claudeai) appear when imported
   const byTool = {
     claude: { sessions: 0, prompts: 0, tokens: 0 },
     codex: { sessions: 0, prompts: 0, tokens: 0 },
@@ -564,7 +599,7 @@ function computeStats({ sessions, prompts }, { year }) {
 
   for (const s of sessions) {
     for (const k of Object.keys(tokens)) tokens[k] += s.tokens[k];
-    const t = byTool[s.tool];
+    const t = byTool[s.tool] || (byTool[s.tool] = { sessions: 0, prompts: 0, tokens: 0 });
     t.sessions++;
     t.tokens += s.tokens.input + s.tokens.output + s.tokens.cacheRead + s.tokens.cacheWrite;
     workMs += s.workMs;
@@ -586,7 +621,7 @@ function computeStats({ sessions, prompts }, { year }) {
     hours[d.getHours()]++;
     weekdays[d.getDay()]++;
     addTo(days, localDay(p.ts));
-    byTool[p.tool].prompts++;
+    (byTool[p.tool] || (byTool[p.tool] = { sessions: 0, prompts: 0, tokens: 0 })).prompts++;
   }
 
   const totalPrompts = prompts.length;
@@ -719,6 +754,131 @@ function computeRoast(prompts, replies, { year }) {
 var api = { computeRoast, isCatchphrase, YOU, AI };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.VWRoast = api;
+})(typeof self !== "undefined" ? self : this);
+</script>
+<script>/**
+ * ChatGPT and Claude.ai data exports (Settings → Export data → a .zip by email).
+ * Runs in Node and the browser. Reads only timestamps, roles, model names and
+ * message text (for the roast counts); conversation titles are ignored.
+ */
+(function (root) {
+  "use strict";
+  var P = typeof module !== "undefined" && module.exports ? require("./parse") : root.VWParse;
+
+  // ---------- minimal ZIP reader (stored + deflate), no dependencies ----------
+  async function inflateRaw(bytes) {
+    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  /** Returns [{ name, read: async () => Uint8Array }] for every file in the zip. */
+  function listZip(buf) {
+    var u8 = new Uint8Array(buf), dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    var eocd = -1;
+    for (var i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    if (eocd < 0) throw new Error("not a zip file");
+    var count = dv.getUint16(eocd + 10, true), off = dv.getUint32(eocd + 16, true), out = [];
+    var dec = new TextDecoder();
+    for (var n = 0; n < count; n++) {
+      if (dv.getUint32(off, true) !== 0x02014b50) break;
+      var method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true);
+      var nlen = dv.getUint16(off + 28, true), xlen = dv.getUint16(off + 30, true), clen = dv.getUint16(off + 32, true);
+      var local = dv.getUint32(off + 42, true), name = dec.decode(u8.subarray(off + 46, off + 46 + nlen));
+      (function (method, csize, local, name) {
+        out.push({ name: name, read: async function () {
+          var start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
+          var data = u8.subarray(start, start + csize);
+          if (method === 0) return data;
+          if (method === 8) return inflateRaw(data);
+          throw new Error("unsupported zip compression " + method);
+        } });
+      })(method, csize, local, name);
+      off += 46 + nlen + xlen + clen;
+    }
+    return out;
+  }
+
+  // ---------- the two export formats ----------
+  function textOf(parts) {
+    return (parts || []).filter(function (x) { return typeof x === "string"; }).join("\n");
+  }
+
+  /** ChatGPT conversations.json: [{ id, create_time, mapping: { node: { message } } }] */
+  function parseChatGPT(convs) {
+    var out = { sessions: [], prompts: [], texts: [], replies: [] };
+    convs.forEach(function (c) {
+      var s = P.newSession("chatgpt", c.id || c.conversation_id || String(c.create_time));
+      Object.keys(c.mapping || {}).forEach(function (k) {
+        var m = c.mapping[k] && c.mapping[k].message;
+        if (!m || !m.author) return;
+        var ts = (m.create_time || c.create_time || 0) * 1000;
+        if (!ts) return;
+        var meta = m.metadata || {}, text = m.content ? textOf(m.content.parts) || m.content.text || "" : "";
+        if (m.author.role === "user" && !meta.is_visually_hidden_from_conversation && text.trim()) {
+          s.prompts++; touch(s, ts);
+          out.prompts.push({ ts: ts, tool: "chatgpt" });
+          out.texts.push({ ts: ts, text: text });
+        } else if (m.author.role === "assistant") {
+          touch(s, ts);
+          if (meta.model_slug) s.models[meta.model_slug] = (s.models[meta.model_slug] || 0) + 1;
+          if (text) out.replies.push({ ts: ts, text: text });
+        }
+      });
+      if (s.start !== null) out.sessions.push(s);
+    });
+    return out;
+  }
+
+  /** Claude.ai conversations.json: [{ uuid, chat_messages: [{ sender, text, content, created_at }] }] */
+  function parseClaudeAI(convs) {
+    var out = { sessions: [], prompts: [], texts: [], replies: [] };
+    convs.forEach(function (c) {
+      var s = P.newSession("claudeai", c.uuid || c.created_at);
+      (c.chat_messages || []).forEach(function (m) {
+        var ts = Date.parse(m.created_at || c.created_at);
+        if (isNaN(ts)) return;
+        var text = m.text || (m.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("\n");
+        touch(s, ts);
+        if (m.sender === "human" && text.trim()) {
+          s.prompts++;
+          out.prompts.push({ ts: ts, tool: "claudeai" });
+          out.texts.push({ ts: ts, text: text });
+        } else if (m.sender === "assistant" && text) out.replies.push({ ts: ts, text: text });
+      });
+      if (s.start !== null) out.sessions.push(s);
+    });
+    return out;
+  }
+
+  function touch(s, t) {
+    if (s.start === null || t < s.start) s.start = t;
+    if (s.end === null || t > s.end) s.end = t;
+  }
+
+  /** Which export is this conversations.json? */
+  function detect(convs) {
+    if (!Array.isArray(convs) || !convs.length) return null;
+    var c = convs.find(function (x) { return x && (x.mapping || x.chat_messages); }) || convs[0];
+    return c.mapping ? "chatgpt" : c.chat_messages ? "claudeai" : null;
+  }
+
+  /** Accepts the export .zip or its conversations.json (as bytes). */
+  async function readExport(bytes) {
+    var u8 = new Uint8Array(bytes), json;
+    if (u8[0] === 0x50 && u8[1] === 0x4b) {
+      var entry = listZip(u8).find(function (e) { return /(^|\/)conversations\.json$/.test(e.name); });
+      if (!entry) throw new Error("no conversations.json in this zip");
+      json = new TextDecoder().decode(await entry.read());
+    } else json = new TextDecoder().decode(u8);
+    var convs = JSON.parse(json), kind = detect(convs);
+    if (kind === "chatgpt") return Object.assign({ kind: kind }, parseChatGPT(convs));
+    if (kind === "claudeai") return Object.assign({ kind: kind }, parseClaudeAI(convs));
+    throw new Error("this doesn't look like a ChatGPT or Claude export");
+  }
+
+  var api = { listZip: listZip, parseChatGPT: parseChatGPT, parseClaudeAI: parseClaudeAI, detect: detect, readExport: readExport };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.VWWebChat = api;
 })(typeof self !== "undefined" ? self : this);
 </script>
 <script>/* Share links: the report's numbers are compressed into the URL fragment (#s=...).
@@ -1061,6 +1221,22 @@ window.VWReport = function (DATA) {
   };
   function b() { return B[lang]; }
 
+  var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
+  function srcName(k) { var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
+  /** Sources you actually used, most prompts first, with their share. */
+  function sources() {
+    var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
+      .filter(function (x) { return x.n > 0; }).sort(function (a, c) { return c.n - a.n; });
+    list.forEach(function (x) { x.share = tot ? x.n / tot : 0; x.name = srcName(x.k); });
+    return list;
+  }
+  function loveLine(src) {
+    if (!src.length) return "";
+    var a = src[0].name, b2 = src[1] && src[1].name;
+    if (lang === "zh") return !b2 ? a + " 是你的唯一 💍" : src.length >= 3 && src[2].share >= 0.15 ? "脚踏 " + src.length + " 条船 🚢" : src[1].share >= 0.3 ? "脚踏两条船：" + a + " 和 " + b2 + " ⚔️" : a + " 是正宫，" + b2 + " 只是备胎 🖤";
+    return !b2 ? a + " is the one 💍" : src.length >= 3 && src[2].share >= 0.15 ? "Juggling " + src.length + " AIs 🚢" : src[1].share >= 0.3 ? "Two-timing " + a + " and " + b2 + " ⚔️" : a + " is the one. " + b2 + " is the backup 🖤";
+  }
+
   function money(v) {
     var neg = v < 0, a = Math.abs(v), s;
     if (lang === "zh") s = "¥" + (a < 10 ? a.toFixed(1) : Math.round(a).toLocaleString());
@@ -1123,6 +1299,7 @@ window.VWReport = function (DATA) {
     }
 
     var C = charges(), R = D.roast, by = C.by;
+    window.VW_TOTAL = money(C.total); window.VW_LANG = lang;
     var invNo = "No." + D.year + "-" + String(D.prompts).padStart(5, "0");
 
     // 1. cover: the total
@@ -1130,7 +1307,7 @@ window.VWReport = function (DATA) {
       '<div class="rc-head">' + K.company + "<small>" + invNo + "</small></div>" +
       '<div class="rc-row"><span>' + K.client + "</span><b>" + (D.shared ? K.them : K.you) + "</b></div>" +
       '<div class="rc-row"><span>' + K.period + "</span><b>" + K.periodV + "</b></div>" +
-      '<div class="rc-row"><span>' + K.vendor + "</span><b>Claude Code × Codex</b></div>" +
+      '<div class="rc-row"><span>' + K.vendor + "</span><b>" + (sources().map(function (x) { return x.name; }).join(" × ") || "Claude Code × Codex") + "</b></div>" +
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total">' + money(C.total) + "</div>" +
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>") +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
@@ -1161,12 +1338,11 @@ window.VWReport = function (DATA) {
 
     // 5. wages & supplies, with the year's numbers
     var p4 = [by.wage, by.gpu];
-    var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
     var facts = [[fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]], [String(D.streak.days), L.factL[5]]]
       .map(function (f) { return '<div class="rc-fact"><b>' + f[0] + "</b><span>" + f[1] + "</span></div>"; }).join("");
     add('<div class="pop"><div class="kicker">' + (R ? K.itemNo(4) : K.itemNo(1)) + "</div>" + receipt(K.p4,
       p4.filter(Boolean).map(line).join("") + subtotal(p4) + '<div class="rc-facts">' + facts + "</div>" +
-      '<div class="rc-meme"><b>' + L.factsH(c) + "</b><br>" + L.factMeme() + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
+      '<div class="rc-meme"><b>' + loveLine(sources()) + "</b><br>" + L.factMeme() + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
 
     // 6. attendance record
     var att = "";
@@ -1212,6 +1388,8 @@ window.VWReport = function (DATA) {
   // ---------- player ----------
   var stage = document.getElementById("stage"), barsEl = document.getElementById("bars");
   var list_ = [], idx = 0, timer = null;
+  if (window.__vwStop) window.__vwStop(); // a previous report on this page stops its autoplay
+  window.__vwStop = function () { clearTimeout(timer); };
   var still = /[?&]still\b/.test(location.search); // for screenshots: no autoplay
 
   function build() {
@@ -1275,11 +1453,11 @@ window.VWReport = function (DATA) {
     if (dur && !still && idx < list_.length - 1) timer = setTimeout(function () { go(idx + 1); }, dur * 1000);
   }
 
-  stage.addEventListener("click", function (e) {
+  stage.onclick = (function (e) {
     if (e.target.closest("button")) return;
     go(e.clientX < window.innerWidth / 3 ? idx - 1 : idx + 1);
   });
-  document.addEventListener("keydown", function (e) {
+  document.onkeydown = (function (e) {
     if (e.key === "ArrowRight" || e.key === " ") go(idx + 1);
     if (e.key === "ArrowLeft") go(idx - 1);
   });
@@ -1390,6 +1568,135 @@ window.VWReport = function (DATA) {
 };
 if (window.DATA) window.VWReport(window.DATA);
 </script>
+<script>/* "Web AI is calling": a few seconds into the bill, the AI from claude.ai / ChatGPT
+   phones you to collect on your web chats too. Answering opens the import. */
+(function () {
+  "use strict";
+  var T = {
+    zh: {
+      caller: "网页版 AI", incoming: "来电…", accept: "接听", decline: "挂断", hangup: "挂断", talking: "通话中",
+      lines: function (total) { return [
+        "喂？是我，你在网页上聊天的那个 AI。",
+        "听说你在 Claude Code 和 Codex 那边欠了 " + total + "。",
+        "但你在网页上跟我聊的那些，还一分钱没算呢。",
+        "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
+      ]; },
+      declined: "📵 AI 已记录：你挂了它的电话。",
+      gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
+      gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
+      claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件到了以后下载 zip。",
+      drop: "把导出的 zip 拖到这里，或者点这里选择", reading: "正在对账…",
+      got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT" : "Claude 网页版") + " 对话"; },
+      recalc: "重新算账", later: "邮件还没到？先挂了，拿到 zip 后点首页的「导入网页聊天」也行。",
+      bad: "这个文件好像不是 ChatGPT 或 Claude 的导出。",
+    },
+    en: {
+      caller: "Web AI", incoming: "incoming call…", accept: "Accept", decline: "Decline", hangup: "Hang up", talking: "On call",
+      lines: function (total) { return [
+        "Hello? It's me, the AI you chat with in the browser.",
+        "I hear you owe Claude Code and Codex " + total + ".",
+        "But everything you said to me on the web? Not billed yet.",
+        "Export your chats and send them over. Don't worry, the data never leaves your browser.",
+      ]; },
+      declined: "📵 Noted: you hung up on AI.",
+      gpt: "I use ChatGPT", cla: "I use Claude.ai",
+      gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
+      claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. Download the zip from the email.",
+      drop: "Drop the export zip here, or click to choose it", reading: "Auditing…",
+      got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : "Claude.ai") + " conversations"; },
+      recalc: "Recalculate my bill", later: "Email not here yet? Hang up for now and use \"Import web chats\" on the home page later.",
+      bad: "That doesn't look like a ChatGPT or Claude export.",
+    },
+  };
+  function t() { return T[window.VW_LANG === "zh" ? "zh" : "en"]; }
+  function el(html) { var d = document.createElement("div"); d.innerHTML = html; return d.firstChild; }
+
+  // ---- ringtone (Web Audio, no files) + vibration ----
+  var audio = null, ringTimer = null;
+  function ring() {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      var now = audio.currentTime;
+      [0, 0.45].forEach(function (d) {
+        var o = audio.createOscillator(), g = audio.createGain();
+        o.frequency.value = 440; var o2 = audio.createOscillator(); o2.frequency.value = 480;
+        g.gain.setValueAtTime(0, now + d); g.gain.linearRampToValueAtTime(0.06, now + d + 0.02); g.gain.setValueAtTime(0.06, now + d + 0.35); g.gain.linearRampToValueAtTime(0, now + d + 0.4);
+        o.connect(g); o2.connect(g); g.connect(audio.destination); o.start(now + d); o2.start(now + d); o.stop(now + d + 0.42); o2.stop(now + d + 0.42);
+      });
+    } catch (e) {}
+    try { if (navigator.vibrate) navigator.vibrate([300, 150, 300]); } catch (e) {}
+  }
+  function stopRing() { clearInterval(ringTimer); ringTimer = null; try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {} }
+
+  // ---- the incoming-call banner ----
+  var shown = false;
+  function incoming(onImported) {
+    if (shown) return; shown = true;
+    var L = t();
+    var bar = el('<div class="call-bar"><div class="call-av">🤖</div><div class="call-who"><b>' + L.caller + "</b><span>" + L.incoming +
+      '</span></div><button class="call-btn no" aria-label="' + L.decline + '">✕</button><button class="call-btn yes" aria-label="' + L.accept + '">✆</button></div>');
+    document.body.appendChild(bar);
+    requestAnimationFrame(function () { bar.classList.add("in"); });
+    ring(); ringTimer = setInterval(ring, 2600);
+    var giveUp = setTimeout(function () { close(true); }, 20000);
+    function close(missed) {
+      stopRing(); clearTimeout(giveUp);
+      bar.classList.remove("in");
+      setTimeout(function () { bar.remove(); }, 400);
+      if (missed) toast(L.declined);
+    }
+    bar.querySelector(".no").onclick = function (e) { e.stopPropagation(); close(true); };
+    bar.querySelector(".yes").onclick = function (e) { e.stopPropagation(); close(false); answer(onImported); };
+  }
+
+  function toast(text) {
+    var x = el('<div class="call-toast">' + text + "</div>");
+    document.body.appendChild(x);
+    setTimeout(function () { x.classList.add("out"); }, 2600);
+    setTimeout(function () { x.remove(); }, 3200);
+  }
+
+  // ---- the call itself: AI talks, then you hand over the export ----
+  function answer(onImported, opts) {
+    var L = t(), secs = 0, quiet = opts && opts.quiet;
+    var ov = el('<div class="call-ov"><div class="call-top"><div class="call-av big">🤖</div><b>' + L.caller + '</b><span class="call-time">' + L.talking + ' 00:00</span></div>' +
+      '<div class="call-lines"></div><div class="call-import" hidden>' +
+      '<div class="call-pick"><button class="call-opt" data-k="gpt">' + L.gpt + '</button><button class="call-opt" data-k="cla">' + L.cla + "</button></div>" +
+      '<p class="call-steps"></p><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span>' + L.drop + '</span></label>' +
+      '<p class="call-later">' + L.later + '</p></div><button class="call-btn no end">✕</button></div>');
+    document.body.appendChild(ov);
+    var clock = setInterval(function () { secs++; ov.querySelector(".call-time").textContent = L.talking + " 00:" + String(secs).padStart(2, "0"); }, 1000);
+    var box = ov.querySelector(".call-lines");
+    var lines = quiet ? [] : L.lines(window.VW_TOTAL || "?");
+    lines.forEach(function (line, i) {
+      setTimeout(function () { box.appendChild(el('<p class="bubble">' + line + "</p>")); }, 600 + i * 1300);
+    });
+    setTimeout(function () { ov.querySelector(".call-import").hidden = false; }, quiet ? 0 : 600 + lines.length * 1300);
+    if (quiet) { ov.querySelector(".call-time").textContent = ""; ov.classList.add("quiet"); }
+    ov.querySelectorAll(".call-opt").forEach(function (b) {
+      b.onclick = function () { ov.querySelector(".call-steps").innerHTML = b.dataset.k === "gpt" ? L.gptSteps : L.claSteps; };
+    });
+    var input = ov.querySelector("input"), label = ov.querySelector(".call-drop span");
+    async function take(file) {
+      label.textContent = L.reading;
+      try {
+        var r = await window.VWWebChat.readExport(await file.arrayBuffer());
+        label.innerHTML = L.got(r.sessions.length, r.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
+        label.querySelector(".go-recalc").onclick = function (e) { e.preventDefault(); end(); onImported(r); };
+      } catch (err) { label.textContent = L.bad; }
+    }
+    input.onchange = function () { if (input.files[0]) take(input.files[0]); };
+    var drop = ov.querySelector(".call-drop");
+    drop.ondragover = function (e) { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = function () { drop.classList.remove("over"); };
+    drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) take(e.dataTransfer.files[0]); };
+    function end() { clearInterval(clock); ov.remove(); }
+    ov.querySelector(".end").onclick = end;
+  }
+
+  window.VWCall = { incoming: incoming, answer: answer, toast: toast };
+})();
+</script>
 <script>/* Landing page: pick ~/.claude and ~/.codex, read them in the browser, show the report. */
 (function () {
   "use strict";
@@ -1404,7 +1711,7 @@ if (window.DATA) window.VWReport(window.DATA);
       : isWin ? k("Ctrl") + k("V") + " → " + k("Enter")
       : k("Ctrl") + k("L") + " → " + k("Ctrl") + k("V") + " → " + k("Enter");
   }
-  var S = { claude: null, codex: null };
+  var S = { claude: null, codex: null, web: [] };
 
   var T = {
     zh: {
@@ -1417,6 +1724,8 @@ if (window.DATA) window.VWReport(window.DATA);
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       cli: "习惯用终端？", lang: "EN",
+      importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
+      webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
     },
     en: {
       title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
@@ -1428,6 +1737,8 @@ if (window.DATA) window.VWReport(window.DATA);
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       cli: "Prefer the terminal?", lang: "中文",
+      importWeb: "📦 Import web chats (ChatGPT / Claude, optional)", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
+      webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
     },
   };
   function t() { return T[lang]; }
@@ -1519,15 +1830,27 @@ if (window.DATA) window.VWReport(window.DATA);
     var year = new Date().getFullYear();
     var c = S.claude || { files: [], history: [] }, x = S.codex || { files: [], history: [] };
     var cl = VWParse.parseClaude(c.files, c.history), cx = VWParse.parseCodex(x.files);
-    var stats = VWStats.computeStats({ sessions: cl.sessions.concat(cx.sessions), prompts: cl.prompts.concat(cx.prompts) }, { year: year });
-    stats.roast = VWRoast.computeRoast(VWParse.promptTexts(c.history, x.history), VWParse.replyTexts(c.files, x.files), { year: year });
+    var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
+    var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
+    S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
+    stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
     return stats;
   }
 
-  function show(stats) {
-    document.getElementById("landing").remove();
+  function show(stats, real) {
+    var land = document.getElementById("landing");
+    if (land) land.remove();
     document.body.classList.add("playing");
     window.VWReport(stats);
+    // a few seconds into a real bill, the web AI calls to collect on your web chats
+    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
+  }
+
+  function addWeb(r) {
+    S.web.push(r);
+    show(makeStats(), true);
+    window.VWCall.toast(t().updated(window.VW_TOTAL));
   }
 
   function render() {
@@ -1541,6 +1864,7 @@ if (window.DATA) window.VWReport(window.DATA);
       '<button class="pick" id="pick-claude"><span class="ico">🧡</span>' + L.pickClaude + '</button><div class="st" id="st-claude"></div>' +
       '<button class="pick" id="pick-codex"><span class="ico">🖤</span>' + L.pickCodex + '</button><div class="st" id="st-codex"></div>' +
       '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
+      '<button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
       "</div>" +
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
@@ -1549,10 +1873,19 @@ if (window.DATA) window.VWReport(window.DATA);
       "</div>";
     document.getElementById("pick-claude").onclick = function () { pick("claude"); };
     document.getElementById("pick-codex").onclick = function () { pick("codex"); };
-    document.getElementById("go").onclick = function () { show(makeStats()); };
+    document.getElementById("go").onclick = function () { show(makeStats(), true); };
+    document.getElementById("web").onclick = function () {
+      window.VWCall.answer(function (r) {
+        S.web.push(r);
+        var st = document.getElementById("st-web"); st.textContent = t().webGot(S.web.reduce(function (a, w) { return a + w.sessions.length; }, 0)); st.className = "st ok";
+        document.getElementById("go").disabled = false;
+      }, { quiet: true });
+    };
     document.getElementById("demo").onclick = function () { show(window.VW_DEMO); };
     document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; try { localStorage.setItem("vw-lang", lang); } catch (e) {} render(); };
   }
+
+  window.__vw = { S: S, show: show, makeStats: makeStats }; // used by the browser tests
 
   var shared = window.VWShare.fromHash();
   if (shared) shared.then(show, function () { history.replaceState(null, "", location.pathname); render(); });

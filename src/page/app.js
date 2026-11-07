@@ -338,6 +338,22 @@ window.VWReport = function (DATA) {
   };
   function b() { return B[lang]; }
 
+  var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
+  function srcName(k) { var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
+  /** Sources you actually used, most prompts first, with their share. */
+  function sources() {
+    var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
+      .filter(function (x) { return x.n > 0; }).sort(function (a, c) { return c.n - a.n; });
+    list.forEach(function (x) { x.share = tot ? x.n / tot : 0; x.name = srcName(x.k); });
+    return list;
+  }
+  function loveLine(src) {
+    if (!src.length) return "";
+    var a = src[0].name, b2 = src[1] && src[1].name;
+    if (lang === "zh") return !b2 ? a + " 是你的唯一 💍" : src.length >= 3 && src[2].share >= 0.15 ? "脚踏 " + src.length + " 条船 🚢" : src[1].share >= 0.3 ? "脚踏两条船：" + a + " 和 " + b2 + " ⚔️" : a + " 是正宫，" + b2 + " 只是备胎 🖤";
+    return !b2 ? a + " is the one 💍" : src.length >= 3 && src[2].share >= 0.15 ? "Juggling " + src.length + " AIs 🚢" : src[1].share >= 0.3 ? "Two-timing " + a + " and " + b2 + " ⚔️" : a + " is the one. " + b2 + " is the backup 🖤";
+  }
+
   function money(v) {
     var neg = v < 0, a = Math.abs(v), s;
     if (lang === "zh") s = "¥" + (a < 10 ? a.toFixed(1) : Math.round(a).toLocaleString());
@@ -400,6 +416,7 @@ window.VWReport = function (DATA) {
     }
 
     var C = charges(), R = D.roast, by = C.by;
+    window.VW_TOTAL = money(C.total); window.VW_LANG = lang;
     var invNo = "No." + D.year + "-" + String(D.prompts).padStart(5, "0");
 
     // 1. cover: the total
@@ -407,7 +424,7 @@ window.VWReport = function (DATA) {
       '<div class="rc-head">' + K.company + "<small>" + invNo + "</small></div>" +
       '<div class="rc-row"><span>' + K.client + "</span><b>" + (D.shared ? K.them : K.you) + "</b></div>" +
       '<div class="rc-row"><span>' + K.period + "</span><b>" + K.periodV + "</b></div>" +
-      '<div class="rc-row"><span>' + K.vendor + "</span><b>Claude Code × Codex</b></div>" +
+      '<div class="rc-row"><span>' + K.vendor + "</span><b>" + (sources().map(function (x) { return x.name; }).join(" × ") || "Claude Code × Codex") + "</b></div>" +
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total">' + money(C.total) + "</div>" +
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>") +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
@@ -438,12 +455,11 @@ window.VWReport = function (DATA) {
 
     // 5. wages & supplies, with the year's numbers
     var p4 = [by.wage, by.gpu];
-    var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
     var facts = [[fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]], [String(D.streak.days), L.factL[5]]]
       .map(function (f) { return '<div class="rc-fact"><b>' + f[0] + "</b><span>" + f[1] + "</span></div>"; }).join("");
     add('<div class="pop"><div class="kicker">' + (R ? K.itemNo(4) : K.itemNo(1)) + "</div>" + receipt(K.p4,
       p4.filter(Boolean).map(line).join("") + subtotal(p4) + '<div class="rc-facts">' + facts + "</div>" +
-      '<div class="rc-meme"><b>' + L.factsH(c) + "</b><br>" + L.factMeme() + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
+      '<div class="rc-meme"><b>' + loveLine(sources()) + "</b><br>" + L.factMeme() + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
 
     // 6. attendance record
     var att = "";
@@ -489,6 +505,8 @@ window.VWReport = function (DATA) {
   // ---------- player ----------
   var stage = document.getElementById("stage"), barsEl = document.getElementById("bars");
   var list_ = [], idx = 0, timer = null;
+  if (window.__vwStop) window.__vwStop(); // a previous report on this page stops its autoplay
+  window.__vwStop = function () { clearTimeout(timer); };
   var still = /[?&]still\b/.test(location.search); // for screenshots: no autoplay
 
   function build() {
@@ -552,11 +570,11 @@ window.VWReport = function (DATA) {
     if (dur && !still && idx < list_.length - 1) timer = setTimeout(function () { go(idx + 1); }, dur * 1000);
   }
 
-  stage.addEventListener("click", function (e) {
+  stage.onclick = (function (e) {
     if (e.target.closest("button")) return;
     go(e.clientX < window.innerWidth / 3 ? idx - 1 : idx + 1);
   });
-  document.addEventListener("keydown", function (e) {
+  document.onkeydown = (function (e) {
     if (e.key === "ArrowRight" || e.key === " ") go(idx + 1);
     if (e.key === "ArrowLeft") go(idx - 1);
   });

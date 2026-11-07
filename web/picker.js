@@ -12,7 +12,7 @@
       : isWin ? k("Ctrl") + k("V") + " → " + k("Enter")
       : k("Ctrl") + k("L") + " → " + k("Ctrl") + k("V") + " → " + k("Enter");
   }
-  var S = { claude: null, codex: null };
+  var S = { claude: null, codex: null, web: [] };
 
   var T = {
     zh: {
@@ -25,6 +25,8 @@
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       cli: "习惯用终端？", lang: "EN",
+      importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
+      webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
     },
     en: {
       title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
@@ -36,6 +38,8 @@
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       cli: "Prefer the terminal?", lang: "中文",
+      importWeb: "📦 Import web chats (ChatGPT / Claude, optional)", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
+      webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
     },
   };
   function t() { return T[lang]; }
@@ -127,15 +131,27 @@
     var year = new Date().getFullYear();
     var c = S.claude || { files: [], history: [] }, x = S.codex || { files: [], history: [] };
     var cl = VWParse.parseClaude(c.files, c.history), cx = VWParse.parseCodex(x.files);
-    var stats = VWStats.computeStats({ sessions: cl.sessions.concat(cx.sessions), prompts: cl.prompts.concat(cx.prompts) }, { year: year });
-    stats.roast = VWRoast.computeRoast(VWParse.promptTexts(c.history, x.history), VWParse.replyTexts(c.files, x.files), { year: year });
+    var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
+    var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
+    S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
+    stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
     return stats;
   }
 
-  function show(stats) {
-    document.getElementById("landing").remove();
+  function show(stats, real) {
+    var land = document.getElementById("landing");
+    if (land) land.remove();
     document.body.classList.add("playing");
     window.VWReport(stats);
+    // a few seconds into a real bill, the web AI calls to collect on your web chats
+    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
+  }
+
+  function addWeb(r) {
+    S.web.push(r);
+    show(makeStats(), true);
+    window.VWCall.toast(t().updated(window.VW_TOTAL));
   }
 
   function render() {
@@ -149,6 +165,7 @@
       '<button class="pick" id="pick-claude"><span class="ico">🧡</span>' + L.pickClaude + '</button><div class="st" id="st-claude"></div>' +
       '<button class="pick" id="pick-codex"><span class="ico">🖤</span>' + L.pickCodex + '</button><div class="st" id="st-codex"></div>' +
       '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
+      '<button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
       "</div>" +
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
@@ -157,10 +174,19 @@
       "</div>";
     document.getElementById("pick-claude").onclick = function () { pick("claude"); };
     document.getElementById("pick-codex").onclick = function () { pick("codex"); };
-    document.getElementById("go").onclick = function () { show(makeStats()); };
+    document.getElementById("go").onclick = function () { show(makeStats(), true); };
+    document.getElementById("web").onclick = function () {
+      window.VWCall.answer(function (r) {
+        S.web.push(r);
+        var st = document.getElementById("st-web"); st.textContent = t().webGot(S.web.reduce(function (a, w) { return a + w.sessions.length; }, 0)); st.className = "st ok";
+        document.getElementById("go").disabled = false;
+      }, { quiet: true });
+    };
     document.getElementById("demo").onclick = function () { show(window.VW_DEMO); };
     document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; try { localStorage.setItem("vw-lang", lang); } catch (e) {} render(); };
   }
+
+  window.__vw = { S: S, show: show, makeStats: makeStats }; // used by the browser tests
 
   var shared = window.VWShare.fromHash();
   if (shared) shared.then(show, function () { history.replaceState(null, "", location.pathname); render(); });

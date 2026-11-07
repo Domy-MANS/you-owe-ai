@@ -68,6 +68,7 @@ function computeStats({ sessions, prompts }, { year }) {
   prompts = prompts.filter((p) => !Number.isNaN(p.ts) && inYear(p.ts));
 
   const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+  // claude/codex always present; other sources (chatgpt, claudeai) appear when imported
   const byTool = {
     claude: { sessions: 0, prompts: 0, tokens: 0 },
     codex: { sessions: 0, prompts: 0, tokens: 0 },
@@ -78,7 +79,7 @@ function computeStats({ sessions, prompts }, { year }) {
 
   for (const s of sessions) {
     for (const k of Object.keys(tokens)) tokens[k] += s.tokens[k];
-    const t = byTool[s.tool];
+    const t = byTool[s.tool] || (byTool[s.tool] = { sessions: 0, prompts: 0, tokens: 0 });
     t.sessions++;
     t.tokens += s.tokens.input + s.tokens.output + s.tokens.cacheRead + s.tokens.cacheWrite;
     workMs += s.workMs;
@@ -100,7 +101,7 @@ function computeStats({ sessions, prompts }, { year }) {
     hours[d.getHours()]++;
     weekdays[d.getDay()]++;
     addTo(days, localDay(p.ts));
-    byTool[p.tool].prompts++;
+    (byTool[p.tool] || (byTool[p.tool] = { sessions: 0, prompts: 0, tokens: 0 })).prompts++;
   }
 
   const totalPrompts = prompts.length;

@@ -10,6 +10,7 @@ const { computeStats } = require("../src/core/stats");
 const { renderHtml } = require("../src/render");
 const { demoData, demoRoast } = require("../src/demo");
 const { collectPrompts, collectReplies, computeRoast } = require("../src/roast");
+const { readExport } = require("../src/core/webchat");
 
 const HELP = `you-owe-ai — your year of AI coding, Spotify-Wrapped style.
 Reads Claude Code (~/.claude/projects) and Codex (~/.codex/sessions) logs locally.
@@ -22,13 +23,15 @@ Usage: npx github:Domy-MANS/you-owe-ai [options]
   --demo            Use made-up data (to preview without any logs)
   --hide-projects   Leave project names out of the report
   --no-text         Don't scan prompt text (skips catchphrases and the roast)
+  --import <file>   Add a ChatGPT or Claude.ai data export (.zip or conversations.json).
+                    Can be repeated.
   --json            Print the stats as JSON instead of writing HTML
   --no-open         Don't open the report in the browser
   -h, --help        Show this help
 `;
 
 function parseArgs(argv) {
-  const o = { year: new Date().getFullYear(), open: true };
+  const o = { year: new Date().getFullYear(), open: true, imports: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "-h" || a === "--help") o.help = true;
@@ -37,6 +40,7 @@ function parseArgs(argv) {
     else if (a === "--demo") o.demo = true;
     else if (a === "--hide-projects") o.hideProjects = true;
     else if (a === "--no-text") o.noText = true;
+    else if (a === "--import") o.imports.push(argv[++i]);
     else if (a === "--json") o.json = true;
     else if (a === "--no-open") o.open = false;
     else throw new Error(`Unknown option: ${a} (see --help)`);
@@ -51,7 +55,7 @@ function openFile(file) {
   execFile(cmd, args, () => {});
 }
 
-function main() {
+async function main() {
   let o;
   try {
     o = parseArgs(process.argv.slice(2));
@@ -61,16 +65,27 @@ function main() {
   }
   if (o.help) return console.log(HELP);
 
-  let data;
+  let data, texts = [], replies = [];
   if (o.demo) data = demoData(o.year);
   else {
     const c = parseClaude(), x = parseCodex();
     data = { sessions: [...c.sessions, ...x.sessions], prompts: [...c.prompts, ...x.prompts] };
+    if (!o.noText) { texts = collectPrompts(); replies = collectReplies(); }
+  }
+  for (const file of o.imports) {
+    try {
+      const w = await readExport(fs.readFileSync(file));
+      data.sessions.push(...w.sessions); data.prompts.push(...w.prompts); texts.push(...w.texts); replies.push(...w.replies);
+      console.log(`+ ${w.sessions.length} ${w.kind === "chatgpt" ? "ChatGPT" : "Claude.ai"} conversations from ${path.basename(file)}`);
+    } catch (e) {
+      console.error(`Couldn't read ${file}: ${e.message}`);
+      process.exit(1);
+    }
   }
   const stats = computeStats(data, { year: o.year });
   stats.demo = !!o.demo;
   if (o.hideProjects) stats.topProjects = [];
-  stats.roast = o.noText ? null : o.demo ? demoRoast() : computeRoast(collectPrompts(), collectReplies(), { year: o.year });
+  stats.roast = o.noText ? null : o.demo ? demoRoast() : computeRoast(texts, replies, { year: o.year });
 
   if (o.json) return console.log(JSON.stringify(stats, null, 2));
 
