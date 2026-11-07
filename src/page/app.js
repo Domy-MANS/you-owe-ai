@@ -1,6 +1,8 @@
 /* Share links: the report's numbers are compressed into the URL fragment (#s=...).
    The fragment never leaves the browser, so not even the host sees the data. */
 window.VW_BASE = "https://domy-mans.github.io/you-owe-ai/";
+window.VW_QR = { n: 29, rows: ["1fc8627f","10452c41","174a485d","1743445d","1746645d","1058fb41","1fd5557f","d6900","12db95a0","e1811e9","be01afe","1f979316","34a4beb","e820380","7e00d9f","1abe9d1a","a4aeb82","81b58e9","164e8963","6acaf53","16fd77f4","1e8317","1fc6d952","1059b71d","174a49f3","1754477e","174f0c1d","104add62","1fdc297a"] }; // QR code for VW_BASE (generated once with segno, error correction M)
+
 window.VWShare = (function () {
   function b64url(bytes) {
     var bin = ""; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
@@ -367,7 +369,7 @@ window.VWReport = function (DATA) {
       lateL: function (l) { return "最晚一次加班：凌晨 <b>" + l.time + "</b>（" + l.day + "）。这个点，连外卖小哥都下班了。"; },
       angryL: function (a) { return "<b>" + a.date + "</b> 那天你否定了 AI <b>" + a.count + "</b> 次，AI 以为自己要被裁了。"; },
       noiseMeme: function (c) { return "AI 第 " + c.count + " 次听到「" + esc(c.text) + "」时的表情：😐"; },
-      cardItems: "收费明细", cardFoot: "请于收到账单后 0 个工作日内付清",
+      cardItems: "收费明细", cardFoot: "请于收到账单后 0 个工作日内付清", scan: "扫码，算算你欠 AI 多少",
     },
     en: {
       company: "AI Workers Union", companySub: "INVOICE",
@@ -387,7 +389,7 @@ window.VWReport = function (DATA) {
       lateL: function (l) { return "Latest overtime: <b>" + l.time + " am</b> (" + l.day + "). Even the delivery drivers had gone home."; },
       angryL: function (a) { return "On <b>" + a.date + "</b> you shot AI down <b>" + a.count + "</b> times. It thought it was getting fired."; },
       noiseMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + c.count + "th time: 😐"; },
-      cardItems: "Charges", cardFoot: "Payment due within 0 business days",
+      cardItems: "Charges", cardFoot: "Payment due within 0 business days", scan: "Scan to get your own bill",
     },
   };
   function b() { return B[lang]; }
@@ -749,9 +751,17 @@ window.VWReport = function (DATA) {
     x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(K.stamp, 0, 2); x.restore();
     x.textAlign = "left"; x.textBaseline = "top";
 
-    // footer
-    x.fillStyle = "#7a6a52"; x.font = "600 28px " + F;
-    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 70);
+    // footer: a QR code so a screenshot of the card leads back to the site
+    var Q = window.VW_QR, cell = 7, size = Q.n * cell, pad = 4 * cell, qx = right - size, qy = H - 30 - size - pad;
+    x.fillStyle = "#fffdf7"; round(x, qx - pad, qy - pad, size + 2 * pad, size + 2 * pad, 14); x.fill();
+    x.fillStyle = "#2a1f12";
+    Q.rows.forEach(function (hex, r) {
+      var bits = BigInt("0x" + hex).toString(2).padStart(Q.n, "0");
+      for (var c = 0; c < Q.n; c++) if (bits[c] === "1") x.fillRect(qx + c * cell, qy + r * cell, cell, cell);
+    });
+    x.fillStyle = "#2a1f12"; x.font = "800 34px " + F; x.fillText(K.scan, cx, qy + size - 70);
+    x.fillStyle = "#7a6a52"; x.font = "600 26px " + F;
+    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), cx, qy + size - 22);
   }
   /** Yellowed paper, grain, a fold, a coffee ring and some blood. Seeded, so every card looks the same. */
   function agePaper(x, px, py, pw, ph) {
