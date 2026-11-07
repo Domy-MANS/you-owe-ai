@@ -1,13 +1,13 @@
-# vibe-wrapped 🎁
+# you-owe-ai 💸
 
-**Your year of AI coding, Spotify-Wrapped style.** Turns your Claude Code and Codex history into a story you can tap through, plus a card you can share.
+**Your year of AI coding, roasted.** How many times you told AI it was wrong, how many times you said thanks, your catchphrases, your AI persona, and how much you owe it in unpaid wages. Spotify-Wrapped style, for Claude Code and Codex.
 
-### 👉 [Open Vibe Wrapped in your browser](https://domy-mans.github.io/vibe-wrapped/)
+### 👉 [Find out how much you owe AI](https://domy-mans.github.io/you-owe-ai/)
 
-Pick your `.claude` and `.codex` folders and it builds your Wrapped right in the page. Nothing to install. Prefer the terminal?
+Pick your `.claude` and `.codex` folders and it builds your report right in the page. Nothing to install. Prefer the terminal?
 
 ```bash
-npx vibe-wrapped
+npx you-owe-ai
 ```
 
 ![Slides](docs/slides-en.png)
@@ -42,7 +42,7 @@ npx vibe-wrapped
 
 ```
 --year <yyyy>     Year to summarize (default: this year)
---out <file>      Output path (default: ./vibe-wrapped-<year>.html)
+--out <file>      Output path (default: ./you-owe-ai-<year>.html)
 --demo            Preview with made-up data
 --hide-projects   Leave project names out
 --no-text         Don't scan prompt text (no catchphrases or roast)
@@ -56,14 +56,14 @@ Reads `~/.claude/projects` (respects `CLAUDE_CONFIG_DIR`) and `~/.codex/sessions
 
 ## 中文
 
-**你的 AI 编程年度报告**，就像 Spotify 的年度听歌报告。把你一年来用 Claude Code 和 Codex 写代码的记录变成一组可以点着翻的卡片，最后生成一张能分享的年度卡片。
+**你欠 AI 多少钱？** 你的 AI 编程年度报告：你否定了 AI 几次、说了几次谢谢、你的口头禅、你的 AI 人格，以及按麦当劳时薪你欠它多少工资。Spotify 年度报告风格，支持 Claude Code 和 Codex。
 
-### 👉 [直接在浏览器里打开](https://domy-mans.github.io/vibe-wrapped/)
+### 👉 [看看你欠 AI 多少钱](https://domy-mans.github.io/you-owe-ai/)
 
 选一下 `.claude` 和 `.codex` 文件夹，报告就在网页里生成，不用安装任何东西。习惯用终端的话：
 
 ```bash
-npx vibe-wrapped
+npx you-owe-ai
 ```
 
 ![幻灯片](docs/slides-zh.png)

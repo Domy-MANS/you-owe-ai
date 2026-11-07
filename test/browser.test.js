@@ -85,7 +85,7 @@ test("share link round-trips the report without project names or daily history",
   const src = fs.readFileSync(path.join(__dirname, "../src/page/app.js"), "utf8");
   vm.runInContext(src.slice(0, src.indexOf("/* Report player.")), ctx);
   const url = await window.VWShare.link(D);
-  assert.match(url, /^https:\/\/domy-mans\.github\.io\/vibe-wrapped\/#s=z[A-Za-z0-9_-]+$/);
+  assert.match(url, /^https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=z[A-Za-z0-9_-]+$/);
   assert.ok(url.length < 3000, `link too long: ${url.length}`);
   const back = JSON.parse(JSON.stringify(await window.VWShare.decode(url.split("#s=")[1]))); // copy out of the vm realm
   assert.equal(back.shared, true);

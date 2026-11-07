@@ -1,9 +1,9 @@
 {
-  "name": "vibe-wrapped",
+  "name": "you-owe-ai",
   "version": "0.1.0",
   "description": "Your year of AI coding, Spotify-Wrapped style. Claude Code + Codex. 100% local.",
   "bin": {
-    "vibe-wrapped": "bin/vibe-wrapped.js"
+    "you-owe-ai": "bin/you-owe-ai.js"
   },
   "files": [
     "bin",
@@ -33,10 +33,10 @@
   "author": "Domy Yu",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Domy-MANS/vibe-wrapped.git"
+    "url": "git+https://github.com/Domy-MANS/you-owe-ai.git"
   },
-  "homepage": "https://github.com/Domy-MANS/vibe-wrapped#readme",
+  "homepage": "https://github.com/Domy-MANS/you-owe-ai#readme",
   "bugs": {
-    "url": "https://github.com/Domy-MANS/vibe-wrapped/issues"
+    "url": "https://github.com/Domy-MANS/you-owe-ai/issues"
   }
 }

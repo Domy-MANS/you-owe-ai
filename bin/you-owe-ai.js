@@ -11,14 +11,14 @@ const { renderHtml } = require("../src/render");
 const { demoData, demoRoast } = require("../src/demo");
 const { collectPrompts, collectReplies, computeRoast } = require("../src/roast");
 
-const HELP = `vibe-wrapped — your year of AI coding, Spotify-Wrapped style.
+const HELP = `you-owe-ai — your year of AI coding, Spotify-Wrapped style.
 Reads Claude Code (~/.claude/projects) and Codex (~/.codex/sessions) logs locally.
 Everything stays on your machine. The report can't make network requests.
 
-Usage: npx vibe-wrapped [options]
+Usage: npx you-owe-ai [options]
 
   --year <yyyy>     Year to summarize (default: this year)
-  --out <file>      Where to write the HTML (default: ./vibe-wrapped-<year>.html)
+  --out <file>      Where to write the HTML (default: ./you-owe-ai-<year>.html)
   --demo            Use made-up data (to preview without any logs)
   --hide-projects   Leave project names out of the report
   --no-text         Don't scan prompt text (skips catchphrases and the roast)
@@ -74,7 +74,7 @@ function main() {
 
   if (o.json) return console.log(JSON.stringify(stats, null, 2));
 
-  const out = path.resolve(o.out || `vibe-wrapped-${o.year}.html`);
+  const out = path.resolve(o.out || `you-owe-ai-${o.year}.html`);
   fs.writeFileSync(out, renderHtml(stats));
   const tilde = out.replace(os.homedir(), "~");
   console.log(

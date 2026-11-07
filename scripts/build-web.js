@@ -22,7 +22,7 @@ const html = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
-<title>Vibe Wrapped: your year of AI coding</title>
+<title>You Owe AI: your year of AI coding</title>
 <meta name="description" content="Spotify-Wrapped for Claude Code and Codex. Runs entirely in your browser.">
 <style>${read("src/page/style.css")}
 ${read("web/landing.css")}</style>

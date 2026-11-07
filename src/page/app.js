@@ -1,6 +1,6 @@
 /* Share links: the report's numbers are compressed into the URL fragment (#s=...).
    The fragment never leaves the browser, so not even the host sees the data. */
-window.VW_BASE = "https://domy-mans.github.io/vibe-wrapped/";
+window.VW_BASE = "https://domy-mans.github.io/you-owe-ai/";
 window.VWShare = (function () {
   function b64url(bytes) {
     var bin = ""; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
@@ -498,7 +498,7 @@ window.VWReport = function (DATA) {
   }
   function download() {
     var cv = document.getElementById("card"), a = document.createElement("a");
-    a.download = "vibe-wrapped-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
+    a.download = "you-owe-ai-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
   }
 
   build();

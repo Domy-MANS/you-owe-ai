@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
-<title>Vibe Wrapped: your year of AI coding</title>
+<title>You Owe AI: your year of AI coding</title>
 <meta name="description" content="Spotify-Wrapped for Claude Code and Codex. Runs entirely in your browser.">
 <style>:root {
   --fg: #fff;
@@ -588,7 +588,7 @@ else root.VWRoast = api;
 </script>
 <script>/* Share links: the report's numbers are compressed into the URL fragment (#s=...).
    The fragment never leaves the browser, so not even the host sees the data. */
-window.VW_BASE = "https://domy-mans.github.io/vibe-wrapped/";
+window.VW_BASE = "https://domy-mans.github.io/you-owe-ai/";
 window.VWShare = (function () {
   function b64url(bytes) {
     var bin = ""; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
@@ -1086,7 +1086,7 @@ window.VWReport = function (DATA) {
   }
   function download() {
     var cv = document.getElementById("card"), a = document.createElement("a");
-    a.download = "vibe-wrapped-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
+    a.download = "you-owe-ai-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
   }
 
   build();
@@ -1104,23 +1104,23 @@ if (window.DATA) window.VWReport(window.DATA);
 
   var T = {
     zh: {
-      title: "你的 AI 编程年度报告", sub: "Claude Code × Codex · " + new Date().getFullYear(),
+      title: "你欠 AI 多少钱？", sub: "AI 编程年度报告 · Claude Code × Codex · " + new Date().getFullYear(),
       pickClaude: "选择 .claude 文件夹", pickCodex: "选择 .codex 文件夹",
       where: isMac ? "在你的用户文件夹里（/Users/你的名字）。看不到？在选择窗口里按 <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> 显示隐藏文件夹。"
         : "在你的用户文件夹里（C:\\Users\\你的名字 或 /home/你的名字）。看不到的话，打开「显示隐藏文件」。",
       onlyOne: "只用了其中一个？选一个就行。",
-      go: "生成我的报告", demo: "先看看示例", reading: "正在读取…", files: function (n) { return "✓ 读取了 " + n + " 个文件"; },
+      go: "算算我欠了多少", demo: "先看看示例", reading: "正在读取…", files: function (n) { return "✓ 读取了 " + n + " 个文件"; },
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       cli: "习惯用终端？", lang: "EN",
     },
     en: {
-      title: "Your AI Coding Wrapped", sub: "Claude Code × Codex · " + new Date().getFullYear(),
+      title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
       pickClaude: "Choose your .claude folder", pickCodex: "Choose your .codex folder",
       where: isMac ? "They're in your home folder. Can't see them? Press <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> in the picker to show hidden folders."
         : "They're in your home folder (C:\\Users\\you or /home/you). Turn on \"show hidden files\" if you can't see them.",
       onlyOne: "Only use one of them? Just pick that one.",
-      go: "Make my Wrapped", demo: "See a demo", reading: "Reading…", files: function (n) { return "✓ Read " + n + " files"; },
+      go: "Show me the bill", demo: "See a demo", reading: "Reading…", files: function (n) { return "✓ Read " + n + " files"; },
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       cli: "Prefer the terminal?", lang: "中文",
@@ -1238,7 +1238,7 @@ if (window.DATA) window.VWReport(window.DATA);
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="privacy">' + L.privacy + "</p>" +
-      '<p class="cli">' + L.cli + " <code>npx vibe-wrapped</code></p>" +
+      '<p class="cli">' + L.cli + " <code>npx you-owe-ai</code></p>" +
       "</div>";
     document.getElementById("pick-claude").onclick = function () { pick("claude"); };
     document.getElementById("pick-codex").onclick = function () { pick("codex"); };
