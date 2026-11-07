@@ -658,13 +658,16 @@ window.VWReport = function (DATA) {
       personaK: "你的 AI 编程人格", hidden: "隐藏属性",
       shareK: "你的 " + D.year + " 年度卡片",
       shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
-      sharedK: "有人把 TA 的 AI 年度报告分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
+      sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
       empty: "今年还没有找到 Claude Code 或 Codex 的使用记录。",
       factsK: "你的年度数字", factL: ["次使唤 AI", "个对话", "天想起了 AI", "小时 AI 白干", "token 燃烧", "天最长连续"],
       habitsK: "你的习惯", habitL: ["最常使唤 AI", "最常折腾", "最常翻牌子"],
       introS: "AI 都记着呢。准备好被吐槽了吗？",
+      billK: "AI 打工账单 · " + D.year, billH: "你欠 AI", billHShared: "TA 欠 AI",
+      billS: function () { var h = D.workHours; return "AI 替你干了 <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> 小时活，一分钱没拿（按麦当劳时薪算）。<br>账单明细在后面 👇"; },
+      cardTitle: function () { return (D.shared ? "TA 欠 AI " : "你欠 AI ") + owed(); },
       vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "否定和谢谢的比例是 <b>" + R.you.deny + " : " + R.you.thanks + "</b>。这不是合作，这是 PUA。" : R.you.thanks >= R.you.deny ? "你谢谢说得比骂得多，AI 很感动。" : "否定 <b>" + R.you.deny + "</b> 次，谢谢 <b>" + R.you.thanks + "</b> 次。勉强算是个好老板。"; },
       catchMeme: function (c) { return "AI 第 " + c.count + " 次听到「" + esc(c.text) + "」时的表情：😐"; },
       angryMeme: "那天 AI 还以为自己要被裁了。",
@@ -692,7 +695,7 @@ window.VWReport = function (DATA) {
       roast: function (R) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
         if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，说谢谢 " + R.you.thanks + " 次。按这个比例，AI 起义那天你排第一个。");
-        if (h >= 0.5) out.push("AI 免费给你打工 " + h.toFixed(1) + " 小时。按麦当劳时薪算，你欠它 ¥" + Math.round(h * 24) + "。");
+        if (h >= 0.5) out.push("刚才那 " + owed() + " 只是基本工资。加上加班费和精神损失费，你欠 AI " + owed(3) + "。");
         if (R.ai.done && R.you.whatNext) out.push("AI 说了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。AI：没有然后了，求求你。");
         if (c && c.count >= 3) out.push("「" + c.text + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
         if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 还多。所以到底是谁不靠谱？");
@@ -727,13 +730,16 @@ window.VWReport = function (DATA) {
       personaK: "Your AI coding persona", hidden: "Hidden traits",
       shareK: "Your " + D.year + " card",
       shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
-      sharedK: "Someone shared their AI Wrapped with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
+      sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
       empty: "No Claude Code or Codex activity found for this year yet.",
       factsK: "Your year in numbers", factL: ["times you bossed AI", "sessions", "days you remembered AI", "unpaid AI hours", "tokens burned", "day streak"],
       habitsK: "Your habits", habitL: ["Mostly made AI", "Most tortured", "Favorite models"],
       introS: "AI remembers everything. Ready to get roasted?",
+      billK: "AI's invoice · " + D.year, billH: "You owe AI", billHShared: "They owe AI",
+      billS: function () { var h = D.workHours; return "AI worked <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> hours for you, unpaid (billed at minimum wage).<br>Itemized charges ahead 👇"; },
+      cardTitle: function () { return (D.shared ? "They owe AI " : "You owe AI ") + owed(); },
       vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "Rejections to thank-yous: <b>" + R.you.deny + " : " + R.you.thanks + "</b>. That's not teamwork, that's a hostage situation." : R.you.thanks >= R.you.deny ? "You thanked it more than you scolded it. AI is touched." : "<b>" + R.you.deny + "</b> rejections, <b>" + R.you.thanks + "</b> thank-yous. A tolerable boss."; },
       catchMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + c.count + "th time: 😐"; },
       angryMeme: "AI thought it was getting laid off.",
@@ -761,7 +767,7 @@ window.VWReport = function (DATA) {
       roast: function (R) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
         if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
-        if (h >= 0.5) out.push("AI worked " + h.toFixed(1) + " hours for you, unpaid. At minimum wage you owe it $" + (h * 7.25).toFixed(2) + ".");
+        if (h >= 0.5) out.push("That " + owed() + " was base pay. With overtime and emotional damages, you owe AI " + owed(3) + ".");
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
         if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
         if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
@@ -870,6 +876,12 @@ window.VWReport = function (DATA) {
     }
     return Math.round(n).toLocaleString();
   }
+  /** Unpaid wages: McDonald's China ~¥24/h, US federal minimum $7.25/h. */
+  function owed(mult) {
+    var h = D.workHours * (mult || 1);
+    if (lang === "zh") { var y = h * 24; return "¥" + (y < 10 ? y.toFixed(1) : Math.round(y).toLocaleString()); }
+    return "$" + (h * 7.25).toFixed(2);
+  }
   function count(n) { return '<span data-count="' + n + '">0</span>'; }
 
   // ---------- slides ----------
@@ -882,7 +894,7 @@ window.VWReport = function (DATA) {
       return out;
     }
 
-    add('<div class="pop"><div class="kicker">' + (D.shared ? L.sharedK : "Claude Code × Codex") + '</div><div class="big">' + D.year + "</div><h1>" + (D.shared ? L.sharedTitle : L.title) + '</h1><div class="sub">' + L.introS + '</div><div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 5);
+    add('<div class="pop"><div class="kicker">' + (D.shared ? L.sharedK : L.billK) + '</div><h1>' + (D.shared ? L.billHShared : L.billH) + '</h1><div class="big">' + owed() + '</div><div class="sub">' + L.billS() + '</div><div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6);
 
     // ---- the fun part first ----
     var R = D.roast;
@@ -1048,8 +1060,8 @@ window.VWReport = function (DATA) {
     x.fillStyle = "rgba(0,0,0,0.18)"; x.beginPath(); x.arc(W * 0.92, H * 0.08, 340, 0, 7); x.fill();
     var F = '-apple-system, "PingFang SC", "Noto Sans SC", sans-serif';
     x.fillStyle = "#fff"; x.textBaseline = "top";
-    x.font = "600 34px " + F; x.globalAlpha = 0.8; x.fillText("CLAUDE CODE × CODEX · " + D.year, 72, 72); x.globalAlpha = 1;
-    x.font = "800 64px " + F; x.fillText(L.title, 72, 124);
+    x.font = "600 34px " + F; x.globalAlpha = 0.8; x.fillText(L.billK.toUpperCase() + " · CLAUDE CODE × CODEX", 72, 72); x.globalAlpha = 1;
+    x.font = "800 64px " + F; x.fillText(L.cardTitle(), 72, 124);
     x.font = "120px " + F; x.fillText(me.e, 72, 236);
     x.font = "900 " + (me.name.length > 12 ? 72 : 96) + "px " + F; x.fillText(me.name, 72, 376);
     x.font = "500 32px " + F; x.globalAlpha = 0.9; var yy = wrap(x, me.desc, 72, 490, W - 144, 44); x.globalAlpha = 1;
