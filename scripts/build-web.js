@@ -42,7 +42,7 @@ ${read("web/landing.css")}</style>
 </head>
 <body>
 <div class="bars" id="bars"></div>
-<div class="top"><button class="chip" id="snd" aria-label="Sound"></button><button class="chip" id="lang"></button></div>
+<div class="top"><button class="chip" id="snd" aria-label="Sound"></button><button class="chip seg" id="lang"></button></div>
 <main id="stage"></main>
 <div class="hint" id="hint"></div>
 <div id="landing"></div>

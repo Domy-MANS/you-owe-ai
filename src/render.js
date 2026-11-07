@@ -33,7 +33,7 @@ function renderHtml(stats) {
 </head>
 <body>
 <div class="bars" id="bars"></div>
-<div class="top"><button class="chip" id="snd" aria-label="Sound"></button><button class="chip" id="lang"></button></div>
+<div class="top"><button class="chip" id="snd" aria-label="Sound"></button><button class="chip seg" id="lang"></button></div>
 <main id="stage"></main>
 <div class="hint" id="hint"></div>
 <script>var DATA = ${data};</script>

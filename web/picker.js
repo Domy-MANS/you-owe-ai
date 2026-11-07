@@ -43,6 +43,7 @@
     },
   };
   function t() { return T[lang]; }
+  function langSwitch(cur) { return '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>'; }
 
   // ---------- reading folders ----------
   // Which files we need, relative to the picked folder.
@@ -157,7 +158,7 @@
   function render() {
     var L = t();
     document.getElementById("landing").innerHTML =
-      '<button class="chip lang" id="l-lang">' + L.lang + "</button>" +
+      '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
       '<div class="land">' +
       '<div class="kicker">' + L.sub + "</div>" +
       "<h1>" + L.title + "</h1>" +

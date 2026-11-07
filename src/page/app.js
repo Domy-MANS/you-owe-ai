@@ -328,6 +328,7 @@ window.VWReport = function (DATA) {
   ];
 
   function t() { return T[lang]; }
+  function langSwitch(cur) { return '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>'; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function fmt(n) {
     n = Number(n) || 0;
@@ -566,7 +567,8 @@ window.VWReport = function (DATA) {
     list_ = slides();
     stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.deco + s.html + "</section>"; }).join("");
     barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
-    document.getElementById("lang").textContent = t().lang;
+    var lb = document.getElementById("lang");
+    lb.innerHTML = langSwitch(lang); lb.setAttribute("aria-label", lang === "zh" ? "Switch to English" : "切换到中文");
     var snd = document.getElementById("snd");
     if (snd) {
       snd.textContent = soundOn ? t().soundOn : t().soundOff;
