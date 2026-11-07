@@ -218,9 +218,50 @@ hr.rc { border: 0; border-top: 2px dashed #ccc; margin: 12px 0; }
 .rc-clock i.peak { background: #2a1f12; }
 .rc-meme { color: #3d2f1c; }
 
+/* ===== full-screen paper: the whole slide is the invoice ===== */
+:root { --fg: #2a1f12; --dim: #7a6a52; --faint: rgba(110,80,30,0.22); --ink: #2a1f12; }
+html, body { background: #e9d8a6; color: var(--ink); }
+.slide { color: var(--ink); background-color: #f1e2b8; background-image:
+    linear-gradient(180deg, transparent 49.7%, rgba(110,80,30,0.16) 50%, rgba(255,255,255,0.25) 50.4%, transparent 50.8%),
+    radial-gradient(ellipse 70% 55% at 45% 40%, rgba(255,248,225,0.7), transparent 75%),
+    radial-gradient(ellipse 60% 50% at 100% 0%, rgba(140,95,30,0.32), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 0% 100%, rgba(140,95,30,0.30), transparent 60%),
+    radial-gradient(circle at 85% 88%, transparent 26px, rgba(120,75,20,0.22) 28px, transparent 33px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .33  0 0 0 0 .12  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23n%29' opacity='.35'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 120% 100% at 50% 50%, transparent 60%, rgba(110,70,20,0.35) 100%);
+  background-size: auto, auto, auto, auto, auto, 160px 160px, auto; padding-top: 72px; padding-bottom: 60px; }
+.slide::before { display: none; }
+.slide::after { content: ""; position: absolute; width: 150px; height: 150px; pointer-events: none; mix-blend-mode: multiply; z-index: 2;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cg fill='%237a0a0a'%3E%3Cpath d='M78 46c10-9 30-6 33 8 12 2 17 18 8 26 7 11-3 26-16 23-3 13-21 16-28 6-12 7-28-1-27-14-13-4-15-21-3-27-4-13 10-25 23-19 3-2 6-3 10-3z' opacity='.85'/%3E%3Cpath d='M111 60c9-3 22-8 34-6-10 4-21 9-31 12z' opacity='.7'/%3E%3Ccircle cx='132' cy='30' r='5'/%3E%3Ccircle cx='143' cy='45' r='2.6'/%3E%3Ccircle cx='122' cy='18' r='2'/%3E%3Ccircle cx='24' cy='122' r='6'/%3E%3Ccircle cx='38' cy='138' r='2.4'/%3E%3Ccircle cx='14' cy='104' r='2'/%3E%3Ccircle cx='118' cy='124' r='3.4'/%3E%3Cellipse cx='90' cy='136' rx='2.2' ry='7' transform='rotate%2818 90 136%29'/%3E%3Cellipse cx='60' cy='18' rx='1.8' ry='6' transform='rotate%28-30 60 18%29'/%3E%3Ccircle cx='150' cy='96' r='2'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; opacity: 0.7; top: 26px; right: -34px; transform: rotate(-20deg); }
+.slide:nth-child(3n+2)::after { top: auto; bottom: -36px; right: auto; left: -34px; width: 120px; height: 120px; transform: rotate(40deg); }
+.slide:nth-child(3n)::after { top: auto; bottom: 8%; right: -30px; width: 96px; height: 96px; opacity: 0.6; transform: rotate(110deg); }
+
+/* the receipt is now the page itself */
+.receipt { background: none !important; box-shadow: none; padding: 0; margin: 6px 0 14px; border-radius: 0; }
+.receipt::after, .receipt::before, .receipt .rc-head::after { display: none; }
+.kicker { color: var(--dim); }
+.sub, .privacy, .hint, .legend { color: var(--dim); }
+.sub b { color: var(--ink); }
+.bars i { background: rgba(110,80,30,0.2); }
+.bars i b { background: var(--ink); }
+.chip { color: var(--ink); background: rgba(110,80,30,0.1); border-color: rgba(110,80,30,0.35); }
+.chip:hover { background: rgba(110,80,30,0.2); }
+.btn { background: var(--ink); color: #f1e2b8; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid rgba(110,80,30,0.5); }
+.link-note { color: var(--dim); } .link-note.ok { color: var(--ink); }
+.link-box { color: var(--ink); background: rgba(110,80,30,0.08); border-color: rgba(110,80,30,0.35); }
+canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
+
+/* meme backgrounds become faint watermarks printed on the paper */
+.deco.tile { color: #6b4f22; opacity: 0.07; }
+.giant { filter: sepia(1) saturate(0.6); opacity: 0.12; }
+.giant.vsbig { color: #6b4f22; opacity: 0.08; filter: none; }
+.deco.spot { display: none; }
+.stamp.red { top: -6px; right: 0; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
-  background: linear-gradient(135deg, #ff6a3d, #ff2e88 55%, #7a2cff);
+  background: #f1e2b8; color: #2a1f12;
   display: flex; justify-content: center;
 }
 body:not(.playing) .bars, body:not(.playing) .top, body:not(.playing) .hint { display: none; }
@@ -229,23 +270,23 @@ body:not(.playing) .bars, body:not(.playing) .top, body:not(.playing) .hint { di
 .steps { display: grid; gap: 8px; margin-bottom: 20px; }
 .pick {
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-  font: 700 18px var(--font); color: #fff; background: rgba(0,0,0,0.28);
-  border: 1px solid rgba(255,255,255,0.25); border-radius: 16px; padding: 18px; cursor: pointer;
+  font: 700 18px var(--font); color: #2a1f12; background: rgba(110,80,30,0.08);
+  border: 1.5px dashed rgba(110,80,30,0.5); border-radius: 10px; padding: 18px; cursor: pointer;
 }
-.pick:hover { background: rgba(0,0,0,0.4); }
-.pick.done { background: rgba(255,255,255,0.18); border-color: #fff; }
+.pick:hover { background: rgba(110,80,30,0.16); }
+.pick.done { background: rgba(22,163,74,0.1); border: 1.5px solid #16a34a; }
 .pick .ico { font-size: 24px; }
 .st { font-size: 14px; min-height: 20px; padding: 0 6px 6px; color: var(--dim); }
-.st.ok { color: #fff; font-weight: 700; }
-.st.bad { color: #ffe08a; }
+.st.ok { color: #15803d; font-weight: 700; }
+.st.bad { color: #b45309; }
 .where { font-size: 14px; color: var(--dim); line-height: 1.6; margin-top: 6px; }
-kbd { font: 600 12px var(--mono); background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.3); border-radius: 5px; padding: 1px 6px; }
+kbd { font: 600 12px var(--mono); background: rgba(110,80,30,0.12); border: 1px solid rgba(110,80,30,0.35); border-radius: 5px; padding: 1px 6px; }
 .btn.go { padding: 16px; font-size: 18px; margin-bottom: 10px; }
 .btn.go:disabled { opacity: 0.45; cursor: not-allowed; }
 .land .btn.ghost { padding: 14px; }
 .land .privacy { line-height: 1.6; }
 .cli { font-size: 13px; color: var(--dim); margin-top: 14px; }
-code { font: 600 13px var(--mono); background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 6px; }
+code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2px 6px; border-radius: 6px; }
 .chip.lang { position: fixed; top: 16px; right: 16px; z-index: 60; }
 </style>
 </head>
@@ -1250,16 +1291,11 @@ window.VWReport = function (DATA) {
   function drawCard(cv) {
     var x = cv.getContext("2d"), W = cv.width, H = cv.height, K = b(), C = charges(), me = personality();
     var F = '-apple-system, "PingFang SC", "Noto Sans SC", sans-serif', M = '"SF Mono", Menlo, Consolas, monospace';
-    var g = x.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, "#ff6a3d"); g.addColorStop(0.5, "#ff2e88"); g.addColorStop(1, "#5b21b6");
-    x.fillStyle = g; x.fillRect(0, 0, W, H);
-
-    // paper with a torn (zigzag) bottom edge
-    var px = 90, py = 70, pw = W - 180, ph = 1130, z = 22;
-    x.fillStyle = "#f1e2b8"; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw, py); x.lineTo(px + pw, py + ph);
-    for (var zx = px + pw; zx > px; zx -= z * 2) { x.lineTo(zx - z, py + ph + z); x.lineTo(Math.max(px, zx - 2 * z), py + ph); }
-    x.closePath(); x.shadowColor = "rgba(0,0,0,0.35)"; x.shadowBlur = 40; x.fill(); x.shadowBlur = 0;
-    agePaper(x, px, py, pw, ph);
+    // the whole card is one sheet of old paper
+    x.fillStyle = "#f1e2b8"; x.fillRect(0, 0, W, H);
+    var px = 0, py = 0, pw = W, ph = H;
+    agePaper(x, 0, 0, W, H);
+    px = 90; py = 40; pw = W - 180; ph = H - 80;
 
     var cx = px + 56, right = px + pw - 56, y = py + 56;
     x.textBaseline = "top"; x.fillStyle = "#111";
@@ -1292,16 +1328,16 @@ window.VWReport = function (DATA) {
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
 
     // stamp
-    x.save(); x.translate(right - 60, py + 20); x.rotate(-0.26);
+    x.save(); x.translate(W - 175, py + 50); x.rotate(-0.26);
     x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
     x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
     round(x, -sw / 2, -52, sw, 104, 14); x.stroke();
     x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(K.stamp, 0, 2); x.restore();
     x.textAlign = "left"; x.textBaseline = "top";
 
-    // footer on the background
-    x.fillStyle = "rgba(255,255,255,0.85)"; x.font = "600 28px " + F;
-    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 64);
+    // footer
+    x.fillStyle = "#7a6a52"; x.font = "600 28px " + F;
+    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 70);
   }
   /** Yellowed paper, grain, a fold, a coffee ring and some blood. Seeded, so every card looks the same. */
   function agePaper(x, px, py, pw, ph) {
@@ -1324,9 +1360,11 @@ window.VWReport = function (DATA) {
     };
     blood(px + 30, py + 40, 38, 9);
     blood(px + 26, py + ph * 0.66, 20, 6);
-    x.fillStyle = "rgba(122,10,10,0.75)"; x.beginPath(); x.moveTo(px + pw * 0.2, py); x.lineTo(px + pw * 0.2 + 14, py);
-    x.quadraticCurveTo(px + pw * 0.2 + 10, py + 70, px + pw * 0.2 + 7, py + 110); x.quadraticCurveTo(px + pw * 0.2 + 2, py + 70, px + pw * 0.2, py); x.fill();
-    x.beginPath(); x.arc(px + pw * 0.2 + 7, py + 116, 8, 0, 6.3); x.fill();
+    // one drip running down from the top edge, ending in a drop
+    var dx = px + pw * 0.2;
+    x.fillStyle = "rgba(122,10,10,0.75)"; x.beginPath();
+    x.moveTo(dx - 9, py); x.lineTo(dx + 9, py); x.lineTo(dx + 6, py + 96);
+    x.arc(dx, py + 100, 9, 0, Math.PI); x.lineTo(dx - 9, py); x.fill();
     x.restore();
   }
 

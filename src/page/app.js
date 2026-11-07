@@ -570,16 +570,11 @@ window.VWReport = function (DATA) {
   function drawCard(cv) {
     var x = cv.getContext("2d"), W = cv.width, H = cv.height, K = b(), C = charges(), me = personality();
     var F = '-apple-system, "PingFang SC", "Noto Sans SC", sans-serif', M = '"SF Mono", Menlo, Consolas, monospace';
-    var g = x.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, "#ff6a3d"); g.addColorStop(0.5, "#ff2e88"); g.addColorStop(1, "#5b21b6");
-    x.fillStyle = g; x.fillRect(0, 0, W, H);
-
-    // paper with a torn (zigzag) bottom edge
-    var px = 90, py = 70, pw = W - 180, ph = 1130, z = 22;
-    x.fillStyle = "#f1e2b8"; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw, py); x.lineTo(px + pw, py + ph);
-    for (var zx = px + pw; zx > px; zx -= z * 2) { x.lineTo(zx - z, py + ph + z); x.lineTo(Math.max(px, zx - 2 * z), py + ph); }
-    x.closePath(); x.shadowColor = "rgba(0,0,0,0.35)"; x.shadowBlur = 40; x.fill(); x.shadowBlur = 0;
-    agePaper(x, px, py, pw, ph);
+    // the whole card is one sheet of old paper
+    x.fillStyle = "#f1e2b8"; x.fillRect(0, 0, W, H);
+    var px = 0, py = 0, pw = W, ph = H;
+    agePaper(x, 0, 0, W, H);
+    px = 90; py = 40; pw = W - 180; ph = H - 80;
 
     var cx = px + 56, right = px + pw - 56, y = py + 56;
     x.textBaseline = "top"; x.fillStyle = "#111";
@@ -612,16 +607,16 @@ window.VWReport = function (DATA) {
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
 
     // stamp
-    x.save(); x.translate(right - 60, py + 20); x.rotate(-0.26);
+    x.save(); x.translate(W - 175, py + 50); x.rotate(-0.26);
     x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
     x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
     round(x, -sw / 2, -52, sw, 104, 14); x.stroke();
     x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(K.stamp, 0, 2); x.restore();
     x.textAlign = "left"; x.textBaseline = "top";
 
-    // footer on the background
-    x.fillStyle = "rgba(255,255,255,0.85)"; x.font = "600 28px " + F;
-    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 64);
+    // footer
+    x.fillStyle = "#7a6a52"; x.font = "600 28px " + F;
+    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 70);
   }
   /** Yellowed paper, grain, a fold, a coffee ring and some blood. Seeded, so every card looks the same. */
   function agePaper(x, px, py, pw, ph) {
@@ -644,9 +639,11 @@ window.VWReport = function (DATA) {
     };
     blood(px + 30, py + 40, 38, 9);
     blood(px + 26, py + ph * 0.66, 20, 6);
-    x.fillStyle = "rgba(122,10,10,0.75)"; x.beginPath(); x.moveTo(px + pw * 0.2, py); x.lineTo(px + pw * 0.2 + 14, py);
-    x.quadraticCurveTo(px + pw * 0.2 + 10, py + 70, px + pw * 0.2 + 7, py + 110); x.quadraticCurveTo(px + pw * 0.2 + 2, py + 70, px + pw * 0.2, py); x.fill();
-    x.beginPath(); x.arc(px + pw * 0.2 + 7, py + 116, 8, 0, 6.3); x.fill();
+    // one drip running down from the top edge, ending in a drop
+    var dx = px + pw * 0.2;
+    x.fillStyle = "rgba(122,10,10,0.75)"; x.beginPath();
+    x.moveTo(dx - 9, py); x.lineTo(dx + 9, py); x.lineTo(dx + 6, py + 96);
+    x.arc(dx, py + 100, 9, 0, Math.PI); x.lineTo(dx - 9, py); x.fill();
     x.restore();
   }
 
