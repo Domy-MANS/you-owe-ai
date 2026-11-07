@@ -45,7 +45,7 @@ Rates are in US dollars at the federal minimum wage. The Chinese version bills i
 
 ![An incoming call from the web AI, and the call screen where it asks for your chat export](docs/img/call-en.png)
 
-A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. You can also import an export later from the home page.
+A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. You can also import an export later from the home page. Claude's export arrives as several files: the one you need is `conversations-000.zip`. On a phone, this is the way in: phones can't open the `.claude` and `.codex` folders, but they can import a chat export.
 
 ## Privacy
 

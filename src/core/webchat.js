@@ -56,10 +56,11 @@
         var ts = (m.create_time || c.create_time || 0) * 1000;
         if (!ts) return;
         var meta = m.metadata || {}, text = m.content ? textOf(m.content.parts) || m.content.text || "" : "";
-        if (m.author.role === "user" && !meta.is_visually_hidden_from_conversation && text.trim()) {
+        var media = m.content && (m.content.parts || []).some(function (x) { return x && typeof x === "object"; });
+        if (m.author.role === "user" && !meta.is_visually_hidden_from_conversation && (text.trim() || media)) {
           s.prompts++; touch(s, ts);
           out.prompts.push({ ts: ts, tool: "chatgpt" });
-          out.texts.push({ ts: ts, text: text });
+          if (text.trim()) out.texts.push({ ts: ts, text: text }); // images count as prompts, not as catchphrases
         } else if (m.author.role === "assistant") {
           touch(s, ts);
           if (meta.model_slug) s.models[meta.model_slug] = (s.models[meta.model_slug] || 0) + 1;
@@ -81,10 +82,12 @@
         if (isNaN(ts)) return;
         var text = m.text || (m.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("\n");
         touch(s, ts);
-        if (m.sender === "human" && text.trim()) {
+        var media = (m.attachments && m.attachments.length) || (m.files && m.files.length) ||
+          (m.content || []).some(function (b) { return b.type === "image" || b.type === "document"; });
+        if (m.sender === "human" && (text.trim() || media)) {
           s.prompts++;
           out.prompts.push({ ts: ts, tool: "claudeai" });
-          out.texts.push({ ts: ts, text: text });
+          if (text.trim()) out.texts.push({ ts: ts, text: text });
         } else if (m.sender === "assistant" && text) out.replies.push({ ts: ts, text: text });
       });
       if (s.start !== null) out.sessions.push(s);
@@ -105,17 +108,29 @@
   }
 
   /** Accepts the export .zip or its conversations.json (as bytes). */
+  function fail(code, msg) { var e = new Error(msg); e.code = code; return e; }
+
   async function readExport(bytes) {
     var u8 = new Uint8Array(bytes), json;
     if (u8[0] === 0x50 && u8[1] === 0x4b) {
-      var entry = listZip(u8).find(function (e) { return /(^|\/)conversations\.json$/.test(e.name); });
-      if (!entry) throw new Error("no conversations.json in this zip");
+      var files = listZip(u8), names = files.map(function (e) { return e.name; }).join("\n");
+      var entry = files.find(function (e) { return /(^|\/)conversations\.json$/.test(e.name); });
+      if (!entry) {
+        // Claude's export comes as several zips; point people at the right one
+        if (/(^|\/)(users|login_history)\.json$/m.test(names)) throw fail("claude-metadata", "this is Claude's account file (light_metadata)");
+        if (/memor/i.test(names)) throw fail("claude-memories", "this is Claude's memories file");
+        if (/frame/i.test(names)) throw fail("claude-frames", "this is Claude's frames file");
+        throw fail("no-conversations", "no conversations.json in this zip");
+      }
       json = new TextDecoder().decode(await entry.read());
     } else json = new TextDecoder().decode(u8);
-    var convs = JSON.parse(json), kind = detect(convs);
+    var convs;
+    try { convs = JSON.parse(json); } catch (e) { throw fail("not-json", "not a JSON file"); }
+    if (convs && !Array.isArray(convs) && Array.isArray(convs.data_files)) throw fail("claude-manifest", "this is Claude's export manifest, not the chats");
+    var kind = detect(convs);
     if (kind === "chatgpt") return Object.assign({ kind: kind }, parseChatGPT(convs));
     if (kind === "claudeai") return Object.assign({ kind: kind }, parseClaudeAI(convs));
-    throw new Error("this doesn't look like a ChatGPT or Claude export");
+    throw fail("unknown", "this doesn't look like a ChatGPT or Claude export");
   }
 
   var api = { listZip: listZip, parseChatGPT: parseChatGPT, parseClaudeAI: parseClaudeAI, detect: detect, readExport: readExport };

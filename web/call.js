@@ -14,11 +14,17 @@
       declined: "你挂了 AI 的电话", missed: "未接来电", laterTag: "随时回拨", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
       gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
-      claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件到了以后下载 zip。",
+      claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件里会列出好几个文件，只要下载 <b>conversations-000.zip</b>。",
       drop: "把导出的 zip 拖到这里，或者点这里选择", reading: "正在对账…",
       got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT" : "Claude 网页版") + " 对话"; },
       recalc: "重新算账", later: "邮件还没到？先挂了，拿到 zip 后点首页的「导入网页聊天」也行。",
       bad: "这个文件好像不是 ChatGPT 或 Claude 的导出。",
+      badCodes: {
+        "claude-metadata": "这是 Claude 导出里的账号信息文件。请拖入 conversations-000.zip。",
+        "claude-memories": "这是 Claude 导出里的记忆文件。请拖入 conversations-000.zip。",
+        "claude-frames": "这是 Claude 导出里的 frames 文件。请拖入 conversations-000.zip。",
+        "claude-manifest": "这是 Claude 导出的文件清单。打开清单里 conversations 那个链接，下载 conversations-000.zip 再拖进来。",
+      },
     },
     en: {
       caller: "Web AI", incoming: "incoming call…", accept: "Accept", decline: "Decline", hangup: "Hang up", talking: "On call",
@@ -31,11 +37,17 @@
       declined: "You hung up on AI", missed: "Missed call", laterTag: "Call back anytime", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
       gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
-      claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. Download the zip from the email.",
+      claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. The email lists several files: you only need <b>conversations-000.zip</b>.",
       drop: "Drop the export zip here, or click to choose it", reading: "Auditing…",
       got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : "Claude.ai") + " conversations"; },
       recalc: "Recalculate my bill", later: "Email not here yet? Hang up for now and use \"Import web chats\" on the home page later.",
       bad: "That doesn't look like a ChatGPT or Claude export.",
+      badCodes: {
+        "claude-metadata": "That's the account file from Claude's export. Drop in conversations-000.zip instead.",
+        "claude-memories": "That's the memories file from Claude's export. Drop in conversations-000.zip instead.",
+        "claude-frames": "That's the frames file from Claude's export. Drop in conversations-000.zip instead.",
+        "claude-manifest": "That's the list of files in Claude's export. Open the conversations link in it, download conversations-000.zip and drop that in.",
+      },
     },
   };
   function t() { return T[window.VW_LANG === "zh" ? "zh" : "en"]; }
@@ -144,7 +156,7 @@
       ov.querySelector(".call-later").textContent = L.later;
       if (st.drop === "idle") label.textContent = L.drop;
       else if (st.drop === "reading") label.textContent = L.reading;
-      else if (st.drop === "bad") label.textContent = L.bad;
+      else if (st.drop === "bad") label.textContent = (st.badCode && L.badCodes[st.badCode]) || L.bad;
       else {
         label.innerHTML = L.got(st.result.sessions.length, st.result.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
         label.querySelector(".go-recalc").onclick = function (e) {
@@ -166,7 +178,7 @@
     async function take(file) {
       st.drop = "reading"; relabel();
       try { st.result = await window.VWWebChat.readExport(await file.arrayBuffer()); st.drop = "got"; }
-      catch (err) { st.drop = "bad"; }
+      catch (err) { st.drop = "bad"; st.badCode = err && err.code; }
       relabel();
     }
     input.onchange = function () { if (input.files[0]) take(input.files[0]); };

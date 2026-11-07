@@ -911,10 +911,11 @@ else root.VWRoast = api;
         var ts = (m.create_time || c.create_time || 0) * 1000;
         if (!ts) return;
         var meta = m.metadata || {}, text = m.content ? textOf(m.content.parts) || m.content.text || "" : "";
-        if (m.author.role === "user" && !meta.is_visually_hidden_from_conversation && text.trim()) {
+        var media = m.content && (m.content.parts || []).some(function (x) { return x && typeof x === "object"; });
+        if (m.author.role === "user" && !meta.is_visually_hidden_from_conversation && (text.trim() || media)) {
           s.prompts++; touch(s, ts);
           out.prompts.push({ ts: ts, tool: "chatgpt" });
-          out.texts.push({ ts: ts, text: text });
+          if (text.trim()) out.texts.push({ ts: ts, text: text }); // images count as prompts, not as catchphrases
         } else if (m.author.role === "assistant") {
           touch(s, ts);
           if (meta.model_slug) s.models[meta.model_slug] = (s.models[meta.model_slug] || 0) + 1;
@@ -936,10 +937,12 @@ else root.VWRoast = api;
         if (isNaN(ts)) return;
         var text = m.text || (m.content || []).filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("\n");
         touch(s, ts);
-        if (m.sender === "human" && text.trim()) {
+        var media = (m.attachments && m.attachments.length) || (m.files && m.files.length) ||
+          (m.content || []).some(function (b) { return b.type === "image" || b.type === "document"; });
+        if (m.sender === "human" && (text.trim() || media)) {
           s.prompts++;
           out.prompts.push({ ts: ts, tool: "claudeai" });
-          out.texts.push({ ts: ts, text: text });
+          if (text.trim()) out.texts.push({ ts: ts, text: text });
         } else if (m.sender === "assistant" && text) out.replies.push({ ts: ts, text: text });
       });
       if (s.start !== null) out.sessions.push(s);
@@ -960,17 +963,29 @@ else root.VWRoast = api;
   }
 
   /** Accepts the export .zip or its conversations.json (as bytes). */
+  function fail(code, msg) { var e = new Error(msg); e.code = code; return e; }
+
   async function readExport(bytes) {
     var u8 = new Uint8Array(bytes), json;
     if (u8[0] === 0x50 && u8[1] === 0x4b) {
-      var entry = listZip(u8).find(function (e) { return /(^|\/)conversations\.json$/.test(e.name); });
-      if (!entry) throw new Error("no conversations.json in this zip");
+      var files = listZip(u8), names = files.map(function (e) { return e.name; }).join("\n");
+      var entry = files.find(function (e) { return /(^|\/)conversations\.json$/.test(e.name); });
+      if (!entry) {
+        // Claude's export comes as several zips; point people at the right one
+        if (/(^|\/)(users|login_history)\.json$/m.test(names)) throw fail("claude-metadata", "this is Claude's account file (light_metadata)");
+        if (/memor/i.test(names)) throw fail("claude-memories", "this is Claude's memories file");
+        if (/frame/i.test(names)) throw fail("claude-frames", "this is Claude's frames file");
+        throw fail("no-conversations", "no conversations.json in this zip");
+      }
       json = new TextDecoder().decode(await entry.read());
     } else json = new TextDecoder().decode(u8);
-    var convs = JSON.parse(json), kind = detect(convs);
+    var convs;
+    try { convs = JSON.parse(json); } catch (e) { throw fail("not-json", "not a JSON file"); }
+    if (convs && !Array.isArray(convs) && Array.isArray(convs.data_files)) throw fail("claude-manifest", "this is Claude's export manifest, not the chats");
+    var kind = detect(convs);
     if (kind === "chatgpt") return Object.assign({ kind: kind }, parseChatGPT(convs));
     if (kind === "claudeai") return Object.assign({ kind: kind }, parseClaudeAI(convs));
-    throw new Error("this doesn't look like a ChatGPT or Claude export");
+    throw fail("unknown", "this doesn't look like a ChatGPT or Claude export");
   }
 
   var api = { listZip: listZip, parseChatGPT: parseChatGPT, parseClaudeAI: parseClaudeAI, detect: detect, readExport: readExport };
@@ -1850,11 +1865,17 @@ if (window.DATA) window.VWReport(window.DATA);
       declined: "你挂了 AI 的电话", missed: "未接来电", laterTag: "随时回拨", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
       gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
-      claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件到了以后下载 zip。",
+      claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件里会列出好几个文件，只要下载 <b>conversations-000.zip</b>。",
       drop: "把导出的 zip 拖到这里，或者点这里选择", reading: "正在对账…",
       got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT" : "Claude 网页版") + " 对话"; },
       recalc: "重新算账", later: "邮件还没到？先挂了，拿到 zip 后点首页的「导入网页聊天」也行。",
       bad: "这个文件好像不是 ChatGPT 或 Claude 的导出。",
+      badCodes: {
+        "claude-metadata": "这是 Claude 导出里的账号信息文件。请拖入 conversations-000.zip。",
+        "claude-memories": "这是 Claude 导出里的记忆文件。请拖入 conversations-000.zip。",
+        "claude-frames": "这是 Claude 导出里的 frames 文件。请拖入 conversations-000.zip。",
+        "claude-manifest": "这是 Claude 导出的文件清单。打开清单里 conversations 那个链接，下载 conversations-000.zip 再拖进来。",
+      },
     },
     en: {
       caller: "Web AI", incoming: "incoming call…", accept: "Accept", decline: "Decline", hangup: "Hang up", talking: "On call",
@@ -1867,11 +1888,17 @@ if (window.DATA) window.VWReport(window.DATA);
       declined: "You hung up on AI", missed: "Missed call", laterTag: "Call back anytime", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
       gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
-      claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. Download the zip from the email.",
+      claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. The email lists several files: you only need <b>conversations-000.zip</b>.",
       drop: "Drop the export zip here, or click to choose it", reading: "Auditing…",
       got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : "Claude.ai") + " conversations"; },
       recalc: "Recalculate my bill", later: "Email not here yet? Hang up for now and use \"Import web chats\" on the home page later.",
       bad: "That doesn't look like a ChatGPT or Claude export.",
+      badCodes: {
+        "claude-metadata": "That's the account file from Claude's export. Drop in conversations-000.zip instead.",
+        "claude-memories": "That's the memories file from Claude's export. Drop in conversations-000.zip instead.",
+        "claude-frames": "That's the frames file from Claude's export. Drop in conversations-000.zip instead.",
+        "claude-manifest": "That's the list of files in Claude's export. Open the conversations link in it, download conversations-000.zip and drop that in.",
+      },
     },
   };
   function t() { return T[window.VW_LANG === "zh" ? "zh" : "en"]; }
@@ -1980,7 +2007,7 @@ if (window.DATA) window.VWReport(window.DATA);
       ov.querySelector(".call-later").textContent = L.later;
       if (st.drop === "idle") label.textContent = L.drop;
       else if (st.drop === "reading") label.textContent = L.reading;
-      else if (st.drop === "bad") label.textContent = L.bad;
+      else if (st.drop === "bad") label.textContent = (st.badCode && L.badCodes[st.badCode]) || L.bad;
       else {
         label.innerHTML = L.got(st.result.sessions.length, st.result.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
         label.querySelector(".go-recalc").onclick = function (e) {
@@ -2002,7 +2029,7 @@ if (window.DATA) window.VWReport(window.DATA);
     async function take(file) {
       st.drop = "reading"; relabel();
       try { st.result = await window.VWWebChat.readExport(await file.arrayBuffer()); st.drop = "got"; }
-      catch (err) { st.drop = "bad"; }
+      catch (err) { st.drop = "bad"; st.badCode = err && err.code; }
       relabel();
     }
     input.onchange = function () { if (input.files[0]) take(input.files[0]); };

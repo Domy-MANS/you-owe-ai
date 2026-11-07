@@ -60,3 +60,26 @@ test("web chats merge into the stats as their own sources", async () => {
   assert.equal(st.byTool.claude.prompts, 0);
   assert.equal(st.sessions, 2);
 });
+
+test("a message with only an image or a file still counts as a prompt (but not as text)", async () => {
+  const cl = [{ uuid: "x", created_at: "2026-04-02T09:00:00Z", chat_messages: [
+    { sender: "human", created_at: "2026-04-02T09:00:00Z", text: "", content: [{ type: "image" }], attachments: [] },
+    { sender: "human", created_at: "2026-04-02T09:01:00Z", text: "", content: [], files: [{ file_name: "a.pdf" }] },
+    { sender: "human", created_at: "2026-04-02T09:02:00Z", text: "", content: [] },
+  ] }];
+  const r = await W.readExport(Buffer.from(JSON.stringify(cl)));
+  assert.equal(r.prompts.length, 2);
+  assert.equal(r.texts.length, 0);
+  const g = [{ id: "g", create_time: t("2026-03-01T10:00:00Z"), mapping: { u: { message: { author: { role: "user" }, create_time: t("2026-03-01T10:00:01Z"), content: { parts: [{ asset_pointer: "img" }] }, metadata: {} } } } }];
+  const gr = await W.readExport(Buffer.from(JSON.stringify(g)));
+  assert.equal(gr.prompts.length, 1);
+  assert.equal(gr.texts.length, 0);
+});
+
+test("the other files in Claude's split export get a pointer to the right one", async () => {
+  const code = (p) => p.then(() => null, (e) => e.code);
+  assert.equal(await code(W.readExport(makeZip({ "users.json": "[]", "login_history.json": "{}" }))), "claude-metadata");
+  assert.equal(await code(W.readExport(makeZip({ "memories.json": "[]" }))), "claude-memories");
+  assert.equal(await code(W.readExport(Buffer.from(JSON.stringify({ version: "1.0", data_files: [{ category: "conversations" }] })))), "claude-manifest");
+  assert.equal(await code(W.readExport(Buffer.from("not json"))), "not-json");
+});
