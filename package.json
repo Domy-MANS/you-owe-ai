@@ -1,0 +1,42 @@
+{
+  "name": "vibe-wrapped",
+  "version": "0.1.0",
+  "description": "Your year of AI coding, Spotify-Wrapped style. Claude Code + Codex. 100% local.",
+  "bin": {
+    "vibe-wrapped": "bin/vibe-wrapped.js"
+  },
+  "files": [
+    "bin",
+    "src"
+  ],
+  "scripts": {
+    "test": "node --test test/",
+    "build:web": "node scripts/build-web.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "claude-code",
+    "codex",
+    "wrapped",
+    "year-in-review",
+    "ai-coding",
+    "vibe-coding",
+    "claude",
+    "chatgpt",
+    "openai",
+    "anthropic",
+    "spotify-wrapped"
+  ],
+  "license": "MIT",
+  "author": "Domy Yu",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Domy-MANS/vibe-wrapped.git"
+  },
+  "homepage": "https://github.com/Domy-MANS/vibe-wrapped#readme",
+  "bugs": {
+    "url": "https://github.com/Domy-MANS/vibe-wrapped/issues"
+  }
+}

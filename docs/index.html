@@ -1,0 +1,1090 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Vibe Wrapped: your year of AI coding</title>
+<meta name="description" content="Spotify-Wrapped for Claude Code and Codex. Runs entirely in your browser.">
+<style>:root {
+  --fg: #fff;
+  --dim: rgba(255, 255, 255, 0.72);
+  --faint: rgba(255, 255, 255, 0.16);
+  --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Segoe UI", sans-serif;
+  --mono: "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #0b0b10; color: var(--fg); font-family: var(--font); overflow: hidden; -webkit-font-smoothing: antialiased; }
+
+#stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+.slide {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+  padding: 64px max(16px, calc(50vw - 300px)) 48px; opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease; overflow: hidden;
+}
+.slide.on { opacity: 1; pointer-events: auto; }
+.slide::before { content: ""; position: absolute; inset: -20%; z-index: -1; background: var(--bg); filter: saturate(1.1); animation: drift 14s ease-in-out infinite alternate; }
+@keyframes drift { from { transform: rotate(0deg) scale(1); } to { transform: rotate(8deg) scale(1.1); } }
+
+.bars { position: fixed; top: 12px; left: 12px; right: 12px; display: flex; gap: 4px; z-index: 10; }
+.bars i { flex: 1; height: 3px; border-radius: 2px; background: var(--faint); overflow: hidden; }
+.bars i b { display: block; height: 100%; width: 0; background: #fff; }
+.bars i.done b { width: 100%; }
+.bars i.now b { animation: fill var(--dur, 7s) linear forwards; }
+@keyframes fill { to { width: 100%; } }
+
+.top { position: fixed; top: 24px; right: 16px; z-index: 11; display: flex; gap: 8px; }
+.chip { font: 600 12px var(--font); color: #fff; background: rgba(0,0,0,0.28); border: 1px solid var(--faint); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+.chip:hover { background: rgba(0,0,0,0.45); }
+
+.kicker { font: 600 15px var(--font); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); margin-bottom: 14px; }
+h1 { font-size: clamp(34px, 7vw, 56px); line-height: 1.12; font-weight: 800; letter-spacing: -0.02em; }
+.big { font-size: clamp(64px, 18vw, 132px); font-weight: 900; line-height: 1; letter-spacing: -0.04em; margin: 10px 0 6px; font-variant-numeric: tabular-nums; }
+.unit { font-size: clamp(22px, 5vw, 32px); font-weight: 700; }
+.sub { font-size: clamp(16px, 3.6vw, 20px); color: var(--dim); line-height: 1.5; margin-top: 14px; }
+.sub b { color: #fff; }
+
+.pop > * { opacity: 0; transform: translateY(18px); }
+.slide.on .pop > * { animation: up 0.6s cubic-bezier(.2,.8,.2,1) forwards; }
+.slide.on .pop > *:nth-child(2) { animation-delay: 0.15s; }
+.slide.on .pop > *:nth-child(3) { animation-delay: 0.3s; }
+.slide.on .pop > *:nth-child(4) { animation-delay: 0.45s; }
+.slide.on .pop > *:nth-child(5) { animation-delay: 0.6s; }
+.slide.on .pop > *:nth-child(6) { animation-delay: 0.75s; }
+@keyframes up { to { opacity: 1; transform: none; } }
+
+.split { display: flex; height: 64px; border-radius: 16px; overflow: hidden; margin: 28px 0 12px; background: var(--faint); }
+.split div { display: flex; align-items: center; padding: 0 16px; font-weight: 800; font-size: 18px; white-space: nowrap; width: 0; transition: width 1.2s cubic-bezier(.2,.8,.2,1) 0.3s; }
+.split .c { background: #f4a35c; color: #2a1405; }
+.split .x { background: #111; color: #fff; justify-content: flex-end; }
+.legend { display: flex; justify-content: space-between; color: var(--dim); font-size: 15px; }
+
+.rows { margin-top: 26px; display: grid; gap: 12px; }
+.row { display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 12px; font-size: 18px; }
+.row .n { font: 800 18px var(--mono); color: var(--dim); }
+.row .name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .v { font: 600 16px var(--mono); color: var(--dim); }
+.meter { grid-column: 2 / 4; height: 8px; border-radius: 4px; background: var(--faint); overflow: hidden; margin-top: -6px; }
+.meter b { display: block; height: 100%; background: #fff; width: 0; transition: width 1s cubic-bezier(.2,.8,.2,1) 0.4s; }
+
+.clock { display: flex; align-items: flex-end; gap: 3px; height: 160px; margin-top: 28px; }
+.clock i { flex: 1; background: rgba(255,255,255,0.35); border-radius: 3px 3px 0 0; height: 2px; transition: height 0.9s cubic-bezier(.2,.8,.2,1); }
+.clock i.peak { background: #fff; }
+.clock-axis { display: flex; justify-content: space-between; color: var(--dim); font: 12px var(--mono); margin-top: 6px; }
+
+.heat { display: grid; grid-auto-flow: column; grid-template-rows: repeat(7, 1fr); gap: 2px; margin-top: 26px; width: 100%; aspect-ratio: 53 / 7; }
+.heat i { border-radius: 2px; background: rgba(255,255,255,0.1); }
+.heat i.l1 { background: rgba(255,255,255,0.35); } .heat i.l2 { background: rgba(255,255,255,0.6); }
+.heat i.l3 { background: rgba(255,255,255,0.85); } .heat i.l4 { background: #fff; }
+.heat i.out { visibility: hidden; }
+
+.persona-emoji { font-size: 84px; line-height: 1; margin-bottom: 12px; }
+canvas#card { width: min(100%, 360px); aspect-ratio: 4 / 5; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); align-self: center; }
+.actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+.btn { font: 700 15px var(--font); border-radius: 999px; padding: 12px 20px; border: 0; cursor: pointer; background: #fff; color: #111; }
+.btn.ghost { background: rgba(0,0,0,0.3); color: #fff; border: 1px solid var(--faint); }
+.hint { position: fixed; bottom: 14px; left: 0; right: 0; text-align: center; font-size: 12px; color: var(--dim); z-index: 10; }
+.privacy { font-size: 13px; color: var(--dim); margin-top: 24px; }
+@media (prefers-reduced-motion: reduce) { .slide::before, .bars i.now b { animation: none; } }
+
+/* screenshot mode: everything in its final state */
+.still .pop > *, .still .slide.on .pop > * { opacity: 1; transform: none; animation: none; }
+.still .split div, .still .meter b, .still .clock i { transition: none; }
+.still .slide::before { animation: none; }
+
+.vs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px; }
+.vs-cell { border-radius: 16px; padding: 16px; background: rgba(0,0,0,0.22); }
+.vs-cell.ai { background: rgba(255,255,255,0.14); }
+.vs-n { font-size: clamp(34px, 9vw, 52px); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.vs-l { font-size: 14px; color: var(--dim); margin-top: 8px; line-height: 1.35; }
+.quotes { display: grid; gap: 10px; margin-top: 18px; }
+.quote { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: clamp(20px, 5vw, 26px); font-weight: 700; }
+.quote span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quote b { font: 800 18px var(--mono); color: var(--dim); flex: none; }
+.quote.first { font-size: clamp(30px, 8vw, 44px); font-weight: 900; }
+.quote.first b { color: #fff; font-size: 24px; }
+h1.mood { font-size: clamp(26px, 6vw, 40px); line-height: 1.3; }
+.roast-line { font-size: clamp(18px, 4.4vw, 23px); font-weight: 700; line-height: 1.45; margin-top: 14px; }
+
+#landing {
+  position: fixed; inset: 0; z-index: 50; overflow-y: auto;
+  background: linear-gradient(135deg, #ff6a3d, #ff2e88 55%, #7a2cff);
+  display: flex; justify-content: center;
+}
+body:not(.playing) .bars, body:not(.playing) .top, body:not(.playing) .hint { display: none; }
+.land { width: 100%; max-width: 520px; padding: 72px 16px 48px; display: flex; flex-direction: column; }
+.land h1 { font-size: clamp(36px, 9vw, 56px); margin-bottom: 28px; }
+.steps { display: grid; gap: 8px; margin-bottom: 20px; }
+.pick {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  font: 700 18px var(--font); color: #fff; background: rgba(0,0,0,0.28);
+  border: 1px solid rgba(255,255,255,0.25); border-radius: 16px; padding: 18px; cursor: pointer;
+}
+.pick:hover { background: rgba(0,0,0,0.4); }
+.pick.done { background: rgba(255,255,255,0.18); border-color: #fff; }
+.pick .ico { font-size: 24px; }
+.st { font-size: 14px; min-height: 20px; padding: 0 6px 6px; color: var(--dim); }
+.st.ok { color: #fff; font-weight: 700; }
+.st.bad { color: #ffe08a; }
+.where { font-size: 14px; color: var(--dim); line-height: 1.6; margin-top: 6px; }
+kbd { font: 600 12px var(--mono); background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.3); border-radius: 5px; padding: 1px 6px; }
+.btn.go { padding: 16px; font-size: 18px; margin-bottom: 10px; }
+.btn.go:disabled { opacity: 0.45; cursor: not-allowed; }
+.land .btn.ghost { padding: 14px; }
+.land .privacy { line-height: 1.6; }
+.cli { font-size: 13px; color: var(--dim); margin-top: 14px; }
+code { font: 600 13px var(--mono); background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 6px; }
+.chip.lang { position: fixed; top: 16px; right: 16px; z-index: 60; }
+</style>
+</head>
+<body>
+<div class="bars" id="bars"></div>
+<div class="top"><button class="chip" id="lang"></button></div>
+<main id="stage"></main>
+<div class="hint" id="hint"></div>
+<div id="landing"></div>
+<script>var VW_DEMO = {"year":2026,"empty":false,"firstDay":"2026-01-08","sessions":348,"prompts":5219,"workHours":142.4211173676937,"tokens":{"input":15657000,"output":9394200,"cacheRead":469710000,"cacheWrite":41752000},"totalTokens":536513200,"byTool":{"claude":{"sessions":217,"prompts":3086,"tokens":317240800},"codex":{"sessions":131,"prompts":2133,"tokens":219272400}},"toolCalls":15657,"topTools":[{"name":"exec","count":3305},{"name":"Bash","count":2585},{"name":"apply_patch","count":2051},{"name":"Edit","count":1744},{"name":"Read","count":1586}],"categories":[{"name":"shell","count":5890},{"name":"edit","count":4591},{"name":"read","count":2386},{"name":"web","count":1884},{"name":"agents","count":906}],"topModels":[{"name":"gpt-6-astra","count":2133},{"name":"claude-opus-5-5","count":2040},{"name":"claude-sonnet-5-5","count":1046}],"topProjects":[{"name":"robot-arm-firmware","count":1067},{"name":"portfolio-site","count":1029},{"name":"ml-homework","count":933},{"name":"discord-bot","count":851},{"name":"dotfiles","count":815}],"hours":[805,434,492,301,19,0,0,0,0,0,209,173,10,0,160,322,373,192,14,0,188,420,418,689],"weekdays":[968,777,571,890,737,588,688],"days":{"2026-01-08":19,"2026-01-09":12,"2026-01-11":46,"2026-01-15":19,"2026-01-16":13,"2026-01-17":36,"2026-01-18":47,"2026-01-22":36,"2026-01-24":36,"2026-01-25":7,"2026-01-26":22,"2026-01-27":6,"2026-01-28":37,"2026-01-29":65,"2026-01-31":45,"2026-02-01":42,"2026-02-03":24,"2026-02-04":21,"2026-02-06":29,"2026-02-11":5,"2026-02-12":34,"2026-02-14":8,"2026-02-15":37,"2026-02-16":23,"2026-02-17":11,"2026-02-19":23,"2026-02-20":13,"2026-02-21":24,"2026-02-23":20,"2026-03-01":37,"2026-03-02":30,"2026-03-04":23,"2026-03-05":10,"2026-03-06":28,"2026-03-07":6,"2026-03-08":52,"2026-03-09":30,"2026-03-15":16,"2026-03-16":31,"2026-03-17":66,"2026-03-21":13,"2026-03-22":48,"2026-03-23":31,"2026-03-28":41,"2026-04-04":26,"2026-04-05":29,"2026-04-06":52,"2026-04-08":48,"2026-04-10":51,"2026-04-12":44,"2026-04-13":15,"2026-04-14":32,"2026-04-15":30,"2026-04-16":13,"2026-04-17":16,"2026-04-18":50,"2026-04-19":35,"2026-04-21":55,"2026-04-22":53,"2026-04-23":10,"2026-04-25":15,"2026-04-26":18,"2026-04-27":17,"2026-04-28":37,"2026-04-30":12,"2026-05-01":9,"2026-05-02":31,"2026-05-06":36,"2026-05-10":39,"2026-05-13":46,"2026-05-14":32,"2026-05-18":22,"2026-05-20":32,"2026-05-22":22,"2026-05-25":40,"2026-05-26":23,"2026-05-27":42,"2026-05-28":34,"2026-05-30":22,"2026-05-31":54,"2026-06-05":40,"2026-06-06":8,"2026-06-10":41,"2026-06-11":14,"2026-06-13":10,"2026-06-14":44,"2026-06-15":14,"2026-06-24":27,"2026-06-25":7,"2026-06-27":7,"2026-07-01":3,"2026-07-04":26,"2026-07-06":52,"2026-07-13":31,"2026-07-15":13,"2026-07-16":25,"2026-07-19":38,"2026-07-21":3,"2026-07-22":28,"2026-07-23":13,"2026-07-24":19,"2026-07-25":10,"2026-07-26":25,"2026-07-27":5,"2026-07-29":25,"2026-07-30":18,"2026-07-31":37,"2026-08-01":41,"2026-08-02":18,"2026-08-03":13,"2026-08-05":15,"2026-08-06":43,"2026-08-07":4,"2026-08-08":20,"2026-08-09":23,"2026-08-10":5,"2026-08-11":49,"2026-08-13":26,"2026-08-14":28,"2026-08-15":35,"2026-08-16":12,"2026-08-17":44,"2026-08-18":32,"2026-08-19":37,"2026-08-20":50,"2026-08-21":27,"2026-08-22":30,"2026-08-23":26,"2026-08-25":15,"2026-08-26":43,"2026-08-27":28,"2026-08-28":26,"2026-08-29":9,"2026-08-30":44,"2026-08-31":38,"2026-09-01":34,"2026-09-03":30,"2026-09-04":22,"2026-09-06":5,"2026-09-07":2,"2026-09-08":14,"2026-09-09":34,"2026-09-11":68,"2026-09-12":32,"2026-09-13":36,"2026-09-14":58,"2026-09-15":4,"2026-09-16":61,"2026-09-19":6,"2026-09-20":12,"2026-09-21":34,"2026-09-22":40,"2026-09-23":11,"2026-09-24":34,"2026-09-25":36,"2026-09-26":17,"2026-09-27":6,"2026-09-28":10,"2026-09-30":24,"2026-10-01":29,"2026-10-02":18,"2026-10-03":13,"2026-10-04":4,"2026-10-05":18,"2026-10-06":37,"2026-10-07":34,"2026-10-09":7,"2026-10-10":7,"2026-10-11":22,"2026-10-12":29,"2026-10-13":34,"2026-10-14":21,"2026-10-15":10,"2026-10-16":8,"2026-10-17":13,"2026-10-18":39,"2026-10-19":17,"2026-10-20":24,"2026-10-21":34,"2026-10-22":3,"2026-10-23":22,"2026-10-24":29,"2026-10-25":10,"2026-10-26":27,"2026-10-27":31,"2026-10-28":35,"2026-10-29":50,"2026-10-30":11,"2026-10-31":22,"2026-11-01":53,"2026-11-02":47,"2026-11-04":31,"2026-11-05":50,"2026-11-06":22},"activeDays":194,"busiestDay":{"date":"2026-09-11","prompts":68},"peakHour":0,"streak":{"days":25,"end":"2026-11-02"},"biggestSession":{"project":"startup-mvp","prompts":27,"tool":"codex"},"shares":{"night":0.6050967618317685,"dawn":0,"weekend":0.31730216516574056},"persona":"night","roast":{"prompts":5219,"you":{"deny":412,"again":97,"why":230,"thanks":61,"please":18,"swear":23,"lost":388,"whatNext":74,"lazyYes":301},"ai":{"sorry":156,"flatter":89,"done":1204},"catchphrases":[{"text":"继续","count":188},{"text":"还是不行","count":41},{"text":"然后呢","count":37},{"text":"为什么又报错了","count":12},{"text":"能不能快点","count":9}],"angriestDay":{"date":"2026-10-07","count":34},"latest":{"time":"4:54","day":"2026-08-11"},"tinyShare":0.31,"medianLength":22},"demo":true};</script>
+<script>/**
+ * Log parsing that runs in both Node and the browser.
+ * Input is already-read files: [{ path, records: [...parsed JSON lines] }].
+ * Output is numbers only (plus prompt text for the roast, which never leaves the page).
+ */
+(function (root) {
+  "use strict";
+
+  function parseJsonl(text) {
+    var out = [];
+    var lines = String(text).split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      if (!lines[i].trim()) continue;
+      try { out.push(JSON.parse(lines[i])); } catch (e) { /* partial line from a live session */ }
+    }
+    return out;
+  }
+
+  function baseName(p) {
+    return String(p).replace(/[\\/]+$/, "").split(/[\\/]/).pop();
+  }
+
+  var HOME_RX = /^(\/Users\/[^/]+|\/home\/[^/]+|\/root|[A-Za-z]:\\Users\\[^\\]+)[\\/]?$/;
+
+  /** Folder name for display; a home folder shows as "~". */
+  function projectName(cwd) {
+    if (!cwd) return "";
+    return HOME_RX.test(cwd) ? "~" : baseName(cwd);
+  }
+
+  function newSession(tool, id) {
+    return { tool: tool, id: id, project: "", start: null, end: null, prompts: 0, tools: {}, models: {},
+      tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, workMs: 0 };
+  }
+
+  function touch(s, ts) {
+    if (ts === undefined || ts === null) return;
+    var t = typeof ts === "number" ? ts : Date.parse(ts);
+    if (isNaN(t)) return;
+    if (s.start === null || t < s.start) s.start = t;
+    if (s.end === null || t > s.end) s.end = t;
+  }
+
+  function add(obj, k, n) { obj[k] = (obj[k] || 0) + (n || 1); }
+
+  function isRealPrompt(rec) {
+    if (rec.type !== "user" || rec.isMeta || rec.isSidechain) return false;
+    var c = rec.message && rec.message.content, text;
+    if (typeof c === "string") text = c;
+    else if (Array.isArray(c)) {
+      if (c.some(function (b) { return b.type === "tool_result"; })) return false;
+      text = c.filter(function (b) { return b.type === "text"; }).map(function (b) { return b.text; }).join("");
+      if (!text && c.some(function (b) { return b.type === "image"; })) return true;
+    } else return false;
+    text = (text || "").trim();
+    if (!text) return false;
+    return !/^<(command-|local-command|bash-|task-notification)/.test(text) && text.indexOf("[Request interrupted") !== 0;
+  }
+
+  /**
+   * Claude Code: transcripts in projects/**.jsonl, plus history.jsonl which survives
+   * the ~30-day transcript cleanup (one line per prompt).
+   */
+  function parseClaude(files, history) {
+    var sessions = {}, prompts = [], seen = {};
+    var get = function (sid) { return sessions[sid] || (sessions[sid] = newSession("claude", sid)); };
+
+    files.forEach(function (f) {
+      f.records.forEach(function (rec) {
+        var sid = rec.sessionId || rec.session_id;
+        if (!sid) return;
+        var s = get(sid);
+        if (rec.cwd && !s.project) s.project = projectName(rec.cwd);
+        if (rec.isSidechain) return;
+        touch(s, rec.timestamp);
+        if (isRealPrompt(rec)) {
+          s.prompts++;
+          prompts.push({ ts: Date.parse(rec.timestamp), tool: "claude" });
+        } else if (rec.type === "assistant" && rec.message) {
+          var m = rec.message;
+          if (m.model && m.model !== "<synthetic>") add(s.models, m.model);
+          (Array.isArray(m.content) ? m.content : []).forEach(function (b) { if (b.type === "tool_use" && b.name) add(s.tools, b.name); });
+          var key = m.id || rec.requestId;
+          if (m.usage && key && !seen[key]) {
+            seen[key] = true;
+            s.tokens.input += m.usage.input_tokens || 0;
+            s.tokens.output += m.usage.output_tokens || 0;
+            s.tokens.cacheRead += m.usage.cache_read_input_tokens || 0;
+            s.tokens.cacheWrite += m.usage.cache_creation_input_tokens || 0;
+          }
+        } else if (rec.type === "system" && rec.subtype === "turn_duration" && rec.durationMs) {
+          s.workMs += rec.durationMs;
+        }
+      });
+    });
+
+    // prompts whose transcript was cleaned up; only the first character is checked, to skip /commands
+    (history || []).forEach(function (h) {
+      if (!h.sessionId || typeof h.timestamp !== "number") return;
+      if (sessions[h.sessionId] && !sessions[h.sessionId].fromHistory) return;
+      if (typeof h.display === "string" && h.display.charAt(0) === "/") return;
+      var s = sessions[h.sessionId];
+      if (!s) { s = get(h.sessionId); s.fromHistory = true; s.project = projectName(h.project); }
+      s.prompts++;
+      touch(s, h.timestamp);
+      prompts.push({ ts: h.timestamp, tool: "claude" });
+    });
+
+    return { sessions: Object.keys(sessions).map(function (k) { return sessions[k]; }).filter(function (s) { return s.start !== null; }), prompts: prompts };
+  }
+
+  /** Codex CLI rollouts. One task_started = one prompt; cached tokens are split out of input. */
+  function parseCodex(files) {
+    var sessions = [], prompts = [];
+    files.forEach(function (f) {
+      var s = newSession("codex", baseName(f.path).replace(/\.jsonl$/, ""));
+      f.records.forEach(function (rec) {
+        var p = rec.payload && typeof rec.payload === "object" ? rec.payload : {};
+        touch(s, rec.timestamp);
+        if (rec.type === "session_meta") {
+          if (p.id) s.id = p.id;
+          if (p.cwd) s.project = projectName(p.cwd);
+        } else if (rec.type === "turn_context") {
+          if (p.cwd && !s.project) s.project = projectName(p.cwd);
+          if (p.model) add(s.models, p.model);
+        } else if (rec.type === "event_msg" && p.type === "task_started") {
+          s.prompts++;
+          prompts.push({ ts: Date.parse(rec.timestamp), tool: "codex" });
+        } else if (rec.type === "event_msg" && p.type === "task_complete" && p.duration_ms) {
+          s.workMs += p.duration_ms;
+        } else if (rec.type === "token_usage_record") {
+          var u = p.turn_token_usage || p.usage;
+          if (u) {
+            var cached = u.cached_input_tokens || 0;
+            s.tokens.input += Math.max(0, (u.input_tokens || 0) - cached);
+            s.tokens.cacheRead += cached;
+            s.tokens.cacheWrite += u.cache_write_input_tokens || 0;
+            s.tokens.output += u.output_tokens || 0;
+          }
+        } else if (rec.type === "response_item" && (p.type === "function_call" || p.type === "custom_tool_call" || p.type === "local_shell_call")) {
+          add(s.tools, p.name || (p.type === "local_shell_call" ? "shell" : "tool"));
+        }
+      });
+      if (s.start !== null) sessions.push(s);
+    });
+    return { sessions: sessions, prompts: prompts };
+  }
+
+  /** Prompt text (for the roast) from both history files. */
+  function promptTexts(claudeHistory, codexHistory) {
+    var out = [];
+    (claudeHistory || []).forEach(function (h) {
+      if (typeof h.display === "string" && h.display && h.display.charAt(0) !== "/" && typeof h.timestamp === "number") out.push({ ts: h.timestamp, text: h.display });
+    });
+    (codexHistory || []).forEach(function (h) {
+      if (typeof h.text === "string" && h.text && typeof h.ts === "number") out.push({ ts: h.ts * 1000, text: h.text });
+    });
+    return out;
+  }
+
+  /** What the AI wrote back (for counting apologies, "done", flattery). */
+  function replyTexts(claudeFiles, codexFiles) {
+    var out = [];
+    (claudeFiles || []).forEach(function (f) {
+      f.records.forEach(function (r) {
+        if (r.type !== "assistant" || r.isSidechain || !r.message || !Array.isArray(r.message.content)) return;
+        r.message.content.forEach(function (b) { if (b.type === "text" && b.text) out.push({ ts: Date.parse(r.timestamp), text: b.text }); });
+      });
+    });
+    (codexFiles || []).forEach(function (f) {
+      f.records.forEach(function (r) {
+        var p = r.payload || {};
+        if (r.type !== "response_item" || p.type !== "message" || p.role !== "assistant") return;
+        (p.content || []).forEach(function (c) { if ((c.type === "output_text" || c.type === "text") && c.text) out.push({ ts: Date.parse(r.timestamp), text: c.text }); });
+      });
+    });
+    return out;
+  }
+
+  var api = { parseJsonl: parseJsonl, projectName: projectName, newSession: newSession, isRealPrompt: isRealPrompt,
+    parseClaude: parseClaude, parseCodex: parseCodex, promptTexts: promptTexts, replyTexts: replyTexts };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.VWParse = api;
+})(typeof self !== "undefined" ? self : this);
+</script>
+<script>(function (root) {
+"use strict";
+
+const CATEGORIES = {
+  shell: ["Bash", "exec", "shell", "local_shell", "exec_command", "write_stdin", "BashOutput", "KillShell", "Monitor"],
+  edit: ["Edit", "Write", "MultiEdit", "NotebookEdit", "apply_patch"],
+  read: ["Read", "Grep", "Glob", "LS", "view_image", "read_file", "list_dir", "grep_files"],
+  web: ["WebSearch", "WebFetch", "web_search", "web_fetch"],
+  agents: ["Agent", "Task", "spawn_agent", "SendMessage"],
+};
+
+// polling / bookkeeping calls that aren't real work
+const IGNORED_TOOLS = new Set(["wait", "TodoWrite", "update_plan", "ToolSearch"]);
+
+function categoryOf(tool) {
+  for (const [cat, names] of Object.entries(CATEGORIES)) if (names.includes(tool)) return cat;
+  if (/^mcp__/.test(tool)) return "mcp";
+  return "other";
+}
+
+const pad = (n) => String(n).padStart(2, "0");
+function localDay(ts) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function addTo(obj, key, n = 1) {
+  obj[key] = (obj[key] || 0) + n;
+}
+
+function topN(obj, n) {
+  return Object.entries(obj)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, n)
+    .map(([name, count]) => ({ name, count }));
+}
+
+function longestStreak(daySet) {
+  const days = [...daySet].sort();
+  let best = 0, cur = 0, prev = null, bestEnd = null;
+  for (const d of days) {
+    const t = Date.parse(d + "T12:00:00");
+    cur = prev !== null && Math.round((t - prev) / 86400000) === 1 ? cur + 1 : 1;
+    if (cur > best) { best = cur; bestEnd = d; }
+    prev = t;
+  }
+  return { days: best, end: bestEnd };
+}
+
+const PERSONAS = [
+  { id: "night", test: (x) => x.nightShare >= 0.4 },
+  { id: "dawn", test: (x) => x.dawnShare >= 0.3 },
+  { id: "weekend", test: (x) => x.weekendShare >= 0.4 },
+  { id: "dual", test: (x) => x.minToolShare >= 0.25 },
+  { id: "terminal", test: (x) => x.cat.shell >= 0.5 },
+  { id: "sculptor", test: (x) => x.cat.edit >= 0.35 },
+  { id: "researcher", test: (x) => x.cat.web >= 0.15 },
+  { id: "steady", test: () => true },
+];
+
+/**
+ * Turn parsed sessions + prompts into the numbers the report shows.
+ * Filters to `year` by local time.
+ */
+function computeStats({ sessions, prompts }, { year }) {
+  const inYear = (ts) => new Date(ts).getFullYear() === year;
+  sessions = sessions.filter((s) => inYear(s.start));
+  prompts = prompts.filter((p) => !Number.isNaN(p.ts) && inYear(p.ts));
+
+  const tokens = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+  const byTool = {
+    claude: { sessions: 0, prompts: 0, tokens: 0 },
+    codex: { sessions: 0, prompts: 0, tokens: 0 },
+  };
+  const tools = {}, cats = {}, models = {}, projects = {};
+  let workMs = 0;
+  let biggest = null;
+
+  for (const s of sessions) {
+    for (const k of Object.keys(tokens)) tokens[k] += s.tokens[k];
+    const t = byTool[s.tool];
+    t.sessions++;
+    t.tokens += s.tokens.input + s.tokens.output + s.tokens.cacheRead + s.tokens.cacheWrite;
+    workMs += s.workMs;
+    for (const [name, n] of Object.entries(s.tools)) {
+      if (IGNORED_TOOLS.has(name)) continue;
+      addTo(tools, name, n);
+      addTo(cats, categoryOf(name), n);
+    }
+    for (const [m, n] of Object.entries(s.models)) addTo(models, m, n);
+    if (s.project) addTo(projects, s.project, Math.max(1, s.prompts));
+    if (!biggest || s.prompts > biggest.prompts) biggest = s;
+  }
+
+  const hours = new Array(24).fill(0);
+  const weekdays = new Array(7).fill(0);
+  const days = {};
+  for (const p of prompts) {
+    const d = new Date(p.ts);
+    hours[d.getHours()]++;
+    weekdays[d.getDay()]++;
+    addTo(days, localDay(p.ts));
+    byTool[p.tool].prompts++;
+  }
+
+  const totalPrompts = prompts.length;
+  const share = (n) => (totalPrompts ? n / totalPrompts : 0);
+  const nightShare = share([22, 23, 0, 1, 2, 3, 4].reduce((a, h) => a + hours[h], 0));
+  const dawnShare = share([5, 6, 7, 8].reduce((a, h) => a + hours[h], 0));
+  const weekendShare = share(weekdays[0] + weekdays[6]);
+  const totalCalls = Object.values(cats).reduce((a, b) => a + b, 0);
+  const cat = {};
+  for (const k of [...Object.keys(CATEGORIES), "mcp", "other"]) cat[k] = totalCalls ? (cats[k] || 0) / totalCalls : 0;
+  const minToolShare = Math.min(share(byTool.claude.prompts), share(byTool.codex.prompts));
+  const persona = PERSONAS.find((p) => p.test({ nightShare, dawnShare, weekendShare, minToolShare, cat })).id;
+
+  const busiest = topN(days, 1)[0] || null;
+  const peakHour = hours.indexOf(Math.max(...hours));
+  const streak = longestStreak(new Set(Object.keys(days)));
+
+  return {
+    year,
+    empty: totalPrompts === 0 && sessions.length === 0,
+    firstDay: Object.keys(days).sort()[0] || null,
+    sessions: sessions.length,
+    prompts: totalPrompts,
+    workHours: workMs / 3600000,
+    tokens,
+    totalTokens: tokens.input + tokens.output + tokens.cacheRead + tokens.cacheWrite,
+    byTool,
+    toolCalls: totalCalls,
+    topTools: topN(tools, 5),
+    categories: topN(cats, 6),
+    topModels: topN(models, 4),
+    topProjects: topN(projects, 5),
+    hours,
+    weekdays,
+    days,
+    activeDays: Object.keys(days).length,
+    busiestDay: busiest ? { date: busiest.name, prompts: busiest.count } : null,
+    peakHour: totalPrompts ? peakHour : null,
+    streak,
+    biggestSession: biggest ? { project: biggest.project, prompts: biggest.prompts, tool: biggest.tool } : null,
+    shares: { night: nightShare, dawn: dawnShare, weekend: weekendShare },
+    persona,
+  };
+}
+
+var api = { computeStats, categoryOf, longestStreak, localDay };
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+else root.VWStats = api;
+})(typeof self !== "undefined" ? self : this);
+</script>
+<script>/** Turn prompt text into counts and short repeated phrases. Runs in Node and the browser. */
+(function (root) {
+"use strict";
+var localDay = typeof module !== "undefined" && module.exports ? require("./stats").localDay : root.VWStats.localDay;
+
+const YOU = {
+  deny: /不对|不是这样|不是这个|不行|错了|没用|\bno\b|\bwrong\b|not working|doesn'?t work|didn'?t work/i,
+  again: /还是不行|还是不对|还是有问题|又报错|又错|\bstill\b|\bagain\b/i,
+  why: /为什么|为啥|\bwhy\b|\?\?|？？/i,
+  thanks: /谢谢|感谢|\bthanks\b|thank you|\bthx\b|\bty\b/i,
+  please: /\bplease\b|\bpls\b|麻烦/i,
+  swear: /卧槽|我去|我靠|妈的|离谱|\bwtf\b|\bshit\b|\bfuck|\bdamn\b/i,
+  lost: /不知道|不会|怎么|在哪|看不懂|没懂|啥意思|\bhow (do|to|can)\b|\bconfused\b/i,
+  whatNext: /^(然后呢|下一步|接下来呢?|then\??|what'?s next\??|next\??)[。.!！?？]*$/i,
+  lazyYes: /^(继续|好|好的|可以|ok|okay|行|嗯|go|yes|y|对|是|continue|lgtm|sure)[。.!！]*$/i,
+};
+const AI = {
+  sorry: /\bsorry\b|抱歉|apolog|my mistake|my bad|这怪我|是我的问题/i,
+  flatter: /you'?re (absolutely |totally )?right|你说得对|你说的对|good catch|great question|好问题|你考虑得对/i,
+  done: /\bdone\b|完成了|搞定|做好了|✅/i,
+};
+
+function isCatchphrase(t) {
+  if (t.length < 2 || t.length > 14) return false;
+  if (/^\[(image|pasted)/i.test(t)) return false; // attachment placeholders
+  if (/^[\d\s.,]+$/.test(t)) return false; // menu picks like "1"
+  if (/^(https?:|\/|~)/.test(t)) return false; // links and paths
+  return true;
+}
+
+function median(xs) {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  return s[Math.floor(s.length / 2)];
+}
+
+/** Counts + a few short phrases for the report. Filters to `year` by local time. */
+function computeRoast(prompts, replies, { year }) {
+  const inYear = (ts) => !Number.isNaN(ts) && new Date(ts).getFullYear() === year;
+  prompts = prompts.filter((p) => inYear(p.ts));
+  replies = replies.filter((r) => inYear(r.ts));
+  if (!prompts.length) return null;
+
+  const you = {}, ai = {};
+  for (const k of Object.keys(YOU)) you[k] = 0;
+  for (const k of Object.keys(AI)) ai[k] = 0;
+  const phrases = {}, angryDays = {};
+  let latest = null, tiny = 0;
+
+  for (const p of prompts) {
+    const t = p.text.trim();
+    for (const [k, rx] of Object.entries(YOU)) if (rx.test(t)) you[k]++;
+    if (YOU.deny.test(t) || YOU.again.test(t)) angryDays[localDay(p.ts)] = (angryDays[localDay(p.ts)] || 0) + 1;
+    if ([...t].length <= 4) tiny++;
+    const norm = t.toLowerCase().replace(/\s+/g, " ").replace(/[。.!！]+$/, "");
+    if (isCatchphrase(norm)) phrases[norm] = (phrases[norm] || 0) + 1;
+    const d = new Date(p.ts);
+    const mins = d.getHours() < 5 ? d.getHours() * 60 + d.getMinutes() : -1; // "late" = after midnight, before 5am
+    if (mins >= 0 && (!latest || mins > latest.mins)) latest = { mins, time: `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`, day: localDay(p.ts) };
+  }
+  for (const r of replies) for (const [k, rx] of Object.entries(AI)) if (rx.test(r.text)) ai[k]++;
+
+  const angriest = Object.entries(angryDays).sort((a, b) => b[1] - a[1])[0];
+  return {
+    prompts: prompts.length,
+    you,
+    ai,
+    catchphrases: Object.entries(phrases)
+      .filter(([, n]) => n >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([text, count]) => ({ text, count })),
+    angriestDay: angriest ? { date: angriest[0], count: angriest[1] } : null,
+    latest: latest ? { time: latest.time, day: latest.day } : null,
+    tinyShare: tiny / prompts.length,
+    medianLength: median(prompts.map((p) => [...p.text].length)),
+  };
+}
+
+var api = { computeRoast, isCatchphrase, YOU, AI };
+if (typeof module !== "undefined" && module.exports) module.exports = api;
+else root.VWRoast = api;
+})(typeof self !== "undefined" ? self : this);
+</script>
+<script>/* Report player. Called with the computed stats: VWReport(stats). */
+window.VWReport = function (DATA) {
+  "use strict";
+  var D = DATA;
+  var lang = (function () {
+    var q = /[?&]lang=(zh|en)/.exec(location.search);
+    if (q) return q[1];
+    try { var s = localStorage.getItem("vw-lang"); if (s) return s; } catch (e) {}
+    return /^zh/i.test(navigator.language || "") ? "zh" : "en";
+  })();
+
+  var T = {
+    zh: {
+      title: "你的 AI 编程年度报告", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
+      privacy: "全部在你的电脑上统计。这个页面被浏览器禁止联网，数据发不出去。",
+      promptsK: "今年你给 AI 下了", promptsU: "条指令",
+      promptsS: function () { return "开了 <b>" + fmt(D.sessions) + "</b> 次对话，活跃了 <b>" + D.activeDays + "</b> 天"; },
+      workK: "AI 替你干了", workU: function (h) { return h < 1 ? "分钟的活" : "小时的活"; },
+      workS: function (h) { return h >= 8 ? "相当于一个打工人上了 <b>" + (h / 8).toFixed(1) + "</b> 天班" : "它干活，你摸鱼"; },
+      tokK: "一共处理了", tokU: "个 token",
+      tokS: function (books) { return "其中 AI 亲手写了 <b>" + fmt(D.tokens.output) + "</b> 个，相当于 <b>" + books + "</b> 本《哈利·波特与魔法石》"; },
+      splitK: "你的主力是", claude: "Claude Code", codex: "Codex",
+      splitH: function (c) { return c >= 0.7 ? "Claude 派 🧡" : c <= 0.3 ? "Codex 派 🖤" : "双持玩家 ⚔️"; },
+      splitS: function () { return "按指令数算 · Claude " + D.byTool.claude.prompts + " 条 · Codex " + D.byTool.codex.prompts + " 条"; },
+      toolsK: "你最常让 AI", toolsH: function (n) { return "调用了 " + fmt(n) + " 次工具"; },
+      cats: { shell: "跑命令", edit: "改代码", read: "读代码", web: "上网查", agents: "派小弟", mcp: "MCP 插件", other: "其他" },
+      clockK: "你的黄金时间", clockH: function (h) { return "最爱在 " + h + ":00 写代码"; },
+      clockS: function () { var n = Math.round(D.shares.night * 100); return n >= 20 ? "<b>" + n + "%</b> 的指令发生在晚上 10 点到凌晨 5 点。早点睡 🌙" : "作息还挺健康 ☀️"; },
+      calK: "你的年度日历", calH: function (n) { return "最长连续 " + n + " 天"; },
+      calS: function () { return D.busiestDay ? "最拼的一天是 <b>" + D.busiestDay.date + "</b>，下了 <b>" + D.busiestDay.prompts + "</b> 条指令" : ""; },
+      projK: "你最常折腾的项目", modelK: "陪你最久的模型",
+      personaK: "你的 AI 编程人格",
+      shareK: "你的 " + D.year + " 年度卡片",
+      cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
+      cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
+      empty: "今年还没有找到 Claude Code 或 Codex 的使用记录。",
+      vsK: "你 vs AI", vsH: "相爱相杀",
+      vs: [["你否定了 AI", "次"], ["AI 跟你道歉", "次"], ["你说了谢谢", "次"], ["AI 宣布「搞定了」", "次"]],
+      vsS: function (R) { return "你还迷茫了 <b>" + R.you.lost + "</b> 次，问了 <b>" + R.you.why + "</b> 次「为什么」"; },
+      catchK: "你的年度口头禅", catchS: "这几句话，AI 已经听腻了",
+      moodK: "你的至暗时刻",
+      angry: function (a) { return "🌋 最暴躁的一天是 <b>" + a.date + "</b><br>你一天否定了 AI <b>" + a.count + "</b> 次"; },
+      late: function (l) { return "🦉 最晚的一条指令发在凌晨 <b>" + l.time + "</b>（" + l.day + "）"; },
+      roastK: "AI 对你的年度锐评",
+      roast: function (R) {
+        var out = [], c = R.catchphrases[0];
+        if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，却只说了 " + R.you.thanks + " 次谢谢。AI 不说，但它都记得。");
+        if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 的次数还多。所以到底是谁在帮谁？");
+        if (R.ai.done && R.you.whatNext) out.push("AI 宣布了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。");
+        if (c) out.push("你最常说的是「" + c.text + "」，一共 " + c.count + " 次。");
+        if (R.latest) out.push("凌晨 " + R.latest.time + " 你还在发指令，AI 都替你困了。");
+        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% 的指令不超过 4 个字。言简意赅，或者说，懒。");
+        if (R.you.swear >= 5) out.push("你对 AI 爆了 " + R.you.swear + " 次粗口。它没还嘴，因为它不能。");
+        if (!out.length) out.push("你和 AI 合作得很好。好得有点无聊。");
+        return out.slice(0, 4);
+      },
+    },
+    en: {
+      title: "Your AI Coding Wrapped", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
+      privacy: "Counted on your machine. This page is blocked from the network by your browser, so nothing can leave.",
+      promptsK: "This year you gave AI", promptsU: "prompts",
+      promptsS: function () { return "across <b>" + fmt(D.sessions) + "</b> sessions on <b>" + D.activeDays + "</b> active days"; },
+      workK: "AI worked for you for", workU: function (h) { return h < 1 ? "minutes" : "hours"; },
+      workS: function (h) { return h >= 8 ? "That's <b>" + (h / 8).toFixed(1) + "</b> full workdays" : "It worked. You chilled."; },
+      tokK: "It processed", tokU: "tokens",
+      tokS: function (books) { return "and wrote <b>" + fmt(D.tokens.output) + "</b> itself, about <b>" + books + "</b> copies of Harry Potter and the Philosopher's Stone"; },
+      splitK: "Your main", claude: "Claude Code", codex: "Codex",
+      splitH: function (c) { return c >= 0.7 ? "Team Claude 🧡" : c <= 0.3 ? "Team Codex 🖤" : "Dual wielder ⚔️"; },
+      splitS: function () { return "By prompts · Claude " + D.byTool.claude.prompts + " · Codex " + D.byTool.codex.prompts; },
+      toolsK: "What you asked AI to do", toolsH: function (n) { return fmt(n) + " tool calls"; },
+      cats: { shell: "Run commands", edit: "Edit code", read: "Read code", web: "Search the web", agents: "Spawn helpers", mcp: "MCP plugins", other: "Other" },
+      clockK: "Your golden hour", clockH: function (h) { return "Peak coding at " + h + ":00"; },
+      clockS: function () { var n = Math.round(D.shares.night * 100); return n >= 20 ? "<b>" + n + "%</b> of your prompts came between 10pm and 5am. Get some sleep 🌙" : "Healthy hours ☀️"; },
+      calK: "Your year", calH: function (n) { return "Longest streak: " + n + " days"; },
+      calS: function () { return D.busiestDay ? "Busiest day: <b>" + D.busiestDay.date + "</b> with <b>" + D.busiestDay.prompts + "</b> prompts" : ""; },
+      projK: "Your top projects", modelK: "Your top models",
+      personaK: "Your AI coding persona",
+      shareK: "Your " + D.year + " card",
+      cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
+      cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
+      empty: "No Claude Code or Codex activity found for this year yet.",
+      vsK: "You vs AI", vsH: "It's complicated",
+      vs: [["You told AI it was wrong", "times"], ["AI apologized", "times"], ["You said thanks", "times"], ["AI said \"done\"", "times"]],
+      vsS: function (R) { return "You were lost <b>" + R.you.lost + "</b> times and asked \"why\" <b>" + R.you.why + "</b> times"; },
+      catchK: "Your catchphrases", catchS: "AI has heard these enough",
+      moodK: "Your darkest hours",
+      angry: function (a) { return "🌋 Angriest day: <b>" + a.date + "</b><br>you shot AI down <b>" + a.count + "</b> times"; },
+      late: function (l) { return "🦉 Latest prompt: <b>" + l.time + " am</b> (" + l.day + ")"; },
+      roastK: "AI roasts your year",
+      roast: function (R) {
+        var out = [], c = R.catchphrases[0];
+        if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + " times. It won't say anything. It remembers.");
+        if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. Who's helping whom?");
+        if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times.");
+        if (c) out.push("Your #1 line was \"" + c.text + "\", " + c.count + " times.");
+        if (R.latest) out.push("You were still prompting at " + R.latest.time + " am. Even the AI was tired.");
+        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or less. Concise. Or lazy.");
+        if (R.you.swear >= 5) out.push("You swore at AI " + R.you.swear + " times. It didn't talk back. It can't.");
+        if (!out.length) out.push("You and AI got along great. Suspiciously great.");
+        return out.slice(0, 4);
+      },
+    },
+  };
+
+  var PERSONAS = {
+    night: { e: "🌙", zh: ["深夜指挥官", "别人睡觉，你在指挥 AI 加班。凌晨的终端是你的主场。"], en: ["Midnight Commander", "While the world sleeps, you keep the agents working."] },
+    dawn: { e: "🌅", zh: ["早起黑客", "天还没亮，你的第一条指令已经发出去了。"], en: ["Dawn Hacker", "Your first prompt goes out before sunrise."] },
+    weekend: { e: "🏝️", zh: ["周末战士", "工作日是别人的，周末是你和 AI 的。"], en: ["Weekend Warrior", "Weekdays are for others. Weekends are for shipping."] },
+    dual: { e: "⚔️", zh: ["双持玩家", "左手 Claude，右手 Codex，哪个顺手用哪个。"], en: ["Dual Wielder", "Claude in one hand, Codex in the other."] },
+    terminal: { e: "🧙", zh: ["终端魔法师", "一半以上的活都是跑命令。你的咒语叫 bash。"], en: ["Terminal Wizard", "Most of your work is commands. Your spellbook is bash."] },
+    sculptor: { e: "🗿", zh: ["代码雕刻师", "一刀一刀地改，直到代码变成你想要的样子。"], en: ["Code Sculptor", "Edit by edit, you carve the code into shape."] },
+    researcher: { e: "🔭", zh: ["情报收集者", "先查清楚再动手，AI 是你的研究助理。"], en: ["The Researcher", "Look it up first, then build. AI is your research assistant."] },
+    steady: { e: "🚀", zh: ["稳定输出者", "不熬夜，不摆烂，一条指令一条指令地往前推。"], en: ["Steady Shipper", "No drama. Prompt by prompt, you ship."] },
+  };
+
+  var GRADS = [
+    "linear-gradient(135deg,#ff6a3d,#ff2e88 55%,#7a2cff)",
+    "linear-gradient(135deg,#1db954,#0b7a5a 60%,#0a3d3a)",
+    "linear-gradient(135deg,#ffb100,#ff5e3a 60%,#d6246e)",
+    "linear-gradient(135deg,#00c2ff,#3a5bff 55%,#7a2cff)",
+    "linear-gradient(135deg,#f4a35c,#c2410c 50%,#1a1a1a)",
+    "linear-gradient(135deg,#ff2e88,#a020f0 60%,#2b1055)",
+    "linear-gradient(135deg,#0f2027,#203a43 50%,#2c5364)",
+    "linear-gradient(135deg,#00b09b,#22863a 50%,#0b3d1f)",
+    "linear-gradient(135deg,#ff9a3c,#ff3c5f 60%,#3c1053)",
+    "linear-gradient(135deg,#4facfe,#7a2cff 60%,#1a0b3d)",
+    "linear-gradient(135deg,#f83600,#f9d423)",
+    "linear-gradient(160deg,#141e30,#243b55)",
+  ];
+
+  function t() { return T[lang]; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function fmt(n) {
+    n = Number(n) || 0;
+    if (lang === "zh") {
+      if (n >= 1e8) return (n / 1e8).toFixed(n >= 1e9 ? 0 : 1) + "亿";
+      if (n >= 1e4) return (n / 1e4).toFixed(n >= 1e5 ? 0 : 1) + "万";
+    } else {
+      if (n >= 1e9) return (n / 1e9).toFixed(1) + "B";
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+      if (n >= 1e4) return (n / 1e3).toFixed(0) + "K";
+    }
+    return Math.round(n).toLocaleString();
+  }
+  function count(n) { return '<span data-count="' + n + '">0</span>'; }
+
+  // ---------- slides ----------
+  function slides() {
+    var L = t(), out = [];
+    var add = function (html, dur) { out.push({ html: html, dur: dur || 7 }); };
+
+    if (D.empty) {
+      add('<div class="pop"><div class="kicker">' + D.year + '</div><h1>' + L.empty + '</h1><div class="privacy">' + L.privacy + "</div></div>");
+      return out;
+    }
+
+    add('<div class="pop"><div class="kicker">Claude Code × Codex</div><div class="big">' + D.year + "</div><h1>" + L.title + '</h1><div class="privacy">' + L.privacy + "</div></div>", 5);
+
+    add('<div class="pop"><div class="kicker">' + L.promptsK + '</div><div class="big">' + count(D.prompts) + '</div><div class="unit">' + L.promptsU + '</div><div class="sub">' + L.promptsS() + "</div></div>");
+
+    var h = D.workHours, minutes = h < 1;
+    add('<div class="pop"><div class="kicker">' + L.workK + '</div><div class="big">' + count(minutes ? Math.round(h * 60) : Math.round(h * 10) / 10) + '</div><div class="unit">' + L.workU(h) + '</div><div class="sub">' + L.workS(h) + "</div></div>");
+
+    var books = (D.tokens.output / 100000).toFixed(D.tokens.output >= 1e6 ? 0 : 1);
+    add('<div class="pop"><div class="kicker">' + L.tokK + '</div><div class="big">' + fmt(D.totalTokens) + '</div><div class="unit">' + L.tokU + '</div><div class="sub">' + L.tokS(books) + "</div></div>");
+
+    var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
+    add('<div class="pop"><div class="kicker">' + L.splitK + "</div><h1>" + L.splitH(c) + '</h1><div class="split"><div class="c" data-w="' + c * 100 + '">' + (c >= 0.12 ? Math.round(c * 100) + "%" : "") + '</div><div class="x" data-w="' + (1 - c) * 100 + '">' + (1 - c >= 0.12 ? Math.round((1 - c) * 100) + "%" : "") + '</div></div><div class="legend"><span>' + L.claude + "</span><span>" + L.codex + '</span></div><div class="sub">' + L.splitS() + "</div></div>");
+
+    if (D.toolCalls) {
+      var max = D.categories[0].count;
+      var rows = D.categories.map(function (r, i) {
+        return '<div class="row"><span class="n">' + (i + 1) + '</span><span class="name">' + (L.cats[r.name] || r.name) + '</span><span class="v">' + fmt(r.count) + '</span><span class="meter"><b data-w="' + (r.count / max) * 100 + '"></b></span></div>';
+      }).join("");
+      add('<div class="pop"><div class="kicker">' + L.toolsK + "</div><h1>" + L.toolsH(D.toolCalls) + '</h1><div class="rows">' + rows + "</div></div>");
+    }
+
+    if (D.peakHour !== null) {
+      var hmax = Math.max.apply(null, D.hours) || 1;
+      var bars = D.hours.map(function (v, i) { return '<i class="' + (i === D.peakHour ? "peak" : "") + '" data-h="' + Math.max(2, (v / hmax) * 100) + '"></i>'; }).join("");
+      add('<div class="pop"><div class="kicker">' + L.clockK + "</div><h1>" + L.clockH(D.peakHour) + '</h1><div><div class="clock">' + bars + '</div><div class="clock-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div></div><div class="sub">' + L.clockS() + "</div></div>");
+    }
+
+    add('<div class="pop"><div class="kicker">' + L.calK + "</div><h1>" + L.calH(D.streak.days) + '</h1><div class="heat">' + heat() + '</div><div class="sub">' + L.calS() + "</div></div>");
+
+    if (D.topProjects.length) add(list(L.projK, D.topProjects));
+    if (D.topModels.length) add(list(L.modelK, D.topModels));
+
+    var R = D.roast;
+    if (R) {
+      var v = [R.you.deny, R.ai.sorry, R.you.thanks, R.ai.done];
+      var cells = L.vs.map(function (x, i) { return '<div class="vs-cell ' + (i % 2 ? "ai" : "me") + '"><div class="vs-n">' + count(v[i]) + '</div><div class="vs-l">' + x[0] + "</div></div>"; }).join("");
+      add('<div class="pop"><div class="kicker">' + L.vsK + "</div><h1>" + L.vsH + '</h1><div class="vs">' + cells + '</div><div class="sub">' + L.vsS(R) + "</div></div>");
+      if (R.catchphrases.length) {
+        var q = R.catchphrases.map(function (c, i) { return '<div class="quote' + (i === 0 ? " first" : "") + '"><span>「' + esc(c.text) + '」</span><b>×' + c.count + "</b></div>"; }).join("");
+        add('<div class="pop"><div class="kicker">' + L.catchK + '</div><div class="quotes">' + q + '</div><div class="sub">' + L.catchS + "</div></div>");
+      }
+      if (R.angriestDay || R.latest) {
+        add('<div class="pop"><div class="kicker">' + L.moodK + "</div>" + (R.angriestDay ? '<h1 class="mood">' + L.angry(R.angriestDay) + "</h1>" : "") + (R.latest ? '<div class="sub" style="font-size:clamp(18px,4vw,24px)">' + L.late(R.latest) + "</div>" : "") + "</div>");
+      }
+    }
+
+    var P = PERSONAS[D.persona];
+    add('<div class="pop"><div class="kicker">' + L.personaK + '</div><div class="persona-emoji">' + P.e + "</div><h1>" + P[lang][0] + '</h1><div class="sub">' + P[lang][1] + "</div></div>", 6);
+
+    if (R) {
+      var lines = L.roast(R).map(function (l) { return '<p class="roast-line">' + esc(l) + "</p>"; }).join("");
+      add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10);
+    }
+
+    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + L.shareK + '</div><canvas id="card" width="1080" height="1350"></canvas><div class="actions"><button class="btn" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button></div></div>", 0);
+    return out;
+  }
+
+  function list(kicker, items) {
+    var max = items[0].count;
+    var rows = items.map(function (r, i) {
+      return '<div class="row"><span class="n">' + (i + 1) + '</span><span class="name">' + esc(r.name) + '</span><span class="v">' + fmt(r.count) + '</span><span class="meter"><b data-w="' + (r.count / max) * 100 + '"></b></span></div>';
+    }).join("");
+    return '<div class="pop"><div class="kicker">' + kicker + '</div><div class="rows">' + rows + "</div></div>";
+  }
+
+  function heat() {
+    var start = new Date(D.year, 0, 1), cells = [], vals = [];
+    for (var k in D.days) vals.push(D.days[k]);
+    vals.sort(function (a, b) { return a - b; });
+    var q = function (p) { return vals.length ? vals[Math.min(vals.length - 1, Math.floor(p * vals.length))] : 1; };
+    var q1 = q(0.25), q2 = q(0.5), q3 = q(0.75);
+    for (var i = 0; i < start.getDay(); i++) cells.push('<i class="out"></i>');
+    for (var d = new Date(start); d.getFullYear() === D.year; d.setDate(d.getDate() + 1)) {
+      var key = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+      var v = D.days[key] || 0;
+      var lvl = !v ? "" : v <= q1 ? "l1" : v <= q2 ? "l2" : v <= q3 ? "l3" : "l4";
+      cells.push('<i class="' + lvl + '" title="' + key + ": " + v + '"></i>');
+    }
+    return cells.join("");
+  }
+
+  // ---------- player ----------
+  var stage = document.getElementById("stage"), barsEl = document.getElementById("bars");
+  var list_ = [], idx = 0, timer = null;
+  var still = /[?&]still\b/.test(location.search); // for screenshots: no autoplay
+
+  function build() {
+    list_ = slides();
+    stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.html + "</section>"; }).join("");
+    barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
+    document.getElementById("lang").textContent = t().lang;
+    document.getElementById("hint").textContent = t().next;
+    var dl = document.getElementById("dl"), again = document.getElementById("again");
+    if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
+    if (again) again.onclick = function (e) { e.stopPropagation(); go(0); };
+  }
+
+  if (still) document.documentElement.classList.add("still");
+
+  function animateIn(el) {
+    el.querySelectorAll("[data-count]").forEach(function (n) {
+      if (still) { var v = parseFloat(n.getAttribute("data-count")); n.textContent = v % 1 ? v.toFixed(1) : fmt(v); return; }
+      var target = parseFloat(n.getAttribute("data-count")), t0 = performance.now(), dec = target % 1 ? 1 : 0;
+      (function tick(now) {
+        var p = Math.min(1, (now - t0) / 1400), e = 1 - Math.pow(1 - p, 3);
+        n.textContent = dec ? (target * e).toFixed(1) : fmt(Math.round(target * e));
+        if (p < 1) requestAnimationFrame(tick);
+      })(t0);
+    });
+    requestAnimationFrame(function () {
+      el.querySelectorAll("[data-w]").forEach(function (b) { b.style.width = b.getAttribute("data-w") + "%"; });
+      el.querySelectorAll("[data-h]").forEach(function (b) { b.style.height = b.getAttribute("data-h") + "%"; });
+    });
+    if (el.querySelector("#card")) drawCard(el.querySelector("#card"));
+  }
+
+  function go(i) {
+    idx = Math.max(0, Math.min(list_.length - 1, i));
+    var secs = stage.children;
+    for (var k = 0; k < secs.length; k++) {
+      secs[k].classList.toggle("on", k === idx);
+      secs[k].querySelectorAll("[data-w]").forEach(function (b) { if (k !== idx) b.style.width = 0; });
+      secs[k].querySelectorAll("[data-h]").forEach(function (b) { if (k !== idx) b.style.height = "2px"; });
+    }
+    var bars = barsEl.children;
+    for (var j = 0; j < bars.length; j++) {
+      bars[j].className = j < idx ? "done" : "";
+      bars[j].firstChild.style.animation = "none";
+      void bars[j].offsetWidth;
+      bars[j].firstChild.style.animation = "";
+    }
+    var dur = list_[idx].dur;
+    if (dur) { bars[idx].className = "now"; bars[idx].style.setProperty("--dur", dur + "s"); }
+    else bars[idx].className = "done";
+    animateIn(secs[idx]);
+    clearTimeout(timer);
+    if (dur && !still && idx < list_.length - 1) timer = setTimeout(function () { go(idx + 1); }, dur * 1000);
+  }
+
+  stage.addEventListener("click", function (e) {
+    if (e.target.closest("button")) return;
+    go(e.clientX < window.innerWidth / 3 ? idx - 1 : idx + 1);
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight" || e.key === " ") go(idx + 1);
+    if (e.key === "ArrowLeft") go(idx - 1);
+  });
+  document.getElementById("lang").onclick = function () {
+    lang = lang === "zh" ? "en" : "zh";
+    try { localStorage.setItem("vw-lang", lang); } catch (e) {}
+    var keep = idx; build(); go(keep);
+  };
+
+  // ---------- share card ----------
+  function drawCard(cv) {
+    var x = cv.getContext("2d"), W = cv.width, H = cv.height, L = t(), P = PERSONAS[D.persona];
+    var g = x.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, "#ff6a3d"); g.addColorStop(0.5, "#ff2e88"); g.addColorStop(1, "#5b21b6");
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = "rgba(0,0,0,0.18)"; x.beginPath(); x.arc(W * 0.92, H * 0.08, 340, 0, 7); x.fill();
+    var F = '-apple-system, "PingFang SC", "Noto Sans SC", sans-serif';
+    x.fillStyle = "#fff"; x.textBaseline = "top";
+    x.font = "600 34px " + F; x.globalAlpha = 0.8; x.fillText("CLAUDE CODE × CODEX · " + D.year, 72, 72); x.globalAlpha = 1;
+    x.font = "800 64px " + F; x.fillText(L.title, 72, 124);
+    x.font = "120px " + F; x.fillText(P.e, 72, 250);
+    x.font = "900 96px " + F; x.fillText(P[lang][0], 72, 400);
+    x.font = "500 34px " + F; x.globalAlpha = 0.85; wrap(x, P[lang][1], 72, 520, W - 144, 46); x.globalAlpha = 1;
+
+    var R = D.roast;
+    var vals = R
+      ? [fmt(D.prompts), fmt(R.you.deny), fmt(R.ai.sorry), String(D.activeDays), fmt(D.totalTokens), (R.latest ? R.latest.time : "-")]
+      : [fmt(D.prompts), (D.workHours >= 1 ? D.workHours.toFixed(0) : D.workHours.toFixed(1)), fmt(D.totalTokens), String(D.activeDays), String(D.streak.days), fmt(D.toolCalls)];
+    var labels = R ? L.cardFun : L.cardStats;
+    for (var i = 0; i < 6; i++) {
+      var cx = 72 + (i % 3) * 320, cy = 660 + Math.floor(i / 3) * 190;
+      x.fillStyle = "rgba(0,0,0,0.22)"; round(x, cx, cy, 296, 166, 24); x.fill();
+      x.fillStyle = "#fff"; x.font = "900 64px " + F; x.fillText(vals[i], cx + 26, cy + 26);
+      x.font = "600 28px " + F; x.globalAlpha = 0.8; x.fillText(labels[i], cx + 26, cy + 112); x.globalAlpha = 1;
+    }
+    var hmax = Math.max.apply(null, D.hours) || 1, bw = (W - 144) / 24;
+    for (var h = 0; h < 24; h++) {
+      var bh = Math.max(4, (D.hours[h] / hmax) * 150);
+      x.fillStyle = h === D.peakHour ? "#fff" : "rgba(255,255,255,0.45)";
+      round(x, 72 + h * bw + 3, 1200 - bh, bw - 6, bh, 6); x.fill();
+    }
+    x.font = "600 26px " + F; x.globalAlpha = 0.75; x.fillText("npx vibe-wrapped", 72, 1232); x.globalAlpha = 1;
+  }
+  function round(x, a, b, w, h, r) { r = Math.min(r, w / 2, h / 2); x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
+  function wrap(x, text, a, b, maxW, lh) {
+    var line = "", chars = lang === "zh" ? text.split("") : text.split(" "), sep = lang === "zh" ? "" : " ";
+    for (var i = 0; i < chars.length; i++) {
+      var test = line + (line ? sep : "") + chars[i];
+      if (x.measureText(test).width > maxW && line) { x.fillText(line, a, b); b += lh; line = chars[i]; } else line = test;
+    }
+    if (line) x.fillText(line, a, b);
+  }
+  function download() {
+    var cv = document.getElementById("card"), a = document.createElement("a");
+    a.download = "vibe-wrapped-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
+  }
+
+  build();
+  go(parseInt(location.hash.slice(1), 10) || 0);
+};
+if (window.DATA) window.VWReport(window.DATA);
+</script>
+<script>/* Landing page: pick ~/.claude and ~/.codex, read them in the browser, show the report. */
+(function () {
+  "use strict";
+  var lang = /[?&]lang=(zh|en)/.exec(location.search);
+  lang = lang ? lang[1] : /^zh/i.test(navigator.language || "") ? "zh" : "en";
+  var isMac = /Mac/i.test(navigator.platform || navigator.userAgent);
+  var S = { claude: null, codex: null };
+
+  var T = {
+    zh: {
+      title: "你的 AI 编程年度报告", sub: "Claude Code × Codex · " + new Date().getFullYear(),
+      pickClaude: "选择 .claude 文件夹", pickCodex: "选择 .codex 文件夹",
+      where: isMac ? "在你的用户文件夹里（/Users/你的名字）。看不到？在选择窗口里按 <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> 显示隐藏文件夹。"
+        : "在你的用户文件夹里（C:\\Users\\你的名字 或 /home/你的名字）。看不到的话，打开「显示隐藏文件」。",
+      onlyOne: "只用了其中一个？选一个就行。",
+      go: "生成我的报告", demo: "先看看示例", reading: "正在读取…", files: function (n) { return "✓ 读取了 " + n + " 个文件"; },
+      wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
+      privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
+      cli: "习惯用终端？", lang: "EN",
+    },
+    en: {
+      title: "Your AI Coding Wrapped", sub: "Claude Code × Codex · " + new Date().getFullYear(),
+      pickClaude: "Choose your .claude folder", pickCodex: "Choose your .codex folder",
+      where: isMac ? "They're in your home folder. Can't see them? Press <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> in the picker to show hidden folders."
+        : "They're in your home folder (C:\\Users\\you or /home/you). Turn on \"show hidden files\" if you can't see them.",
+      onlyOne: "Only use one of them? Just pick that one.",
+      go: "Make my Wrapped", demo: "See a demo", reading: "Reading…", files: function (n) { return "✓ Read " + n + " files"; },
+      wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
+      privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
+      cli: "Prefer the terminal?", lang: "中文",
+    },
+  };
+  function t() { return T[lang]; }
+
+  // ---------- reading folders ----------
+  // Which files we need, relative to the picked folder.
+  var WANT = {
+    claude: function (rel) { return rel === "history.jsonl" ? "history" : /^projects\/.+\.jsonl$/.test(rel) ? "log" : null; },
+    codex: function (rel) { return rel === "history.jsonl" ? "history" : /^(sessions|archived_sessions)\/.+\.jsonl$/.test(rel) ? "log" : null; },
+  };
+  var SUBDIRS = { claude: ["projects"], codex: ["sessions", "archived_sessions"] };
+
+  async function walk(dir, prefix, out) {
+    for await (var entry of dir.values()) {
+      var rel = prefix + entry.name;
+      if (entry.kind === "directory") await walk(entry, rel + "/", out);
+      else if (/\.jsonl$/.test(entry.name)) out.push({ rel: rel, file: await entry.getFile() });
+    }
+  }
+
+  /** File System Access API (Chrome, Edge): only walk the subfolders we need. */
+  async function pickWithHandle(kind) {
+    var dir = await window.showDirectoryPicker({ id: kind, mode: "read" });
+    try { dir = await dir.getDirectoryHandle("." + kind); } catch (e) { /* picked the home folder? no: use as is */ }
+    var out = [];
+    if (dir.name === "projects" || dir.name === "sessions") { await walk(dir, dir.name + "/", out); return out; }
+    try { out.push({ rel: "history.jsonl", file: await (await dir.getFileHandle("history.jsonl")).getFile() }); } catch (e) {}
+    for (var i = 0; i < SUBDIRS[kind].length; i++) {
+      try { await walk(await dir.getDirectoryHandle(SUBDIRS[kind][i]), SUBDIRS[kind][i] + "/", out); } catch (e) {}
+    }
+    return out;
+  }
+
+  /** Fallback (Safari, Firefox): <input webkitdirectory>. */
+  function pickWithInput() {
+    return new Promise(function (resolve) {
+      var input = document.createElement("input");
+      input.type = "file";
+      input.webkitdirectory = true;
+      input.multiple = true;
+      input.onchange = function () {
+        resolve(Array.prototype.map.call(input.files, function (f) {
+          var parts = (f.webkitRelativePath || f.name).split("/");
+          parts.shift(); // drop the picked folder's own name
+          if (parts[0] === ".claude" || parts[0] === ".codex") parts.shift();
+          return { rel: parts.join("/"), file: f };
+        }));
+      };
+      input.click();
+    });
+  }
+
+  async function pick(kind) {
+    var btn = document.getElementById("pick-" + kind), status = document.getElementById("st-" + kind);
+    var entries;
+    try {
+      entries = window.showDirectoryPicker ? await pickWithHandle(kind) : await pickWithInput();
+    } catch (e) {
+      if (e && e.name === "AbortError") return;
+      status.textContent = String(e.message || e);
+      return;
+    }
+    status.textContent = t().reading;
+    var logs = [], history = [];
+    for (var i = 0; i < entries.length; i++) {
+      var role = WANT[kind](entries[i].rel);
+      if (!role) continue;
+      var records = VWParse.parseJsonl(await entries[i].file.text());
+      if (role === "history") history = records;
+      else logs.push({ path: entries[i].rel, records: records });
+    }
+    if (!logs.length && !history.length) {
+      status.textContent = t().wrong(kind);
+      status.className = "st bad";
+      return;
+    }
+    S[kind] = { files: logs, history: history };
+    status.textContent = t().files(logs.length + (history.length ? 1 : 0));
+    status.className = "st ok";
+    btn.classList.add("done");
+    document.getElementById("go").disabled = false;
+  }
+
+  // ---------- compute + show ----------
+  function makeStats() {
+    var year = new Date().getFullYear();
+    var c = S.claude || { files: [], history: [] }, x = S.codex || { files: [], history: [] };
+    var cl = VWParse.parseClaude(c.files, c.history), cx = VWParse.parseCodex(x.files);
+    var stats = VWStats.computeStats({ sessions: cl.sessions.concat(cx.sessions), prompts: cl.prompts.concat(cx.prompts) }, { year: year });
+    stats.roast = VWRoast.computeRoast(VWParse.promptTexts(c.history, x.history), VWParse.replyTexts(c.files, x.files), { year: year });
+    return stats;
+  }
+
+  function show(stats) {
+    document.getElementById("landing").remove();
+    document.body.classList.add("playing");
+    window.VWReport(stats);
+  }
+
+  function render() {
+    var L = t();
+    document.getElementById("landing").innerHTML =
+      '<button class="chip lang" id="l-lang">' + L.lang + "</button>" +
+      '<div class="land">' +
+      '<div class="kicker">' + L.sub + "</div>" +
+      "<h1>" + L.title + "</h1>" +
+      '<div class="steps">' +
+      '<button class="pick" id="pick-claude"><span class="ico">🧡</span>' + L.pickClaude + '</button><div class="st" id="st-claude"></div>' +
+      '<button class="pick" id="pick-codex"><span class="ico">🖤</span>' + L.pickCodex + '</button><div class="st" id="st-codex"></div>' +
+      '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
+      "</div>" +
+      '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
+      '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
+      '<p class="privacy">' + L.privacy + "</p>" +
+      '<p class="cli">' + L.cli + " <code>npx vibe-wrapped</code></p>" +
+      "</div>";
+    document.getElementById("pick-claude").onclick = function () { pick("claude"); };
+    document.getElementById("pick-codex").onclick = function () { pick("codex"); };
+    document.getElementById("go").onclick = function () { show(makeStats()); };
+    document.getElementById("demo").onclick = function () { show(window.VW_DEMO); };
+    document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; render(); };
+  }
+
+  if (/[?&]demo\b/.test(location.search)) show(window.VW_DEMO);
+  else render();
+})();
+</script>
+</body>
+</html>
