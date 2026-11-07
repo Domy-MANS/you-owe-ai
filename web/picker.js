@@ -128,12 +128,12 @@
 
   // ---------- compute + show ----------
   function makeStats() {
-    var year = new Date().getFullYear();
     var c = S.claude || { files: [], history: [] }, x = S.codex || { files: [], history: [] };
     var cl = VWParse.parseClaude(c.files, c.history), cx = VWParse.parseCodex(x.files);
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
     S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    var year = VWStats.defaultYear(prompts);
     var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
     return stats;

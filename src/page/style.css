@@ -255,3 +255,8 @@ canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
 .rc-head { text-align: left; padding-right: 110px; }
 .stamp.red { font-size: clamp(17px, 4.4vw, 26px); right: -12px; }
 .still .slide.on .stamp { animation: none; }
+
+/* receipt printer */
+.printed { animation: printin 0.2s steps(3, end) both; animation-delay: var(--d, 0s); }
+@keyframes printin { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-5px); } to { opacity: 1; clip-path: inset(0); transform: none; } }
+.still .printed { animation: none; }

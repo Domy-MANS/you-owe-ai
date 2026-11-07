@@ -431,7 +431,7 @@ window.VWReport = function (DATA) {
       '<div class="rc-row"><span>' + K.client + "</span><b>" + (D.shared ? K.them : K.you) + "</b></div>" +
       '<div class="rc-row"><span>' + K.period + "</span><b>" + K.periodV + "</b></div>" +
       '<div class="rc-row"><span>' + K.vendor + "</span><b>" + (sources().map(function (x) { return x.name; }).join(" × ") || "Claude Code × Codex") + "</b></div>" +
-      '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total">' + money(C.total) + "</div>" +
+      '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>") +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
@@ -520,6 +520,15 @@ window.VWReport = function (DATA) {
     stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.deco + s.html + "</section>"; }).join("");
     barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
     document.getElementById("lang").textContent = t().lang;
+    var snd = document.getElementById("snd");
+    if (snd) {
+      snd.textContent = soundOn ? "🔊" : "🔇";
+      snd.onclick = function (e) {
+        e.stopPropagation(); soundOn = !soundOn; snd.textContent = soundOn ? "🔊" : "🔇";
+        try { localStorage.setItem("vw-sound", soundOn ? "on" : "off"); } catch (err) {}
+        if (soundOn) audio();
+      };
+    }
     document.getElementById("hint").textContent = t().next;
     var dl = document.getElementById("dl"), again = document.getElementById("again");
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
@@ -536,7 +545,55 @@ window.VWReport = function (DATA) {
 
   if (still) document.documentElement.classList.add("still");
 
+  // ---- receipt printer: lines print one by one, the total ticks up, the stamp lands ----
+  var soundOn = (function () { try { return localStorage.getItem("vw-sound") !== "off"; } catch (e) { return true; } })();
+  var ac = null;
+  function audio() {
+    if (!soundOn) return null;
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); return ac.state === "running" ? ac : null; } catch (e) { return null; }
+  }
+  function tick(at) { // one printer line: a short filtered burst of noise
+    var a = audio(); if (!a) return;
+    var len = Math.floor(a.sampleRate * 0.035), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    var src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf; f.type = "bandpass"; f.frequency.value = 3200; f.Q.value = 0.8; g.gain.value = 0.05;
+    src.connect(f); f.connect(g); g.connect(a.destination); src.start(a.currentTime + at);
+  }
+  function thud(at) { // the stamp
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime + at;
+    o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.15);
+    g.gain.setValueAtTime(0.22, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.2);
+    o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + 0.22);
+  }
+  var PRINT = ".rc-head, .rc-title, .rc-row, .rc-item, .rc-sub, hr.rc, .rc-label, .rc-total, .rc-note, .rc-meme, .rc-facts, .rc-quote, .rc-stars, .rc-persona, .rc-clock, .rc-axis";
+  function printReceipt(el) {
+    var rc = el.querySelector(".receipt");
+    if (!rc || still) return;
+    var lines = rc.querySelectorAll(PRINT), start = 0.35, step = 0.11;
+    lines.forEach(function (ln, i) {
+      ln.classList.remove("printed"); void ln.offsetWidth;
+      ln.style.setProperty("--d", (start + i * step).toFixed(2) + "s"); ln.classList.add("printed");
+      tick(start + i * step);
+    });
+    var done = start + lines.length * step + 0.15;
+    if (el.querySelector("[data-amt]")) done = Math.max(done, start + 5 * step + 1.1 + 0.15); // stamp after the total settles
+    var st = el.querySelector(".stamp");
+    if (st) { st.style.animation = "none"; void st.offsetWidth; st.style.animation = ""; st.style.animationDelay = done.toFixed(2) + "s"; thud(done + 0.12); }
+    el.querySelectorAll("[data-amt]").forEach(function (n) {
+      var target = parseFloat(n.getAttribute("data-amt")), begin = performance.now() + (start + 5 * step) * 1000, dur = 1100;
+      n.textContent = money(0);
+      (function run(now) {
+        var p = Math.max(0, Math.min(1, (now - begin) / dur)), e = 1 - Math.pow(1 - p, 3);
+        n.textContent = money(target * e);
+        if (p < 1) requestAnimationFrame(run);
+      })(performance.now());
+    });
+  }
+
   function animateIn(el) {
+    printReceipt(el);
     el.querySelectorAll("[data-count]").forEach(function (n) {
       if (still) { var v = parseFloat(n.getAttribute("data-count")); n.textContent = v % 1 ? v.toFixed(1) : fmt(v); return; }
       var target = parseFloat(n.getAttribute("data-count")), t0 = performance.now(), dec = target % 1 ? 1 : 0;

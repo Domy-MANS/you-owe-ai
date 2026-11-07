@@ -147,7 +147,19 @@ function computeStats({ sessions, prompts }, { year }) {
   };
 }
 
-var api = { computeStats, categoryOf, longestStreak, localDay };
+/**
+ * Which year to bill when none is given. Wrapped season runs into January,
+ * so early in the year, bill last year if it has more activity.
+ */
+function defaultYear(prompts, now = new Date()) {
+  const y = now.getFullYear();
+  if (now.getMonth() > 1) return y;
+  let cur = 0, prev = 0;
+  for (const p of prompts) { const py = new Date(p.ts).getFullYear(); if (py === y) cur++; else if (py === y - 1) prev++; }
+  return prev > cur ? y - 1 : y;
+}
+
+var api = { computeStats, categoryOf, longestStreak, localDay, defaultYear };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.VWStats = api;
 })(typeof self !== "undefined" ? self : this);

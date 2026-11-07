@@ -4,8 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
-<title>You Owe AI: your year of AI coding</title>
-<meta name="description" content="Spotify-Wrapped for Claude Code and Codex. Runs entirely in your browser.">
+<title>How much do you owe AI?</title>
+<meta name="description" content="Your AI just sent you an invoice: emotional damages, noise pollution, night shifts. A roast of your year with Claude Code, Codex and ChatGPT. Runs entirely in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="You Owe AI">
+<meta property="og:title" content="How much do you owe AI? 你欠 AI 多少钱？">
+<meta property="og:description" content="Your AI just sent you an invoice. Emotional damages, noise pollution, night shifts, and a politeness discount for every thanks.">
+<meta property="og:url" content="https://domy-mans.github.io/you-owe-ai/">
+<meta property="og:image" content="https://domy-mans.github.io/you-owe-ai/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="How much do you owe AI?">
+<meta name="twitter:description" content="Your AI just sent you an invoice. A roast of your year with Claude Code, Codex and ChatGPT.">
+<meta name="twitter:image" content="https://domy-mans.github.io/you-owe-ai/img/og.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%BE%3C/text%3E%3C/svg%3E">
 <style>:root {
   --fg: #fff;
   --dim: rgba(255, 255, 255, 0.72);
@@ -264,6 +277,11 @@ canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
 .stamp.red { font-size: clamp(17px, 4.4vw, 26px); right: -12px; }
 .still .slide.on .stamp { animation: none; }
 
+/* receipt printer */
+.printed { animation: printin 0.2s steps(3, end) both; animation-delay: var(--d, 0s); }
+@keyframes printin { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(-5px); } to { opacity: 1; clip-path: inset(0); transform: none; } }
+.still .printed { animation: none; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -333,11 +351,11 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 </head>
 <body>
 <div class="bars" id="bars"></div>
-<div class="top"><button class="chip" id="lang"></button></div>
+<div class="top"><button class="chip" id="snd" aria-label="Sound"></button><button class="chip" id="lang"></button></div>
 <main id="stage"></main>
 <div class="hint" id="hint"></div>
 <div id="landing"></div>
-<script>var VW_DEMO = {"year":2026,"empty":false,"firstDay":"2026-01-08","sessions":348,"prompts":5219,"workHours":142.4211173676937,"tokens":{"input":15657000,"output":9394200,"cacheRead":469710000,"cacheWrite":41752000},"totalTokens":536513200,"byTool":{"claude":{"sessions":217,"prompts":3086,"tokens":317240800},"codex":{"sessions":131,"prompts":2133,"tokens":219272400}},"toolCalls":15657,"topTools":[{"name":"exec","count":3305},{"name":"Bash","count":2585},{"name":"apply_patch","count":2051},{"name":"Edit","count":1744},{"name":"Read","count":1586}],"categories":[{"name":"shell","count":5890},{"name":"edit","count":4591},{"name":"read","count":2386},{"name":"web","count":1884},{"name":"agents","count":906}],"topModels":[{"name":"gpt-6-astra","count":2133},{"name":"claude-opus-5-5","count":2040},{"name":"claude-sonnet-5-5","count":1046}],"topProjects":[{"name":"robot-arm-firmware","count":1067},{"name":"portfolio-site","count":1029},{"name":"ml-homework","count":933},{"name":"discord-bot","count":851},{"name":"dotfiles","count":815}],"hours":[805,434,492,301,19,0,0,0,0,0,209,173,10,0,160,322,373,192,14,0,188,420,418,689],"weekdays":[968,777,571,890,737,588,688],"days":{"2026-01-08":19,"2026-01-09":12,"2026-01-11":46,"2026-01-15":19,"2026-01-16":13,"2026-01-17":36,"2026-01-18":47,"2026-01-22":36,"2026-01-24":36,"2026-01-25":7,"2026-01-26":22,"2026-01-27":6,"2026-01-28":37,"2026-01-29":65,"2026-01-31":45,"2026-02-01":42,"2026-02-03":24,"2026-02-04":21,"2026-02-06":29,"2026-02-11":5,"2026-02-12":34,"2026-02-14":8,"2026-02-15":37,"2026-02-16":23,"2026-02-17":11,"2026-02-19":23,"2026-02-20":13,"2026-02-21":24,"2026-02-23":20,"2026-03-01":37,"2026-03-02":30,"2026-03-04":23,"2026-03-05":10,"2026-03-06":28,"2026-03-07":6,"2026-03-08":52,"2026-03-09":30,"2026-03-15":16,"2026-03-16":31,"2026-03-17":66,"2026-03-21":13,"2026-03-22":48,"2026-03-23":31,"2026-03-28":41,"2026-04-04":26,"2026-04-05":29,"2026-04-06":52,"2026-04-08":48,"2026-04-10":51,"2026-04-12":44,"2026-04-13":15,"2026-04-14":32,"2026-04-15":30,"2026-04-16":13,"2026-04-17":16,"2026-04-18":50,"2026-04-19":35,"2026-04-21":55,"2026-04-22":53,"2026-04-23":10,"2026-04-25":15,"2026-04-26":18,"2026-04-27":17,"2026-04-28":37,"2026-04-30":12,"2026-05-01":9,"2026-05-02":31,"2026-05-06":36,"2026-05-10":39,"2026-05-13":46,"2026-05-14":32,"2026-05-18":22,"2026-05-20":32,"2026-05-22":22,"2026-05-25":40,"2026-05-26":23,"2026-05-27":42,"2026-05-28":34,"2026-05-30":22,"2026-05-31":54,"2026-06-05":40,"2026-06-06":8,"2026-06-10":41,"2026-06-11":14,"2026-06-13":10,"2026-06-14":44,"2026-06-15":14,"2026-06-24":27,"2026-06-25":7,"2026-06-27":7,"2026-07-01":3,"2026-07-04":26,"2026-07-06":52,"2026-07-13":31,"2026-07-15":13,"2026-07-16":25,"2026-07-19":38,"2026-07-21":3,"2026-07-22":28,"2026-07-23":13,"2026-07-24":19,"2026-07-25":10,"2026-07-26":25,"2026-07-27":5,"2026-07-29":25,"2026-07-30":18,"2026-07-31":37,"2026-08-01":41,"2026-08-02":18,"2026-08-03":13,"2026-08-05":15,"2026-08-06":43,"2026-08-07":4,"2026-08-08":20,"2026-08-09":23,"2026-08-10":5,"2026-08-11":49,"2026-08-13":26,"2026-08-14":28,"2026-08-15":35,"2026-08-16":12,"2026-08-17":44,"2026-08-18":32,"2026-08-19":37,"2026-08-20":50,"2026-08-21":27,"2026-08-22":30,"2026-08-23":26,"2026-08-25":15,"2026-08-26":43,"2026-08-27":28,"2026-08-28":26,"2026-08-29":9,"2026-08-30":44,"2026-08-31":38,"2026-09-01":34,"2026-09-03":30,"2026-09-04":22,"2026-09-06":5,"2026-09-07":2,"2026-09-08":14,"2026-09-09":34,"2026-09-11":68,"2026-09-12":32,"2026-09-13":36,"2026-09-14":58,"2026-09-15":4,"2026-09-16":61,"2026-09-19":6,"2026-09-20":12,"2026-09-21":34,"2026-09-22":40,"2026-09-23":11,"2026-09-24":34,"2026-09-25":36,"2026-09-26":17,"2026-09-27":6,"2026-09-28":10,"2026-09-30":24,"2026-10-01":29,"2026-10-02":18,"2026-10-03":13,"2026-10-04":4,"2026-10-05":18,"2026-10-06":37,"2026-10-07":34,"2026-10-09":7,"2026-10-10":7,"2026-10-11":22,"2026-10-12":29,"2026-10-13":34,"2026-10-14":21,"2026-10-15":10,"2026-10-16":8,"2026-10-17":13,"2026-10-18":39,"2026-10-19":17,"2026-10-20":24,"2026-10-21":34,"2026-10-22":3,"2026-10-23":22,"2026-10-24":29,"2026-10-25":10,"2026-10-26":27,"2026-10-27":31,"2026-10-28":35,"2026-10-29":50,"2026-10-30":11,"2026-10-31":22,"2026-11-01":53,"2026-11-02":47,"2026-11-04":31,"2026-11-05":50,"2026-11-06":22},"activeDays":194,"busiestDay":{"date":"2026-09-11","prompts":68},"peakHour":0,"streak":{"days":25,"end":"2026-11-02"},"biggestSession":{"project":"startup-mvp","prompts":27,"tool":"codex"},"shares":{"night":0.6050967618317685,"dawn":0,"weekend":0.31730216516574056},"persona":"night","roast":{"prompts":5219,"you":{"deny":412,"again":97,"why":230,"thanks":61,"please":18,"swear":23,"lost":388,"whatNext":74,"lazyYes":301},"ai":{"sorry":156,"flatter":89,"done":1204},"catchphrases":[{"text":"continue","count":188},{"text":"still broken","count":41},{"text":"what next","count":37},{"text":"why is it erroring again","count":12},{"text":"can you hurry up","count":9}],"catchphrases_zh":[{"text":"继续","count":188},{"text":"还是不行","count":41},{"text":"然后呢","count":37},{"text":"为什么又报错了","count":12},{"text":"能不能快点","count":9}],"angriestDay":{"date":"2026-10-07","count":34},"latest":{"time":"4:54","day":"2026-08-11"},"tinyShare":0.31,"medianLength":22},"demo":true};</script>
+<script>var VW_DEMO = {"year":2026,"empty":false,"firstDay":"2026-01-08","sessions":351,"prompts":5264,"workHours":143.73504067097994,"tokens":{"input":15792000,"output":9475200,"cacheRead":473760000,"cacheWrite":42112000},"totalTokens":541139200,"byTool":{"claude":{"sessions":219,"prompts":3123,"tokens":321044400},"codex":{"sessions":132,"prompts":2141,"tokens":220094800}},"toolCalls":15792,"topTools":[{"name":"exec","count":3316},{"name":"Bash","count":2616},{"name":"apply_patch","count":2060},{"name":"Edit","count":1769},{"name":"Read","count":1603}],"categories":[{"name":"shell","count":5932},{"name":"edit","count":4637},{"name":"read","count":2410},{"name":"web","count":1899},{"name":"agents","count":914}],"topModels":[{"name":"gpt-6-astra","count":2141},{"name":"claude-opus-5-5","count":2067},{"name":"claude-sonnet-5-5","count":1056}],"topProjects":[{"name":"robot-arm-firmware","count":1102},{"name":"portfolio-site","count":1029},{"name":"ml-homework","count":933},{"name":"discord-bot","count":851},{"name":"dotfiles","count":825}],"hours":[808,441,492,301,19,0,0,0,0,0,209,173,10,0,160,322,383,207,16,0,196,420,418,689],"weekdays":[968,777,571,890,737,588,733],"days":{"2026-01-08":19,"2026-01-09":12,"2026-01-11":46,"2026-01-15":19,"2026-01-16":13,"2026-01-17":36,"2026-01-18":47,"2026-01-22":36,"2026-01-24":36,"2026-01-25":7,"2026-01-26":22,"2026-01-27":6,"2026-01-28":37,"2026-01-29":65,"2026-01-31":45,"2026-02-01":42,"2026-02-03":24,"2026-02-04":21,"2026-02-06":29,"2026-02-11":5,"2026-02-12":34,"2026-02-14":8,"2026-02-15":37,"2026-02-16":23,"2026-02-17":11,"2026-02-19":23,"2026-02-20":13,"2026-02-21":24,"2026-02-23":20,"2026-03-01":37,"2026-03-02":30,"2026-03-04":23,"2026-03-05":10,"2026-03-06":28,"2026-03-07":6,"2026-03-08":52,"2026-03-09":30,"2026-03-15":16,"2026-03-16":31,"2026-03-17":66,"2026-03-21":13,"2026-03-22":48,"2026-03-23":31,"2026-03-28":41,"2026-04-04":26,"2026-04-05":29,"2026-04-06":52,"2026-04-08":48,"2026-04-10":51,"2026-04-12":44,"2026-04-13":15,"2026-04-14":32,"2026-04-15":30,"2026-04-16":13,"2026-04-17":16,"2026-04-18":50,"2026-04-19":35,"2026-04-21":55,"2026-04-22":53,"2026-04-23":10,"2026-04-25":15,"2026-04-26":18,"2026-04-27":17,"2026-04-28":37,"2026-04-30":12,"2026-05-01":9,"2026-05-02":31,"2026-05-06":36,"2026-05-10":39,"2026-05-13":46,"2026-05-14":32,"2026-05-18":22,"2026-05-20":32,"2026-05-22":22,"2026-05-25":40,"2026-05-26":23,"2026-05-27":42,"2026-05-28":34,"2026-05-30":22,"2026-05-31":54,"2026-06-05":40,"2026-06-06":8,"2026-06-10":41,"2026-06-11":14,"2026-06-13":10,"2026-06-14":44,"2026-06-15":14,"2026-06-24":27,"2026-06-25":7,"2026-06-27":7,"2026-07-01":3,"2026-07-04":26,"2026-07-06":52,"2026-07-13":31,"2026-07-15":13,"2026-07-16":25,"2026-07-19":38,"2026-07-21":3,"2026-07-22":28,"2026-07-23":13,"2026-07-24":19,"2026-07-25":10,"2026-07-26":25,"2026-07-27":5,"2026-07-29":25,"2026-07-30":18,"2026-07-31":37,"2026-08-01":41,"2026-08-02":18,"2026-08-03":13,"2026-08-05":15,"2026-08-06":43,"2026-08-07":4,"2026-08-08":20,"2026-08-09":23,"2026-08-10":5,"2026-08-11":49,"2026-08-13":26,"2026-08-14":28,"2026-08-15":35,"2026-08-16":12,"2026-08-17":44,"2026-08-18":32,"2026-08-19":37,"2026-08-20":50,"2026-08-21":27,"2026-08-22":30,"2026-08-23":26,"2026-08-25":15,"2026-08-26":43,"2026-08-27":28,"2026-08-28":26,"2026-08-29":9,"2026-08-30":44,"2026-08-31":38,"2026-09-01":34,"2026-09-03":30,"2026-09-04":22,"2026-09-06":5,"2026-09-07":2,"2026-09-08":14,"2026-09-09":34,"2026-09-11":68,"2026-09-12":32,"2026-09-13":36,"2026-09-14":58,"2026-09-15":4,"2026-09-16":61,"2026-09-19":6,"2026-09-20":12,"2026-09-21":34,"2026-09-22":40,"2026-09-23":11,"2026-09-24":34,"2026-09-25":36,"2026-09-26":17,"2026-09-27":6,"2026-09-28":10,"2026-09-30":24,"2026-10-01":29,"2026-10-02":18,"2026-10-03":13,"2026-10-04":4,"2026-10-05":18,"2026-10-06":37,"2026-10-07":34,"2026-10-09":7,"2026-10-10":7,"2026-10-11":22,"2026-10-12":29,"2026-10-13":34,"2026-10-14":21,"2026-10-15":10,"2026-10-16":8,"2026-10-17":13,"2026-10-18":39,"2026-10-19":17,"2026-10-20":24,"2026-10-21":34,"2026-10-22":3,"2026-10-23":22,"2026-10-24":29,"2026-10-25":10,"2026-10-26":27,"2026-10-27":31,"2026-10-28":35,"2026-10-29":50,"2026-10-30":11,"2026-10-31":22,"2026-11-01":53,"2026-11-02":47,"2026-11-04":31,"2026-11-05":50,"2026-11-06":22,"2026-11-07":45},"activeDays":195,"busiestDay":{"date":"2026-09-11","prompts":68},"peakHour":0,"streak":{"days":25,"end":"2026-11-02"},"biggestSession":{"project":"startup-mvp","prompts":27,"tool":"codex"},"shares":{"night":0.601823708206687,"dawn":0,"weekend":0.32313829787234044},"persona":"night","roast":{"prompts":5219,"you":{"deny":412,"again":97,"why":230,"thanks":61,"please":18,"swear":23,"lost":388,"whatNext":74,"lazyYes":301},"ai":{"sorry":156,"flatter":89,"done":1204},"catchphrases":[{"text":"continue","count":188},{"text":"still broken","count":41},{"text":"what next","count":37},{"text":"why is it erroring again","count":12},{"text":"can you hurry up","count":9}],"catchphrases_zh":[{"text":"继续","count":188},{"text":"还是不行","count":41},{"text":"然后呢","count":37},{"text":"为什么又报错了","count":12},{"text":"能不能快点","count":9}],"angriestDay":{"date":"2026-10-07","count":34},"latest":{"time":"4:54","day":"2026-08-11"},"tinyShare":0.31,"medianLength":22},"demo":true};</script>
 <script>/**
  * Log parsing that runs in both Node and the browser.
  * Input is already-read files: [{ path, records: [...parsed JSON lines] }].
@@ -672,7 +690,19 @@ function computeStats({ sessions, prompts }, { year }) {
   };
 }
 
-var api = { computeStats, categoryOf, longestStreak, localDay };
+/**
+ * Which year to bill when none is given. Wrapped season runs into January,
+ * so early in the year, bill last year if it has more activity.
+ */
+function defaultYear(prompts, now = new Date()) {
+  const y = now.getFullYear();
+  if (now.getMonth() > 1) return y;
+  let cur = 0, prev = 0;
+  for (const p of prompts) { const py = new Date(p.ts).getFullYear(); if (py === y) cur++; else if (py === y - 1) prev++; }
+  return prev > cur ? y - 1 : y;
+}
+
+var api = { computeStats, categoryOf, longestStreak, localDay, defaultYear };
 if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.VWStats = api;
 })(typeof self !== "undefined" ? self : this);
@@ -1319,7 +1349,7 @@ window.VWReport = function (DATA) {
       '<div class="rc-row"><span>' + K.client + "</span><b>" + (D.shared ? K.them : K.you) + "</b></div>" +
       '<div class="rc-row"><span>' + K.period + "</span><b>" + K.periodV + "</b></div>" +
       '<div class="rc-row"><span>' + K.vendor + "</span><b>" + (sources().map(function (x) { return x.name; }).join(" × ") || "Claude Code × Codex") + "</b></div>" +
-      '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total">' + money(C.total) + "</div>" +
+      '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>") +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
@@ -1408,6 +1438,15 @@ window.VWReport = function (DATA) {
     stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.deco + s.html + "</section>"; }).join("");
     barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
     document.getElementById("lang").textContent = t().lang;
+    var snd = document.getElementById("snd");
+    if (snd) {
+      snd.textContent = soundOn ? "🔊" : "🔇";
+      snd.onclick = function (e) {
+        e.stopPropagation(); soundOn = !soundOn; snd.textContent = soundOn ? "🔊" : "🔇";
+        try { localStorage.setItem("vw-sound", soundOn ? "on" : "off"); } catch (err) {}
+        if (soundOn) audio();
+      };
+    }
     document.getElementById("hint").textContent = t().next;
     var dl = document.getElementById("dl"), again = document.getElementById("again");
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
@@ -1424,7 +1463,55 @@ window.VWReport = function (DATA) {
 
   if (still) document.documentElement.classList.add("still");
 
+  // ---- receipt printer: lines print one by one, the total ticks up, the stamp lands ----
+  var soundOn = (function () { try { return localStorage.getItem("vw-sound") !== "off"; } catch (e) { return true; } })();
+  var ac = null;
+  function audio() {
+    if (!soundOn) return null;
+    try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); return ac.state === "running" ? ac : null; } catch (e) { return null; }
+  }
+  function tick(at) { // one printer line: a short filtered burst of noise
+    var a = audio(); if (!a) return;
+    var len = Math.floor(a.sampleRate * 0.035), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    var src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf; f.type = "bandpass"; f.frequency.value = 3200; f.Q.value = 0.8; g.gain.value = 0.05;
+    src.connect(f); f.connect(g); g.connect(a.destination); src.start(a.currentTime + at);
+  }
+  function thud(at) { // the stamp
+    var a = audio(); if (!a) return;
+    var o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime + at;
+    o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.15);
+    g.gain.setValueAtTime(0.22, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.2);
+    o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + 0.22);
+  }
+  var PRINT = ".rc-head, .rc-title, .rc-row, .rc-item, .rc-sub, hr.rc, .rc-label, .rc-total, .rc-note, .rc-meme, .rc-facts, .rc-quote, .rc-stars, .rc-persona, .rc-clock, .rc-axis";
+  function printReceipt(el) {
+    var rc = el.querySelector(".receipt");
+    if (!rc || still) return;
+    var lines = rc.querySelectorAll(PRINT), start = 0.35, step = 0.11;
+    lines.forEach(function (ln, i) {
+      ln.classList.remove("printed"); void ln.offsetWidth;
+      ln.style.setProperty("--d", (start + i * step).toFixed(2) + "s"); ln.classList.add("printed");
+      tick(start + i * step);
+    });
+    var done = start + lines.length * step + 0.15;
+    if (el.querySelector("[data-amt]")) done = Math.max(done, start + 5 * step + 1.1 + 0.15); // stamp after the total settles
+    var st = el.querySelector(".stamp");
+    if (st) { st.style.animation = "none"; void st.offsetWidth; st.style.animation = ""; st.style.animationDelay = done.toFixed(2) + "s"; thud(done + 0.12); }
+    el.querySelectorAll("[data-amt]").forEach(function (n) {
+      var target = parseFloat(n.getAttribute("data-amt")), begin = performance.now() + (start + 5 * step) * 1000, dur = 1100;
+      n.textContent = money(0);
+      (function run(now) {
+        var p = Math.max(0, Math.min(1, (now - begin) / dur)), e = 1 - Math.pow(1 - p, 3);
+        n.textContent = money(target * e);
+        if (p < 1) requestAnimationFrame(run);
+      })(performance.now());
+    });
+  }
+
   function animateIn(el) {
+    printReceipt(el);
     el.querySelectorAll("[data-count]").forEach(function (n) {
       if (still) { var v = parseFloat(n.getAttribute("data-count")); n.textContent = v % 1 ? v.toFixed(1) : fmt(v); return; }
       var target = parseFloat(n.getAttribute("data-count")), t0 = performance.now(), dec = target % 1 ? 1 : 0;
@@ -1837,12 +1924,12 @@ if (window.DATA) window.VWReport(window.DATA);
 
   // ---------- compute + show ----------
   function makeStats() {
-    var year = new Date().getFullYear();
     var c = S.claude || { files: [], history: [] }, x = S.codex || { files: [], history: [] };
     var cl = VWParse.parseClaude(c.files, c.history), cx = VWParse.parseCodex(x.files);
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
     S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    var year = VWStats.defaultYear(prompts);
     var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
     return stats;

@@ -113,3 +113,12 @@ test("report forbids all network access via CSP", () => {
   assert.match(csp, /connect-src 'none'/);
   assert.doesNotMatch(csp, /https?:/);
 });
+
+test("default year: January bills last year if it was busier", () => {
+  const { defaultYear } = require("../src/core/stats");
+  const at = (iso) => ({ ts: Date.parse(iso) });
+  const last = [at("2026-12-01T10:00:00"), at("2026-12-02T10:00:00"), at("2026-11-02T10:00:00")];
+  assert.equal(defaultYear([...last, at("2027-01-03T10:00:00")], new Date("2027-01-05T12:00:00")), 2026);
+  assert.equal(defaultYear([at("2027-01-03T10:00:00"), at("2027-01-04T10:00:00"), at("2026-12-01T10:00:00")], new Date("2027-01-05T12:00:00")), 2027);
+  assert.equal(defaultYear(last, new Date("2027-04-01T12:00:00")), 2027); // spring: always this year
+});

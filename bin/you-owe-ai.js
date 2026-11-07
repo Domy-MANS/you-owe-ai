@@ -6,7 +6,7 @@ const path = require("node:path");
 const { execFile } = require("node:child_process");
 const { parseClaude } = require("../src/claude");
 const { parseCodex } = require("../src/codex");
-const { computeStats } = require("../src/core/stats");
+const { computeStats, defaultYear } = require("../src/core/stats");
 const { renderHtml } = require("../src/render");
 const { demoData, demoRoast } = require("../src/demo");
 const { collectPrompts, collectReplies, computeRoast } = require("../src/roast");
@@ -31,7 +31,7 @@ Usage: npx github:Domy-MANS/you-owe-ai [options]
 `;
 
 function parseArgs(argv) {
-  const o = { year: new Date().getFullYear(), open: true, imports: [] };
+  const o = { year: null, open: true, imports: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === "-h" || a === "--help") o.help = true;
@@ -45,7 +45,7 @@ function parseArgs(argv) {
     else if (a === "--no-open") o.open = false;
     else throw new Error(`Unknown option: ${a} (see --help)`);
   }
-  if (!Number.isInteger(o.year)) throw new Error("--year needs a 4-digit year");
+  if (o.year !== null && !Number.isInteger(o.year)) throw new Error("--year needs a 4-digit year");
   return o;
 }
 
@@ -66,7 +66,7 @@ async function main() {
   if (o.help) return console.log(HELP);
 
   let data, texts = [], replies = [];
-  if (o.demo) data = demoData(o.year);
+  if (o.demo) data = demoData(o.year || new Date().getFullYear());
   else {
     const c = parseClaude(), x = parseCodex();
     data = { sessions: [...c.sessions, ...x.sessions], prompts: [...c.prompts, ...x.prompts] };
@@ -82,6 +82,7 @@ async function main() {
       process.exit(1);
     }
   }
+  if (o.year === null) o.year = o.demo ? new Date().getFullYear() : defaultYear(data.prompts);
   const stats = computeStats(data, { year: o.year });
   stats.demo = !!o.demo;
   if (o.hideProjects) stats.topProjects = [];
