@@ -691,11 +691,14 @@ window.VWReport = function (DATA) {
     if (e.key === "ArrowRight" || e.key === " ") go(idx + 1);
     if (e.key === "ArrowLeft") go(idx - 1);
   });
-  document.getElementById("lang").onclick = function () {
+  function toggleLang() {
     lang = lang === "zh" ? "en" : "zh";
     try { localStorage.setItem("vw-lang", lang); } catch (e) {}
     var keep = idx; build(); go(keep);
-  };
+    window.dispatchEvent(new Event("vw-lang")); // the incoming call follows the language
+  }
+  window.VWToggleLang = toggleLang;
+  document.getElementById("lang").onclick = toggleLang;
 
   // ---------- share card: the receipt ----------
   function drawCard(cv) {

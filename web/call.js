@@ -39,6 +39,10 @@
     },
   };
   function t() { return T[window.VW_LANG === "zh" ? "zh" : "en"]; }
+  var relabelers = [];
+  function onLang(fn) { relabelers.push(fn); fn(); return fn; }
+  function offLang(fn) { relabelers = relabelers.filter(function (f) { return f !== fn; }); }
+  window.addEventListener("vw-lang", function () { relabelers.forEach(function (f) { f(); }); });
   function el(html) { var d = document.createElement("div"); d.innerHTML = html; return d.firstChild; }
 
   // ---- ringtone (Web Audio, no files) + vibration ----
@@ -67,18 +71,21 @@
   var shown = false;
   function incoming(onImported) {
     if (shown) return; shown = true;
-    var L = t();
-    var bar = el('<div class="call-bar"><div class="call-av">🤖</div><div class="call-who"><b>' + L.caller + "</b><span>" + L.incoming +
-      '</span></div><button class="call-btn no" aria-label="' + L.decline + '">✕</button><button class="call-btn yes" aria-label="' + L.accept + '">✆</button></div>');
+    var bar = el('<div class="call-bar"><div class="call-av">🤖</div><div class="call-who"><b></b><span></span></div><button class="call-btn no">✕</button><button class="call-btn yes">✆</button></div>');
+    var relabelBar = onLang(function () {
+      var L = t();
+      bar.querySelector(".call-who b").textContent = L.caller; bar.querySelector(".call-who span").textContent = L.incoming;
+      bar.querySelector(".no").setAttribute("aria-label", L.decline); bar.querySelector(".yes").setAttribute("aria-label", L.accept);
+    });
     bar.onclick = function (e) { e.stopPropagation(); }; // taps on the banner don't turn the page
     document.body.appendChild(bar);
     requestAnimationFrame(function () { bar.classList.add("in"); });
     ring(); ringTimer = setInterval(ring, 2600);
     var giveUp = setTimeout(function () { close("missed"); }, 20000);
     function close(how) { // "declined", "missed", or "answered"
-      stopRing(); clearTimeout(giveUp);
+      stopRing(); clearTimeout(giveUp); offLang(relabelBar);
       if (how === "answered") { bar.classList.remove("in"); setTimeout(function () { bar.remove(); }, 400); return; }
-      flyToCorner(bar, function () { missedBadge(how === "declined" ? L.declined : L.missed, onImported); });
+      flyToCorner(bar, function () { missedBadge(how, onImported); });
     }
     bar.querySelector(".no").onclick = function (e) { e.stopPropagation(); close("declined"); };
     bar.querySelector(".yes").onclick = function (e) { e.stopPropagation(); close("answered"); answer(onImported); };
@@ -94,13 +101,13 @@
   }
 
   /** A little phone with a red "1" on the right edge. Tap to call back. */
-  function missedBadge(label, onImported) {
+  function missedBadge(how, onImported) {
     var old = document.querySelector(".call-missed"); if (old) old.remove();
-    var L = t();
-    var m = el('<button class="call-missed" aria-label="' + L.callBack + '"><span class="ph">📞</span><span class="dot">1</span><span class="tag">' + label + "</span></button>");
+    var m = el('<button class="call-missed"><span class="ph">📞</span><span class="dot">1</span><span class="tag"></span></button>');
+    var relabel = onLang(function () { var L = t(); m.setAttribute("aria-label", L.callBack); m.querySelector(".tag").textContent = how === "declined" ? L.declined : L.missed; });
     document.body.appendChild(m);
     setTimeout(function () { m.classList.add("quiet"); }, 3500); // the label fades, the badge stays
-    m.onclick = function (e) { e.stopPropagation(); m.remove(); answer(onImported); };
+    m.onclick = function (e) { e.stopPropagation(); offLang(relabel); m.remove(); answer(onImported); };
   }
 
   function toast(text) {
@@ -112,39 +119,57 @@
 
   // ---- the call itself: AI talks, then you hand over the export ----
   function answer(onImported, opts) {
-    var L = t(), secs = 0, quiet = opts && opts.quiet;
-    var ov = el('<div class="call-ov"><div class="call-top"><div class="call-av big">🤖</div><b>' + L.caller + '</b><span class="call-time">' + L.talking + ' 00:00</span></div>' +
+    var quiet = opts && opts.quiet;
+    // state, so a language switch can redraw every piece of text
+    var st = { secs: 0, said: 0, steps: null, drop: "idle", result: null };
+    var ov = el('<div class="call-ov' + (quiet ? " quiet" : "") + '"><button class="chip seg call-lang"></button>' +
+      '<div class="call-top"><div class="call-av big">🤖</div><b class="call-name"></b><span class="call-time"></span></div>' +
       '<div class="call-lines"></div><div class="call-import" hidden>' +
-      '<div class="call-pick"><button class="call-opt" data-k="gpt">' + L.gpt + '</button><button class="call-opt" data-k="cla">' + L.cla + "</button></div>" +
-      '<p class="call-steps"></p><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span>' + L.drop + '</span></label>' +
-      '<p class="call-later">' + L.later + '</p></div><button class="call-btn no end">✕</button></div>');
+      '<div class="call-pick"><button class="call-opt" data-k="gpt"></button><button class="call-opt" data-k="cla"></button></div>' +
+      '<p class="call-steps"></p><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span></span></label>' +
+      '<p class="call-later"></p></div><button class="call-btn no end">✕</button></div>');
     document.body.appendChild(ov);
-    var clock = setInterval(function () { secs++; ov.querySelector(".call-time").textContent = L.talking + " 00:" + String(secs).padStart(2, "0"); }, 1000);
-    var box = ov.querySelector(".call-lines");
-    var lines = quiet ? [] : L.lines(window.VW_TOTAL || "?");
-    lines.forEach(function (line, i) {
-      setTimeout(function () { box.appendChild(el('<p class="bubble">' + line + "</p>")); }, 600 + i * 1300);
+    var box = ov.querySelector(".call-lines"), label = ov.querySelector(".call-drop span");
+    function clockText() { return quiet ? "" : t().talking + " 00:" + String(st.secs).padStart(2, "0"); }
+    var relabel = onLang(function () {
+      var L = t(), cur = window.VW_LANG === "zh" ? "zh" : "en";
+      ov.querySelector(".call-lang").innerHTML = '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>';
+      ov.querySelector(".call-name").textContent = L.caller;
+      ov.querySelector(".call-time").textContent = clockText();
+      var lines = L.lines(window.VW_TOTAL || "?");
+      box.innerHTML = lines.slice(0, st.said).map(function (x) { return '<p class="bubble still">' + x + "</p>"; }).join("");
+      ov.querySelector('[data-k="gpt"]').textContent = L.gpt; ov.querySelector('[data-k="cla"]').textContent = L.cla;
+      ov.querySelector(".call-steps").innerHTML = st.steps === "gpt" ? L.gptSteps : st.steps === "cla" ? L.claSteps : "";
+      ov.querySelector(".call-later").textContent = L.later;
+      if (st.drop === "idle") label.textContent = L.drop;
+      else if (st.drop === "reading") label.textContent = L.reading;
+      else if (st.drop === "bad") label.textContent = L.bad;
+      else {
+        label.innerHTML = L.got(st.result.sessions.length, st.result.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
+        label.querySelector(".go-recalc").onclick = function (e) { e.preventDefault(); end(); onImported(st.result); };
+      }
     });
-    setTimeout(function () { ov.querySelector(".call-import").hidden = false; }, quiet ? 0 : 600 + lines.length * 1300);
-    if (quiet) { ov.querySelector(".call-time").textContent = ""; ov.classList.add("quiet"); }
-    ov.querySelectorAll(".call-opt").forEach(function (b) {
-      b.onclick = function () { ov.querySelector(".call-steps").innerHTML = b.dataset.k === "gpt" ? L.gptSteps : L.claSteps; };
-    });
-    var input = ov.querySelector("input"), label = ov.querySelector(".call-drop span");
+    ov.querySelector(".call-lang").onclick = function () { if (window.VWToggleLang) window.VWToggleLang(); };
+    var clock = setInterval(function () { st.secs++; ov.querySelector(".call-time").textContent = clockText(); }, 1000);
+    var total = quiet ? 0 : 4, timers = [];
+    for (var i = 0; i < total; i++) (function (i) {
+      timers.push(setTimeout(function () { st.said = i + 1; box.appendChild(el('<p class="bubble">' + t().lines(window.VW_TOTAL || "?")[i] + "</p>")); }, 600 + i * 1300));
+    })(i);
+    timers.push(setTimeout(function () { ov.querySelector(".call-import").hidden = false; }, quiet ? 0 : 600 + total * 1300));
+    ov.querySelectorAll(".call-opt").forEach(function (b) { b.onclick = function () { st.steps = b.dataset.k; relabel(); }; });
+    var input = ov.querySelector("input");
     async function take(file) {
-      label.textContent = L.reading;
-      try {
-        var r = await window.VWWebChat.readExport(await file.arrayBuffer());
-        label.innerHTML = L.got(r.sessions.length, r.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
-        label.querySelector(".go-recalc").onclick = function (e) { e.preventDefault(); end(); onImported(r); };
-      } catch (err) { label.textContent = L.bad; }
+      st.drop = "reading"; relabel();
+      try { st.result = await window.VWWebChat.readExport(await file.arrayBuffer()); st.drop = "got"; }
+      catch (err) { st.drop = "bad"; }
+      relabel();
     }
     input.onchange = function () { if (input.files[0]) take(input.files[0]); };
     var drop = ov.querySelector(".call-drop");
     drop.ondragover = function (e) { e.preventDefault(); drop.classList.add("over"); };
     drop.ondragleave = function () { drop.classList.remove("over"); };
     drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) take(e.dataTransfer.files[0]); };
-    function end() { clearInterval(clock); ov.remove(); }
+    function end() { clearInterval(clock); timers.forEach(clearTimeout); offLang(relabel); ov.remove(); }
     ov.querySelector(".end").onclick = end;
   }
 

@@ -74,3 +74,7 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .call-missed.quiet .tag { opacity: 0; transform: translateX(10px); pointer-events: none; }
 .call-missed:hover .tag { opacity: 1; transform: none; }
 @keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: none; opacity: 1; } }
+.call-lang { position: absolute; top: 16px; right: 16px; color: #fff; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+.call-lang span { color: rgba(255,255,255,0.6); }
+.call-lang span.on { background: #fff; color: #111; }
+.bubble.still { animation: none; }

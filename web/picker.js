@@ -157,6 +157,7 @@
 
   function render() {
     var L = t();
+    window.VW_LANG = lang; // the import screen opened from here speaks the same language
     document.getElementById("landing").innerHTML =
       '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
       '<div class="land">' +
@@ -184,7 +185,12 @@
       }, { quiet: true });
     };
     document.getElementById("demo").onclick = function () { show(window.VW_DEMO); };
-    document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; try { localStorage.setItem("vw-lang", lang); } catch (e) {} render(); };
+    window.VWToggleLang = function () {
+      lang = lang === "zh" ? "en" : "zh"; window.VW_LANG = lang;
+      try { localStorage.setItem("vw-lang", lang); } catch (e) {}
+      render(); window.dispatchEvent(new Event("vw-lang"));
+    };
+    document.getElementById("l-lang").onclick = window.VWToggleLang;
   }
 
   window.__vw = { S: S, show: show, makeStats: makeStats }; // used by the browser tests
