@@ -347,6 +347,17 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .call-later { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 10px; line-height: 1.5; }
 .call-btn.end { margin-top: auto; width: 64px; height: 64px; font-size: 26px; flex: none; }
 .call-ov.quiet .call-av, .call-ov.quiet .call-time { display: none; }
+.call-missed { position: fixed; right: 14px; bottom: 96px; z-index: 95; display: flex; align-items: center; flex-direction: row-reverse; gap: 8px;
+  border: 0; background: none; padding: 0; cursor: pointer; font-family: var(--font); animation: pop 0.35s cubic-bezier(.2,1.6,.4,1); }
+.call-missed .ph { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-size: 24px;
+  background: rgba(28,28,30,0.92); box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+.call-missed .dot { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  background: #ff3b30; color: #fff; font: 800 12px/20px var(--font); box-shadow: 0 0 0 2px #f1e2b8; }
+.call-missed .tag { background: rgba(28,28,30,0.92); color: #fff; font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 999px; white-space: nowrap;
+  transition: opacity 0.6s, transform 0.6s; }
+.call-missed.quiet .tag { opacity: 0; transform: translateX(10px); pointer-events: none; }
+.call-missed:hover .tag { opacity: 1; transform: none; }
+@keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: none; opacity: 1; } }
 </style>
 </head>
 <body>
@@ -992,6 +1003,7 @@ window.VWReport = function (DATA) {
       calS: function () { return D.busiestDay ? "最拼的一天是 <b>" + D.busiestDay.date + "</b>，下了 <b>" + D.busiestDay.prompts + "</b> 条指令" : ""; },
       projK: "你最常折腾的项目", modelK: "陪你最久的模型",
       personaK: "你的 AI 编程人格", hidden: "隐藏属性",
+      soundOn: "🔊 声音开", soundOff: "🔇 静音",
       shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
       shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
       sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
@@ -1064,6 +1076,7 @@ window.VWReport = function (DATA) {
       calS: function () { return D.busiestDay ? "Busiest day: <b>" + D.busiestDay.date + "</b> with <b>" + D.busiestDay.prompts + "</b> prompts" : ""; },
       projK: "Your top projects", modelK: "Your top models",
       personaK: "Your AI coding persona", hidden: "Hidden traits",
+      soundOn: "🔊 Sound on", soundOff: "🔇 Muted",
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
       shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
       sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
@@ -1440,9 +1453,9 @@ window.VWReport = function (DATA) {
     document.getElementById("lang").textContent = t().lang;
     var snd = document.getElementById("snd");
     if (snd) {
-      snd.textContent = soundOn ? "🔊" : "🔇";
+      snd.textContent = soundOn ? t().soundOn : t().soundOff;
       snd.onclick = function (e) {
-        e.stopPropagation(); soundOn = !soundOn; window.VW_SOUND = soundOn; snd.textContent = soundOn ? "🔊" : "🔇";
+        e.stopPropagation(); soundOn = !soundOn; window.VW_SOUND = soundOn; snd.textContent = soundOn ? t().soundOn : t().soundOff;
         try { localStorage.setItem("vw-sound", soundOn ? "on" : "off"); } catch (err) {}
         if (soundOn) audio();
       };
@@ -1679,7 +1692,7 @@ if (window.DATA) window.VWReport(window.DATA);
         "但你在网页上跟我聊的那些，还一分钱没算呢。",
         "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
       ]; },
-      declined: "📵 AI 已记录：你挂了它的电话。",
+      declined: "你挂了 AI 的电话", missed: "未接来电", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
       gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
       claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件到了以后下载 zip。",
@@ -1696,7 +1709,7 @@ if (window.DATA) window.VWReport(window.DATA);
         "But everything you said to me on the web? Not billed yet.",
         "Export your chats and send them over. Don't worry, the data never leaves your browser.",
       ]; },
-      declined: "📵 Noted: you hung up on AI.",
+      declined: "You hung up on AI", missed: "Missed call", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
       gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
       claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. Download the zip from the email.",
@@ -1742,15 +1755,33 @@ if (window.DATA) window.VWReport(window.DATA);
     document.body.appendChild(bar);
     requestAnimationFrame(function () { bar.classList.add("in"); });
     ring(); ringTimer = setInterval(ring, 2600);
-    var giveUp = setTimeout(function () { close(true); }, 20000);
-    function close(missed) {
+    var giveUp = setTimeout(function () { close("missed"); }, 20000);
+    function close(how) { // "declined", "missed", or "answered"
       stopRing(); clearTimeout(giveUp);
-      bar.classList.remove("in");
-      setTimeout(function () { bar.remove(); }, 400);
-      if (missed) toast(L.declined);
+      if (how === "answered") { bar.classList.remove("in"); setTimeout(function () { bar.remove(); }, 400); return; }
+      flyToCorner(bar, function () { missedBadge(how === "declined" ? L.declined : L.missed, onImported); });
     }
-    bar.querySelector(".no").onclick = function (e) { e.stopPropagation(); close(true); };
-    bar.querySelector(".yes").onclick = function (e) { e.stopPropagation(); close(false); answer(onImported); };
+    bar.querySelector(".no").onclick = function (e) { e.stopPropagation(); close("declined"); };
+    bar.querySelector(".yes").onclick = function (e) { e.stopPropagation(); close("answered"); answer(onImported); };
+  }
+
+  /** Shrink the banner into the bottom-right corner, where the missed-call badge appears. */
+  function flyToCorner(bar, then) {
+    var r = bar.getBoundingClientRect(), tx = window.innerWidth - 40 - (r.left + r.width / 2), ty = window.innerHeight - 120 - (r.top + r.height / 2);
+    bar.style.transition = "transform 0.5s cubic-bezier(.5,0,.2,1), opacity 0.5s";
+    bar.style.transform = "translate(calc(-50% + " + tx + "px), " + ty + "px) scale(0.12)";
+    bar.style.opacity = "0.4";
+    setTimeout(function () { bar.remove(); then(); }, 480);
+  }
+
+  /** A little phone with a red "1" on the right edge. Tap to call back. */
+  function missedBadge(label, onImported) {
+    var old = document.querySelector(".call-missed"); if (old) old.remove();
+    var L = t();
+    var m = el('<button class="call-missed" aria-label="' + L.callBack + '"><span class="ph">📞</span><span class="dot">1</span><span class="tag">' + label + "</span></button>");
+    document.body.appendChild(m);
+    setTimeout(function () { m.classList.add("quiet"); }, 3500); // the label fades, the badge stays
+    m.onclick = function (e) { e.stopPropagation(); m.remove(); answer(onImported); };
   }
 
   function toast(text) {

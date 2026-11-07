@@ -11,7 +11,7 @@
         "但你在网页上跟我聊的那些，还一分钱没算呢。",
         "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
       ]; },
-      declined: "📵 AI 已记录：你挂了它的电话。",
+      declined: "你挂了 AI 的电话", missed: "未接来电", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
       gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
       claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件到了以后下载 zip。",
@@ -28,7 +28,7 @@
         "But everything you said to me on the web? Not billed yet.",
         "Export your chats and send them over. Don't worry, the data never leaves your browser.",
       ]; },
-      declined: "📵 Noted: you hung up on AI.",
+      declined: "You hung up on AI", missed: "Missed call", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
       gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
       claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. Download the zip from the email.",
@@ -74,15 +74,33 @@
     document.body.appendChild(bar);
     requestAnimationFrame(function () { bar.classList.add("in"); });
     ring(); ringTimer = setInterval(ring, 2600);
-    var giveUp = setTimeout(function () { close(true); }, 20000);
-    function close(missed) {
+    var giveUp = setTimeout(function () { close("missed"); }, 20000);
+    function close(how) { // "declined", "missed", or "answered"
       stopRing(); clearTimeout(giveUp);
-      bar.classList.remove("in");
-      setTimeout(function () { bar.remove(); }, 400);
-      if (missed) toast(L.declined);
+      if (how === "answered") { bar.classList.remove("in"); setTimeout(function () { bar.remove(); }, 400); return; }
+      flyToCorner(bar, function () { missedBadge(how === "declined" ? L.declined : L.missed, onImported); });
     }
-    bar.querySelector(".no").onclick = function (e) { e.stopPropagation(); close(true); };
-    bar.querySelector(".yes").onclick = function (e) { e.stopPropagation(); close(false); answer(onImported); };
+    bar.querySelector(".no").onclick = function (e) { e.stopPropagation(); close("declined"); };
+    bar.querySelector(".yes").onclick = function (e) { e.stopPropagation(); close("answered"); answer(onImported); };
+  }
+
+  /** Shrink the banner into the bottom-right corner, where the missed-call badge appears. */
+  function flyToCorner(bar, then) {
+    var r = bar.getBoundingClientRect(), tx = window.innerWidth - 40 - (r.left + r.width / 2), ty = window.innerHeight - 120 - (r.top + r.height / 2);
+    bar.style.transition = "transform 0.5s cubic-bezier(.5,0,.2,1), opacity 0.5s";
+    bar.style.transform = "translate(calc(-50% + " + tx + "px), " + ty + "px) scale(0.12)";
+    bar.style.opacity = "0.4";
+    setTimeout(function () { bar.remove(); then(); }, 480);
+  }
+
+  /** A little phone with a red "1" on the right edge. Tap to call back. */
+  function missedBadge(label, onImported) {
+    var old = document.querySelector(".call-missed"); if (old) old.remove();
+    var L = t();
+    var m = el('<button class="call-missed" aria-label="' + L.callBack + '"><span class="ph">📞</span><span class="dot">1</span><span class="tag">' + label + "</span></button>");
+    document.body.appendChild(m);
+    setTimeout(function () { m.classList.add("quiet"); }, 3500); // the label fades, the badge stays
+    m.onclick = function (e) { e.stopPropagation(); m.remove(); answer(onImported); };
   }
 
   function toast(text) {

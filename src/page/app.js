@@ -74,6 +74,7 @@ window.VWReport = function (DATA) {
       calS: function () { return D.busiestDay ? "最拼的一天是 <b>" + D.busiestDay.date + "</b>，下了 <b>" + D.busiestDay.prompts + "</b> 条指令" : ""; },
       projK: "你最常折腾的项目", modelK: "陪你最久的模型",
       personaK: "你的 AI 编程人格", hidden: "隐藏属性",
+      soundOn: "🔊 声音开", soundOff: "🔇 静音",
       shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
       shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
       sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
@@ -146,6 +147,7 @@ window.VWReport = function (DATA) {
       calS: function () { return D.busiestDay ? "Busiest day: <b>" + D.busiestDay.date + "</b> with <b>" + D.busiestDay.prompts + "</b> prompts" : ""; },
       projK: "Your top projects", modelK: "Your top models",
       personaK: "Your AI coding persona", hidden: "Hidden traits",
+      soundOn: "🔊 Sound on", soundOff: "🔇 Muted",
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
       shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
       sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
@@ -522,9 +524,9 @@ window.VWReport = function (DATA) {
     document.getElementById("lang").textContent = t().lang;
     var snd = document.getElementById("snd");
     if (snd) {
-      snd.textContent = soundOn ? "🔊" : "🔇";
+      snd.textContent = soundOn ? t().soundOn : t().soundOff;
       snd.onclick = function (e) {
-        e.stopPropagation(); soundOn = !soundOn; window.VW_SOUND = soundOn; snd.textContent = soundOn ? "🔊" : "🔇";
+        e.stopPropagation(); soundOn = !soundOn; window.VW_SOUND = soundOn; snd.textContent = soundOn ? t().soundOn : t().soundOff;
         try { localStorage.setItem("vw-sound", soundOn ? "on" : "off"); } catch (err) {}
         if (soundOn) audio();
       };

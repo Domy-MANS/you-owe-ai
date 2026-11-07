@@ -63,3 +63,14 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .call-later { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 10px; line-height: 1.5; }
 .call-btn.end { margin-top: auto; width: 64px; height: 64px; font-size: 26px; flex: none; }
 .call-ov.quiet .call-av, .call-ov.quiet .call-time { display: none; }
+.call-missed { position: fixed; right: 14px; bottom: 96px; z-index: 95; display: flex; align-items: center; flex-direction: row-reverse; gap: 8px;
+  border: 0; background: none; padding: 0; cursor: pointer; font-family: var(--font); animation: pop 0.35s cubic-bezier(.2,1.6,.4,1); }
+.call-missed .ph { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-size: 24px;
+  background: rgba(28,28,30,0.92); box-shadow: 0 6px 18px rgba(0,0,0,0.35); }
+.call-missed .dot { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px;
+  background: #ff3b30; color: #fff; font: 800 12px/20px var(--font); box-shadow: 0 0 0 2px #f1e2b8; }
+.call-missed .tag { background: rgba(28,28,30,0.92); color: #fff; font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 999px; white-space: nowrap;
+  transition: opacity 0.6s, transform 0.6s; }
+.call-missed.quiet .tag { opacity: 0; transform: translateX(10px); pointer-events: none; }
+.call-missed:hover .tag { opacity: 1; transform: none; }
+@keyframes pop { from { transform: scale(0.3); opacity: 0; } to { transform: none; opacity: 1; } }
