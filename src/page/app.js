@@ -19,21 +19,66 @@ window.VWShare = (function () {
     delete o.days; o.topProjects = []; o.shared = true;
     return o;
   }
+
+  // v2 links: just the numbers the pages show, as a positional array (about a third the length of v1)
+  var SRCS = ["claude", "codex", "chatgpt", "claudeai"];
+  var CATS = ["shell", "edit", "read", "web", "agents", "mcp", "other"];
+  var r5 = function (x) { return Math.round(x * 1e5) / 1e5; };
+  function pack(D) {
+    var R = D.roast;
+    var hmax = Math.max.apply(null, D.hours) || 1;
+    var hours = D.hours.map(function (v) { return Math.round((v / hmax) * 35).toString(36); }).join("");
+    var cp = function (list) { return (list || []).map(function (c) { return [c.text, c.count]; }); };
+    return [2, D.year, D.prompts, D.sessions, D.activeDays, D.streak.days,
+      D.busiestDay ? [D.busiestDay.date, D.busiestDay.prompts] : 0,
+      Math.round(D.workHours * 1e4) / 1e4, D.totalTokens,
+      SRCS.map(function (k) { return D.byTool[k] ? D.byTool[k].prompts : 0; }),
+      D.toolCalls, D.categories.slice(0, 3).map(function (c) { return [CATS.indexOf(c.name), c.count]; }),
+      D.topModels.slice(0, 2).map(function (m) { return m.name; }),
+      hours, D.peakHour === null ? -1 : D.peakHour, r5(D.shares.night), D.persona, D.demo ? 1 : 0,
+      R ? [R.prompts, R.you.deny, R.you.why, R.you.thanks, R.you.swear, R.you.lost, R.you.whatNext,
+        R.ai.sorry, R.ai.flatter, R.ai.done, cp(R.catchphrases),
+        R.angriestDay ? [R.angriestDay.date, R.angriestDay.count] : 0,
+        R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0];
+  }
+  function unpack(a) {
+    var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
+    var hours = a[13].split("").map(function (c) { return parseInt(c, 36); });
+    var cp = function (l) { return (l || []).map(function (c) { return { text: c[0], count: c[1] }; }); };
+    var r = a[18], R = r ? {
+      prompts: r[0], you: { deny: r[1], why: r[2], thanks: r[3], swear: r[4], lost: r[5], whatNext: r[6], again: 0, please: 0, lazyYes: 0 },
+      ai: { sorry: r[7], flatter: r[8], done: r[9] }, catchphrases: cp(r[10]),
+      angriestDay: r[11] ? { date: r[11][0], count: r[11][1] } : null, latest: r[12] ? { time: r[12][0], day: r[12][1] } : null,
+      tinyShare: r[13], medianLength: 0,
+    } : null;
+    if (R && r[14]) R.catchphrases_zh = cp(r[14]);
+    return {
+      year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
+      busiestDay: a[6] ? { date: a[6][0], prompts: a[6][1] } : null, workHours: a[7], totalTokens: a[8],
+      tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: a[10],
+      categories: a[11].map(function (c) { return { name: CATS[c[0]] || "other", count: c[1] }; }), topTools: [],
+      topModels: a[12].map(function (n) { return { name: n, count: 0 }; }), topProjects: [], hours: hours, weekdays: [0, 0, 0, 0, 0, 0, 0],
+      days: {}, peakHour: a[14] < 0 ? null : a[14], shares: { night: a[15], dawn: 0, weekend: 0 }, persona: a[16], demo: !!a[17],
+      roast: R, shared: true,
+    };
+  }
+
   async function encode(D) {
-    var bytes = new TextEncoder().encode(JSON.stringify(shareable(D)));
-    if (typeof CompressionStream !== "undefined") return "z" + b64url(await pipe(bytes, new CompressionStream("deflate-raw")));
-    return "j" + b64url(bytes);
+    var bytes = new TextEncoder().encode(JSON.stringify(pack(D)));
+    if (typeof CompressionStream !== "undefined") return "y" + b64url(await pipe(bytes, new CompressionStream("deflate-raw")));
+    return "x" + b64url(bytes);
   }
   async function decode(s) {
-    var bytes = unb64url(s.slice(1));
-    if (s.charAt(0) === "z") bytes = await pipe(bytes, new DecompressionStream("deflate-raw"));
-    var D = JSON.parse(new TextDecoder().decode(bytes));
-    D.shared = true; D.topProjects = []; D.days = {};
-    return D;
+    var kind = s.charAt(0), bytes = unb64url(s.slice(1));
+    if (kind === "z" || kind === "y") bytes = await pipe(bytes, new DecompressionStream("deflate-raw"));
+    var data = JSON.parse(new TextDecoder().decode(bytes));
+    if (Array.isArray(data)) return unpack(data); // v2: "y" (deflated) or "x"
+    data.shared = true; data.topProjects = []; data.days = {}; // v1 links still open: "z" or "j"
+    return data;
   }
   async function link(D) { return window.VW_BASE + "#s=" + (await encode(D)); }
   function fromHash() { var m = /#s=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? decode(m[1]) : null; }
-  return { encode: encode, decode: decode, link: link, fromHash: fromHash, shareable: shareable };
+  return { encode: encode, decode: decode, link: link, fromHash: fromHash, shareable: shareable, pack: pack, unpack: unpack };
 })();
 
 /* Report player. Called with the computed stats: VWReport(stats). */

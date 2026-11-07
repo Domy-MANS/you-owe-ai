@@ -85,13 +85,32 @@ test("share link round-trips the report without project names or daily history",
   const src = fs.readFileSync(path.join(__dirname, "../src/page/app.js"), "utf8");
   vm.runInContext(src.slice(0, src.indexOf("/* Report player.")), ctx);
   const url = await window.VWShare.link(D);
-  assert.match(url, /^https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=z[A-Za-z0-9_-]+$/);
-  assert.ok(url.length < 3000, `link too long: ${url.length}`);
+  assert.match(url, /^https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=y[A-Za-z0-9_-]+$/);
+  assert.ok(url.length < 600, `link too long: ${url.length}`);
   const back = JSON.parse(JSON.stringify(await window.VWShare.decode(url.split("#s=")[1]))); // copy out of the vm realm
   assert.equal(back.shared, true);
   assert.deepEqual(back.topProjects, []);
   assert.deepEqual(back.days, {});
-  assert.equal(back.prompts, D.prompts);
-  assert.deepEqual(back.roast, D.roast);
-  assert.equal(back.persona, D.persona);
+  // every number a page or a charge uses survives the trip
+  for (const k of ["year", "prompts", "sessions", "activeDays", "totalTokens", "toolCalls", "peakHour", "persona"]) assert.equal(back[k], D[k], k);
+  assert.ok(Math.abs(back.workHours - D.workHours) < 1e-4, "workHours"); // under a tenth of a cent of wage
+  assert.equal(back.streak.days, D.streak.days);
+  assert.deepEqual(back.busiestDay, D.busiestDay);
+  assert.equal(Math.round(back.shares.night * D.prompts), Math.round(D.shares.night * D.prompts));
+  assert.deepEqual(back.categories.map((c) => c.name), D.categories.slice(0, 3).map((c) => c.name));
+  assert.equal(back.hours.indexOf(35), D.hours.indexOf(Math.max(...D.hours)));
+  for (const k of ["claude", "codex"]) assert.equal(back.byTool[k].prompts, D.byTool[k].prompts);
+  const R = D.roast, BR = back.roast;
+  for (const k of ["deny", "why", "thanks", "swear", "lost", "whatNext"]) assert.equal(BR.you[k], R.you[k], k);
+  assert.deepEqual(BR.ai, R.ai);
+  assert.deepEqual(BR.catchphrases, R.catchphrases);
+  assert.deepEqual(BR.catchphrases_zh, R.catchphrases_zh);
+  assert.deepEqual(BR.angriestDay, R.angriestDay);
+  assert.deepEqual(BR.latest, R.latest);
+  assert.equal(BR.tinyShare, R.tinyShare);
+  // a v1 link made before this change still opens
+  const v1 = "z" + Buffer.from(require("zlib").deflateRawSync(Buffer.from(JSON.stringify(window.VWShare.shareable(D))))).toString("base64url");
+  const old = JSON.parse(JSON.stringify(await window.VWShare.decode(v1)));
+  assert.equal(old.prompts, D.prompts);
+  assert.equal(old.shared, true);
 });
