@@ -1,6 +1,6 @@
 # you-owe-ai 💸
 
-**Your year of AI coding, roasted.** How many times you told AI it was wrong, how many times you said thanks, your catchphrases, your AI persona, and how much you owe it in unpaid wages. Spotify-Wrapped style, for Claude Code and Codex.
+**Your AI just sent you an invoice.** A year of Claude Code and Codex, itemized: emotional damages for every time you told it it was wrong, noise pollution for your catchphrases, night-shift pay, GPU wear and tear, and a politeness discount for every "thanks". Plus a client review, your client profile and credit rating, and a receipt you can share.
 
 ### 👉 [Find out how much you owe AI](https://domy-mans.github.io/you-owe-ai/)
 
@@ -56,7 +56,7 @@ Reads `~/.claude/projects` (respects `CLAUDE_CONFIG_DIR`) and `~/.codex/sessions
 
 ## 中文
 
-**你欠 AI 多少钱？** 你的 AI 编程年度报告：你否定了 AI 几次、说了几次谢谢、你的口头禅、你的 AI 人格，以及按麦当劳时薪你欠它多少工资。Spotify 年度报告风格，支持 Claude Code 和 Codex。
+**你的 AI 给你寄来了一张账单。** 把你一年来用 Claude Code 和 Codex 的记录，算成一笔笔收费：被你否定的精神损失费、口头禅复读的噪音污染费、夜班补贴、显卡损耗费，说谢谢还能抵扣。最后附上 AI 员工对你的评价、你的客户档案和信用等级，以及一张可以分享的欠条。
 
 ### 👉 [看看你欠 AI 多少钱](https://domy-mans.github.io/you-owe-ai/)
 

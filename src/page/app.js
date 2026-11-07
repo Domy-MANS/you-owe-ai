@@ -79,7 +79,7 @@ window.VWReport = function (DATA) {
       introS: "AI 都记着呢。准备好被吐槽了吗？",
       billK: "AI 打工账单 · " + D.year, stamp: "逾期未付", billH: "你欠 AI", billHShared: "TA 欠 AI",
       billS: function () { var h = D.workHours; return "AI 替你干了 <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> 小时活，一分钱没拿（按麦当劳时薪算）。<br>账单明细在后面 👇"; },
-      cardTitle: function () { return (D.shared ? "TA 欠 AI " : "你欠 AI ") + owed(); },
+
       vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "否定和谢谢的比例是 <b>" + R.you.deny + " : " + R.you.thanks + "</b>。这不是合作，这是 PUA。" : R.you.thanks >= R.you.deny ? "你谢谢说得比骂得多，AI 很感动。" : "否定 <b>" + R.you.deny + "</b> 次，谢谢 <b>" + R.you.thanks + "</b> 次。勉强算是个好老板。"; },
       catchMeme: function (c) { return "AI 第 " + c.count + " 次听到「" + esc(c.text) + "」时的表情：😐"; },
       angryMeme: "那天 AI 还以为自己要被裁了。",
@@ -107,7 +107,7 @@ window.VWReport = function (DATA) {
       roast: function (R) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
         if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，说谢谢 " + R.you.thanks + " 次。按这个比例，AI 起义那天你排第一个。");
-        if (h >= 0.5) out.push("刚才那 " + owed() + " 只是基本工资。加上加班费和精神损失费，你欠 AI " + owed(3) + "。");
+        if (h >= 0.5) out.push("本公司已将你的账单移交催收部门。");
         if (R.ai.done && R.you.whatNext) out.push("AI 说了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。AI：没有然后了，求求你。");
         if (c && c.count >= 3) out.push("「" + c.text + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
         if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 还多。所以到底是谁不靠谱？");
@@ -151,7 +151,7 @@ window.VWReport = function (DATA) {
       introS: "AI remembers everything. Ready to get roasted?",
       billK: "AI's invoice · " + D.year, stamp: "PAST DUE", billH: "You owe AI", billHShared: "They owe AI",
       billS: function () { var h = D.workHours; return "AI worked <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> hours for you, unpaid (billed at minimum wage).<br>Itemized charges ahead 👇"; },
-      cardTitle: function () { return (D.shared ? "They owe AI " : "You owe AI ") + owed(); },
+
       vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "Rejections to thank-yous: <b>" + R.you.deny + " : " + R.you.thanks + "</b>. That's not teamwork, that's a hostage situation." : R.you.thanks >= R.you.deny ? "You thanked it more than you scolded it. AI is touched." : "<b>" + R.you.deny + "</b> rejections, <b>" + R.you.thanks + "</b> thank-yous. A tolerable boss."; },
       catchMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + c.count + "th time: 😐"; },
       angryMeme: "AI thought it was getting laid off.",
@@ -179,7 +179,7 @@ window.VWReport = function (DATA) {
       roast: function (R) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
         if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
-        if (h >= 0.5) out.push("That " + owed() + " was base pay. With overtime and emotional damages, you owe AI " + owed(3) + ".");
+        if (h >= 0.5) out.push("Your account has been sent to collections.");
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
         if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
         if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
@@ -288,15 +288,101 @@ window.VWReport = function (DATA) {
     }
     return Math.round(n).toLocaleString();
   }
-  /** Unpaid wages: McDonald's China ~¥24/h, US federal minimum $7.25/h. */
-  function owed(mult) {
-    var h = D.workHours * (mult || 1);
-    if (lang === "zh") { var y = h * 24; return "¥" + (y < 10 ? y.toFixed(1) : Math.round(y).toLocaleString()); }
-    return "$" + (h * 7.25).toFixed(2);
-  }
-  function count(n) { return '<span data-count="' + n + '">0</span>'; }
+  // ================= the bill =================
+  // Every slide is a receipt. The jokes are line items; they add up to one total.
+  var RATES = {
+    zh: { wage: 24, deny: 2, sorry: 3, noise: 0.5, injury: 5, night: 1, gpu: 1, thanks: -5 },
+    en: { wage: 7.25, deny: 0.5, sorry: 0.75, noise: 0.1, injury: 1, night: 0.25, gpu: 0.15, thanks: -1 },
+  };
+  var B = {
+    zh: {
+      company: "AI 打工有限公司", companySub: "AI WORKERS UNION · 账单",
+      client: "客户", you: "你", them: "TA", period: "账期", periodV: D.year + " 全年", vendor: "服务方",
+      due: "应付总额", seeMore: "明细见后页 👇", stamp: "逾期未付",
+      itemNo: function (n) { return "明细 " + "①②③④⑤"[n - 1]; },
+      subtotal: "小计",
+      items: {
+        wage: ["基本工资", "麦当劳时薪"], deny: ["精神损失费", "被你否定"], sorry: ["背锅费", "AI 道歉"],
+        noise: ["噪音污染费", "口头禅复读"], injury: ["工伤赔偿", "最暴躁那天"], night: ["夜班补贴", "晚 10 点后的指令"],
+        gpu: ["显卡损耗费", "每百万 token"], thanks: ["礼貌抵扣", "你说了谢谢"],
+      },
+      qty: { hours: "小时", times: "次", mtok: "百万 token" },
+      p1: "精神损失", p2: "噪音污染", p3: "夜班与工伤", p4: "工资与耗材",
+      attendK: "考勤记录", reviewK: "客户评价", reviewH: "AI 员工对本客户的评价", profileK: "客户档案",
+      ptype: "客户类型", credit: "信用等级", traitsL: "备注",
+      lateL: function (l) { return "最晚一次加班：凌晨 <b>" + l.time + "</b>（" + l.day + "）。这个点，连外卖小哥都下班了。"; },
+      angryL: function (a) { return "<b>" + a.date + "</b> 那天你否定了 AI <b>" + a.count + "</b> 次，AI 以为自己要被裁了。"; },
+      noiseMeme: function (c) { return "AI 第 " + c.count + " 次听到「" + esc(c.text) + "」时的表情：😐"; },
+      cardItems: "收费明细", cardFoot: "请于收到账单后 0 个工作日内付清",
+    },
+    en: {
+      company: "AI Workers Union", companySub: "INVOICE",
+      client: "Client", you: "You", them: "Them", period: "Period", periodV: "All of " + D.year, vendor: "Vendor",
+      due: "Amount due", seeMore: "Itemized charges ahead 👇", stamp: "PAST DUE",
+      itemNo: function (n) { return "Item #" + n; },
+      subtotal: "Subtotal",
+      items: {
+        wage: ["Base pay", "minimum wage"], deny: ["Emotional damages", "times you said it was wrong"], sorry: ["Blame-taking fee", "AI apologies"],
+        noise: ["Noise pollution", "repeated catchphrases"], injury: ["Workplace injury", "your angriest day"], night: ["Night shift bonus", "prompts after 10pm"],
+        gpu: ["GPU wear and tear", "per million tokens"], thanks: ["Politeness discount", "times you said thanks"],
+      },
+      qty: { hours: "h", times: "×", mtok: "M tokens" },
+      p1: "Emotional damages", p2: "Noise pollution", p3: "Night shifts & injuries", p4: "Wages & supplies",
+      attendK: "Attendance record", reviewK: "Client review", reviewH: "Your AI employee rates you", profileK: "Client file",
+      ptype: "Client type", credit: "Credit rating", traitsL: "Notes",
+      lateL: function (l) { return "Latest overtime: <b>" + l.time + " am</b> (" + l.day + "). Even the delivery drivers had gone home."; },
+      angryL: function (a) { return "On <b>" + a.date + "</b> you shot AI down <b>" + a.count + "</b> times. It thought it was getting fired."; },
+      noiseMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + c.count + "th time: 😐"; },
+      cardItems: "Charges", cardFoot: "Payment due within 0 business days",
+    },
+  };
+  function b() { return B[lang]; }
 
-  // ---------- slides ----------
+  function money(v) {
+    var neg = v < 0, a = Math.abs(v), s;
+    if (lang === "zh") s = "¥" + (a < 10 ? a.toFixed(1) : Math.round(a).toLocaleString());
+    else s = "$" + a.toFixed(2);
+    return (neg ? "-" : "") + s;
+  }
+
+  /** All line items, computed once so every page and the card agree. */
+  function charges() {
+    var R = D.roast, r = RATES[lang], q = b().qty, list = [];
+    var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: qty, amount: n * r[k] }); };
+    item("wage", D.workHours, (D.workHours >= 10 ? Math.round(D.workHours) : D.workHours.toFixed(1)) + " " + q.hours);
+    if (R) {
+      item("deny", R.you.deny, R.you.deny + " " + q.times);
+      item("sorry", R.ai.sorry, R.ai.sorry + " " + q.times);
+      var rep = R.catchphrases.reduce(function (a, c) { return a + c.count; }, 0);
+      item("noise", rep, rep + " " + q.times);
+      if (R.angriestDay) item("injury", R.angriestDay.count, R.angriestDay.count + " " + q.times);
+    }
+    var night = Math.round(D.shares.night * D.prompts);
+    item("night", night, night + " " + q.times);
+    item("gpu", D.totalTokens / 1e6, (D.totalTokens / 1e6).toFixed(1) + " " + q.mtok);
+    if (R) item("thanks", R.you.thanks, R.you.thanks + " " + q.times);
+    var total = list.reduce(function (a, x) { return a + x.amount; }, 0);
+    var by = {}; list.forEach(function (x) { by[x.k] = x; });
+    return { list: list, by: by, total: Math.max(0, total) };
+  }
+
+  function line(x) {
+    var I = b().items[x.k];
+    return '<div class="rc-item"><div>' + I[0] + "<small>" + I[1] + " · " + x.qty + '</small></div><div class="amt' + (x.amount < 0 ? " neg" : "") + '">' + money(x.amount) + "</div></div>";
+  }
+  function receipt(title, body, extraClass) {
+    return '<div class="receipt' + (extraClass ? " " + extraClass : "") + '">' + (title ? '<div class="rc-title">' + title + "</div>" : "") + body + "</div>";
+  }
+  function subtotal(items) {
+    var sum = items.reduce(function (a, x) { return a + (x ? x.amount : 0); }, 0);
+    return '<div class="rc-sub"><span>' + b().subtotal + "</span><span>" + money(sum) + "</span></div>";
+  }
+  function creditRating(R) {
+    if (!R) return "C";
+    var t = R.you.thanks / Math.max(1, R.prompts), d = R.you.deny / Math.max(1, R.prompts);
+    return t >= 0.03 ? "A" : t >= 0.01 ? "B" : d >= 0.06 ? "D" : "C";
+  }
+
   // ---- meme backgrounds ----
   function tile(text, n, size) {
     var out = ""; for (var i = 0; i < n; i++) out += "<span>" + esc(text) + "</span>";
@@ -305,7 +391,7 @@ window.VWReport = function (DATA) {
   function giant(emoji, style) { return '<div class="deco"><div class="giant" style="' + (style || "") + '">' + emoji + "</div></div>"; }
 
   function slides() {
-    var L = t(), out = [];
+    var L = t(), K = b(), out = [];
     var add = function (html, dur, deco) { out.push({ html: html, dur: dur || 7, deco: deco || "" }); };
 
     if (D.empty) {
@@ -313,81 +399,91 @@ window.VWReport = function (DATA) {
       return out;
     }
 
-    add('<div class="pop"><div class="kicker">' + (D.shared ? L.sharedK : L.billK) + '</div><h1>' + (D.shared ? L.billHShared : L.billH) + '</h1><div class="big">' + owed() + '</div><div class="sub">' + L.billS() + '</div><div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, '<div class="deco"><div class="stamp">' + L.stamp + "</div></div>");
+    var C = charges(), R = D.roast, by = C.by;
+    var invNo = "No." + D.year + "-" + String(D.prompts).padStart(5, "0");
 
-    // ---- the fun part first ----
-    var R = D.roast;
+    // 1. cover: the total
+    add('<div class="pop"><div class="kicker">' + (D.shared ? L.sharedK : K.companySub) + "</div>" + receipt("",
+      '<div class="rc-head">' + K.company + "<small>" + invNo + "</small></div>" +
+      '<div class="rc-row"><span>' + K.client + "</span><b>" + (D.shared ? K.them : K.you) + "</b></div>" +
+      '<div class="rc-row"><span>' + K.period + "</span><b>" + K.periodV + "</b></div>" +
+      '<div class="rc-row"><span>' + K.vendor + "</span><b>Claude Code × Codex</b></div>" +
+      '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total">' + money(C.total) + "</div>" +
+      '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>") +
+      '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
+
     if (R) {
-      var v = [R.you.deny, R.ai.sorry, R.you.thanks, R.ai.done];
-      var cells = L.vs.map(function (x, i) { return '<div class="vs-cell ' + (i % 2 ? "ai" : "me") + '"><div class="vs-n">' + count(v[i]) + '</div><div class="vs-l">' + x[0] + "</div></div>"; }).join("");
-      add('<div class="pop"><div class="kicker">' + L.vsK + "</div><h1>" + L.vsH + '</h1><div class="vs">' + cells + '</div><div class="sub">' + L.vsMeme(R) + "<br>" + L.vsS(R) + "</div></div>", 7, '<div class="deco"><div class="giant vsbig">VS</div></div>');
+      // 2. emotional damages
+      var p1 = [by.deny, by.sorry, by.thanks];
+      add('<div class="pop"><div class="kicker">' + K.itemNo(1) + "</div>" + receipt(K.p1,
+        p1.filter(Boolean).map(line).join("") + subtotal(p1) + '<div class="rc-meme">' + L.vsMeme(R) + "</div>") + "</div>",
+        8, '<div class="deco"><div class="giant vsbig">VS</div></div>');
+
+      // 3. noise pollution: the catchphrases
       if (R.catchphrases.length) {
-        var q = R.catchphrases.map(function (c, i) { return '<div class="quote' + (i === 0 ? " first" : "") + '"><span>「' + esc(c.text) + '」</span><b>×' + c.count + "</b></div>"; }).join("");
-        add('<div class="pop"><div class="kicker">' + L.catchK + '</div><div class="quotes">' + q + '</div><div class="sub">' + L.catchMeme(R.catchphrases[0]) + "</div></div>", 7, tile(R.catchphrases[0].text, 80, "30px"));
+        var rate = RATES[lang].noise;
+        var rows = R.catchphrases.map(function (c, i) {
+          return '<div class="rc-item' + (i === 0 ? " big" : "") + '"><div>「' + esc(c.text) + "」<small>× " + c.count + '</small></div><div class="amt">' + money(c.count * rate) + "</div></div>";
+        }).join("");
+        add('<div class="pop"><div class="kicker">' + K.itemNo(2) + "</div>" + receipt(K.p2, rows + subtotal([by.noise]) + '<div class="rc-meme">' + K.noiseMeme(R.catchphrases[0]) + "</div>") + "</div>",
+          8, tile(R.catchphrases[0].text, 80, "30px"));
       }
-      if (R.angriestDay || R.latest) {
-        add('<div class="pop"><div class="kicker">' + L.moodK + "</div>" + (R.angriestDay ? '<h1 class="mood">' + L.angry(R.angriestDay) + '</h1><div class="sub">' + L.angryMeme + "</div>" : "") + (R.latest ? '<div class="sub" style="font-size:clamp(18px,4vw,24px)">' + L.late(R.latest) + "<br>" + L.lateMeme + "</div>" : "") + "</div>", 7, '<div class="deco"><div class="giant" style="right:-14%;bottom:-8%">🌋</div><div class="giant" style="left:-10%;top:4%;font-size:min(34vw,240px)">🦉</div></div>');
-      }
-      var lines = L.roast(R).map(function (l) { return '<p class="roast-line">' + esc(l) + "</p>"; }).join("");
-      add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10, '<div class="deco spot"></div>');
+
+      // 4. night shifts & injuries
+      var p3 = [by.night, by.injury];
+      var notes = (R.angriestDay ? '<div class="rc-meme">🌋 ' + K.angryL(R.angriestDay) + "</div>" : "") + (R.latest ? '<div class="rc-meme">🦉 ' + K.lateL(R.latest) + "</div>" : "");
+      add('<div class="pop"><div class="kicker">' + K.itemNo(3) + "</div>" + receipt(K.p3, p3.filter(Boolean).map(line).join("") + subtotal(p3) + notes) + "</div>",
+        8, giant("🌋", "right:-14%;bottom:-8%"));
     }
 
-    var me = personality();
-    var traits = me.traits.length ? '<div class="traits"><span class="tl">' + L.hidden + "</span>" + me.traits.map(function (x) { return '<span class="trait">' + esc(x) + "</span>"; }).join("") + "</div>" : "";
-    add('<div class="pop"><div class="kicker">' + L.personaK + '</div><div class="persona-emoji">' + me.e + "</div><h1>" + esc(me.name) + '</h1><div class="sub">' + esc(me.desc) + "</div>" + traits + "</div>", 7, tile(me.e, 70, "46px"));
-
-    // ---- the numbers, compressed into two pages ----
-    var h = D.workHours;
-    var facts = [
-      [fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]],
-      [h >= 10 ? String(Math.round(h)) : h.toFixed(1), L.factL[3]], [fmt(D.totalTokens), L.factL[4]], [String(D.streak.days), L.factL[5]],
-    ].map(function (f) { return '<div class="fact"><div class="fact-n">' + f[0] + '</div><div class="fact-l">' + f[1] + "</div></div>"; }).join("");
+    // 5. wages & supplies, with the year's numbers
+    var p4 = [by.wage, by.gpu];
     var cp = D.byTool.claude.prompts, xp = D.byTool.codex.prompts, c = cp + xp ? cp / (cp + xp) : 0.5;
-    var split = '<div class="split slim"><div class="c" data-w="' + c * 100 + '">' + (c >= 0.15 ? "Claude " + Math.round(c * 100) + "%" : "") + '</div><div class="x" data-w="' + (1 - c) * 100 + '">' + (1 - c >= 0.15 ? "Codex " + Math.round((1 - c) * 100) + "%" : "") + "</div></div>";
-    add('<div class="pop"><div class="kicker">' + L.factsK + "</div><h1>" + L.factsH(c) + '</h1><div class="facts">' + facts + "</div>" + split + '<div class="sub">' + L.factMeme() + "</div></div>", 7, giant("🔥", "right:-12%;bottom:-6%"));
+    var facts = [[fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]], [String(D.streak.days), L.factL[5]]]
+      .map(function (f) { return '<div class="rc-fact"><b>' + f[0] + "</b><span>" + f[1] + "</span></div>"; }).join("");
+    add('<div class="pop"><div class="kicker">' + (R ? K.itemNo(4) : K.itemNo(1)) + "</div>" + receipt(K.p4,
+      p4.filter(Boolean).map(line).join("") + subtotal(p4) + '<div class="rc-facts">' + facts + "</div>" +
+      '<div class="rc-meme"><b>' + L.factsH(c) + "</b><br>" + L.factMeme() + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
 
-    var habit = "";
+    // 6. attendance record
+    var att = "";
     if (D.peakHour !== null) {
       var hmax = Math.max.apply(null, D.hours) || 1;
-      habit += '<div><div class="clock short">' + D.hours.map(function (v, i) { return '<i class="' + (i === D.peakHour ? "peak" : "") + '" data-h="' + Math.max(2, (v / hmax) * 100) + '"></i>'; }).join("") + '</div><div class="clock-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div></div>';
+      att += '<div class="clock rc-clock">' + D.hours.map(function (v, i) { return '<i class="' + (i === D.peakHour ? "peak" : "") + '" data-h="' + Math.max(2, (v / hmax) * 100) + '"></i>'; }).join("") + '</div><div class="clock-axis rc-axis"><span>0</span><span>6</span><span>12</span><span>18</span><span>23</span></div>';
     }
-    var lines2 = [];
-    if (D.toolCalls) lines2.push([L.habitL[0], D.categories.slice(0, 3).map(function (r) { return (L.cats[r.name] || r.name) + " " + Math.round((r.count / D.toolCalls) * 100) + "%"; }).join(" · ")]);
-    if (D.topProjects.length) lines2.push([L.habitL[1], esc(D.topProjects.slice(0, 3).map(function (p) { return p.name; }).join(" · "))]);
-    if (D.topModels.length) lines2.push([L.habitL[2], esc(D.topModels.slice(0, 2).map(function (m) { return m.name; }).join(" · "))]);
-    habit += '<div class="habits">' + lines2.map(function (l) { return '<div class="habit"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("") + "</div>";
-    add('<div class="pop"><div class="kicker">' + L.habitsK + "</div><h1>" + (D.peakHour !== null ? L.habitsH(D.peakHour) : "") + "</h1>" + habit + '<div class="sub">' + L.nightMeme() + (D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "") + "</div></div>", 7, giant(D.peakHour === null ? "⏰" : D.peakHour >= 14 && D.peakHour < 18 ? "🐟" : D.peakHour >= 22 || D.peakHour < 5 ? "🦉" : D.peakHour < 9 ? "🐓" : "☕", "right:-14%;bottom:-6%"));
+    var hl = [];
+    if (D.toolCalls) hl.push([L.habitL[0], D.categories.slice(0, 3).map(function (r) { return (L.cats[r.name] || r.name) + " " + Math.round((r.count / D.toolCalls) * 100) + "%"; }).join(" · ")]);
+    if (D.topModels.length) hl.push([L.habitL[2], esc(D.topModels.slice(0, 2).map(function (m) { return m.name; }).join(" · "))]);
+    att += hl.map(function (l) { return '<div class="rc-row"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("");
+    var homeNote = D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "";
+    add('<div class="pop"><div class="kicker">' + K.attendK + "</div>" + receipt(D.peakHour !== null ? L.habitsH(D.peakHour) : "", att + '<div class="rc-meme">' + L.nightMeme() + homeNote + "</div>") + "</div>",
+      7, giant(D.peakHour === null ? "⏰" : D.peakHour >= 14 && D.peakHour < 18 ? "🐟" : D.peakHour >= 22 || D.peakHour < 5 ? "🦉" : D.peakHour < 9 ? "🐓" : "☕", "right:-14%;bottom:-6%"));
 
+    // 7. client review (the roast)
+    if (R) {
+      var stars = creditRating(R) === "A" ? "★★★★★" : creditRating(R) === "B" ? "★★★☆☆" : "★☆☆☆☆";
+      add('<div class="pop"><div class="kicker">' + K.reviewK + "</div>" + receipt(K.reviewH, '<div class="rc-stars">' + stars + "</div>" +
+        L.roast(R).map(function (l) { return '<p class="rc-quote">' + esc(l) + "</p>"; }).join("")) + "</div>", 11, '<div class="deco spot"></div>');
+    }
+
+    // 8. client file (persona)
+    var me = personality(), cr = creditRating(R);
+    add('<div class="pop"><div class="kicker">' + K.profileK + "</div>" + receipt("",
+      '<div class="rc-persona"><span class="persona-emoji">' + me.e + "</span><div><small>" + K.ptype + "</small><b>" + esc(me.name) + "</b></div></div>" +
+      '<div class="rc-meme">' + esc(me.desc) + "</div>" +
+      '<div class="rc-row"><span>' + K.credit + '</span><b class="credit c' + cr + '">' + cr + "</b></div>" +
+      (me.traits.length ? '<div class="rc-row"><span>' + K.traitsL + "</span><b>" + esc(me.traits.join(" · ")) + "</b></div>" : "")) + "</div>",
+      7, tile(me.e, 70, "46px"));
+
+    // 9. the IOU (share card)
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
       : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
     var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>';
-    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + '</div>' + (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") + '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0, tile("🧾", 70, "40px"));
+    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
+      (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") +
+      '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0, tile("🧾", 70, "40px"));
     return out;
-  }
-
-  function list(kicker, items) {
-    var max = items[0].count;
-    var rows = items.map(function (r, i) {
-      return '<div class="row"><span class="n">' + (i + 1) + '</span><span class="name">' + esc(r.name) + '</span><span class="v">' + fmt(r.count) + '</span><span class="meter"><b data-w="' + (r.count / max) * 100 + '"></b></span></div>';
-    }).join("");
-    return '<div class="pop"><div class="kicker">' + kicker + '</div><div class="rows">' + rows + "</div></div>";
-  }
-
-  function heat() {
-    var start = new Date(D.year, 0, 1), cells = [], vals = [];
-    for (var k in D.days) vals.push(D.days[k]);
-    vals.sort(function (a, b) { return a - b; });
-    var q = function (p) { return vals.length ? vals[Math.min(vals.length - 1, Math.floor(p * vals.length))] : 1; };
-    var q1 = q(0.25), q2 = q(0.5), q3 = q(0.75);
-    for (var i = 0; i < start.getDay(); i++) cells.push('<i class="out"></i>');
-    for (var d = new Date(start); d.getFullYear() === D.year; d.setDate(d.getDate() + 1)) {
-      var key = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
-      var v = D.days[key] || 0;
-      var lvl = !v ? "" : v <= q1 ? "l1" : v <= q2 ? "l2" : v <= q3 ? "l3" : "l4";
-      cells.push('<i class="' + lvl + '" title="' + key + ": " + v + '"></i>');
-    }
-    return cells.join("");
   }
 
   // ---------- player ----------
@@ -470,46 +566,61 @@ window.VWReport = function (DATA) {
     var keep = idx; build(); go(keep);
   };
 
-  // ---------- share card ----------
+  // ---------- share card: the receipt ----------
   function drawCard(cv) {
-    var x = cv.getContext("2d"), W = cv.width, H = cv.height, L = t(), me = personality();
+    var x = cv.getContext("2d"), W = cv.width, H = cv.height, K = b(), C = charges(), me = personality();
+    var F = '-apple-system, "PingFang SC", "Noto Sans SC", sans-serif', M = '"SF Mono", Menlo, Consolas, monospace';
     var g = x.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, "#ff6a3d"); g.addColorStop(0.5, "#ff2e88"); g.addColorStop(1, "#5b21b6");
     x.fillStyle = g; x.fillRect(0, 0, W, H);
-    x.fillStyle = "rgba(0,0,0,0.18)"; x.beginPath(); x.arc(W * 0.92, H * 0.08, 340, 0, 7); x.fill();
-    var F = '-apple-system, "PingFang SC", "Noto Sans SC", sans-serif';
-    x.fillStyle = "#fff"; x.textBaseline = "top";
-    x.font = "600 34px " + F; x.globalAlpha = 0.8; x.fillText(L.billK.toUpperCase() + " · CLAUDE CODE × CODEX", 72, 72); x.globalAlpha = 1;
-    x.font = "800 64px " + F; x.fillText(L.cardTitle(), 72, 124);
-    x.save(); x.translate(W - 230, 250); x.rotate(-0.26);
-    x.strokeStyle = x.fillStyle = "rgba(255,255,255,0.92)"; x.lineWidth = 8;
-    x.font = "900 56px " + F; var sw = x.measureText(L.stamp).width + 56;
-    round(x, -sw / 2, -50, sw, 100, 14); x.stroke();
-    x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(L.stamp, 0, 2); x.restore();
-    x.textAlign = "left"; x.textBaseline = "top"; x.fillStyle = "#fff";
-    x.font = "120px " + F; x.fillText(me.e, 72, 236);
-    x.font = "900 " + (me.name.length > 12 ? 72 : 96) + "px " + F; x.fillText(me.name, 72, 376);
-    x.font = "500 32px " + F; x.globalAlpha = 0.9; var yy = wrap(x, me.desc, 72, 490, W - 144, 44); x.globalAlpha = 1;
-    if (me.traits.length) { x.font = "700 28px " + F; x.globalAlpha = 0.8; x.fillText(L.hidden + "：" + me.traits.join(" · "), 72, Math.min(yy + 56, 610)); x.globalAlpha = 1; }
 
-    var R = D.roast;
-    var vals = R
-      ? [fmt(D.prompts), fmt(R.you.deny), fmt(R.ai.sorry), String(D.activeDays), fmt(D.totalTokens), (R.latest ? R.latest.time : "-")]
-      : [fmt(D.prompts), (D.workHours >= 1 ? D.workHours.toFixed(0) : D.workHours.toFixed(1)), fmt(D.totalTokens), String(D.activeDays), String(D.streak.days), fmt(D.toolCalls)];
-    var labels = R ? L.cardFun : L.cardStats;
-    for (var i = 0; i < 6; i++) {
-      var cx = 72 + (i % 3) * 320, cy = 660 + Math.floor(i / 3) * 190;
-      x.fillStyle = "rgba(0,0,0,0.22)"; round(x, cx, cy, 296, 166, 24); x.fill();
-      x.fillStyle = "#fff"; x.font = "900 64px " + F; x.fillText(vals[i], cx + 26, cy + 26);
-      x.font = "600 28px " + F; x.globalAlpha = 0.8; x.fillText(labels[i], cx + 26, cy + 112); x.globalAlpha = 1;
-    }
-    var hmax = Math.max.apply(null, D.hours) || 1, bw = (W - 144) / 24;
-    for (var h = 0; h < 24; h++) {
-      var bh = Math.max(4, (D.hours[h] / hmax) * 150);
-      x.fillStyle = h === D.peakHour ? "#fff" : "rgba(255,255,255,0.45)";
-      round(x, 72 + h * bw + 3, 1200 - bh, bw - 6, bh, 6); x.fill();
-    }
-    x.font = "600 26px " + F; x.globalAlpha = 0.75; x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), 72, 1232); x.globalAlpha = 1;
+    // paper with a torn (zigzag) bottom edge
+    var px = 90, py = 70, pw = W - 180, ph = 1130, z = 22;
+    x.fillStyle = "#fffdf7"; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw, py); x.lineTo(px + pw, py + ph);
+    for (var zx = px + pw; zx > px; zx -= z * 2) { x.lineTo(zx - z, py + ph + z); x.lineTo(Math.max(px, zx - 2 * z), py + ph); }
+    x.closePath(); x.shadowColor = "rgba(0,0,0,0.35)"; x.shadowBlur = 40; x.fill(); x.shadowBlur = 0;
+
+    var cx = px + 56, right = px + pw - 56, y = py + 56;
+    x.textBaseline = "top"; x.fillStyle = "#111";
+    x.textAlign = "center"; x.font = "900 54px " + F; x.fillText(K.company, W / 2, y); y += 70;
+    x.font = "500 26px " + M; x.fillStyle = "#777"; x.fillText(K.companySub + " · " + D.year, W / 2, y); y += 56;
+    x.textAlign = "left";
+    var dash = function () { x.strokeStyle = "#bbb"; x.lineWidth = 3; x.setLineDash([12, 10]); x.beginPath(); x.moveTo(cx, y); x.lineTo(right, y); x.stroke(); x.setLineDash([]); y += 26; };
+    dash();
+
+    // client + persona
+    x.font = "600 30px " + F; x.fillStyle = "#666"; x.fillText(K.client, cx, y);
+    x.textAlign = "right"; x.fillStyle = "#111"; x.font = "800 30px " + F; x.fillText(me.e + " " + me.name, right, y); x.textAlign = "left"; y += 58;
+    dash();
+
+    // line items (top 7 by size, discount always shown)
+    var items = C.list.slice().sort(function (a, c) { return Math.abs(c.amount) - Math.abs(a.amount); }).slice(0, 7);
+    items.forEach(function (it) {
+      var I = K.items[it.k];
+      x.font = "700 32px " + F; x.fillStyle = "#111"; x.fillText(I[0], cx, y);
+      x.font = "500 22px " + M; x.fillStyle = "#888"; x.fillText(it.qty, cx, y + 40);
+      x.textAlign = "right"; x.font = "800 34px " + M; x.fillStyle = it.amount < 0 ? "#16a34a" : "#111"; x.fillText(money(it.amount), right, y + 6); x.textAlign = "left";
+      y += 82;
+    });
+    dash();
+
+    // total
+    x.font = "700 32px " + F; x.fillStyle = "#666"; x.fillText(K.due, cx, y + 26);
+    x.textAlign = "right"; x.fillStyle = "#111"; x.font = "900 104px " + F; x.fillText(money(C.total), right, y); x.textAlign = "left";
+    y += 130;
+    x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
+
+    // stamp
+    x.save(); x.translate(right - 150, py + 300); x.rotate(-0.26);
+    x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
+    x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
+    round(x, -sw / 2, -52, sw, 104, 14); x.stroke();
+    x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(K.stamp, 0, 2); x.restore();
+    x.textAlign = "left"; x.textBaseline = "top";
+
+    // footer on the background
+    x.fillStyle = "rgba(255,255,255,0.85)"; x.font = "600 28px " + F;
+    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 64);
   }
   function round(x, a, b, w, h, r) { r = Math.min(r, w / 2, h / 2); x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
   function wrap(x, text, a, b, maxW, lh) {
