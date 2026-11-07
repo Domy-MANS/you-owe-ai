@@ -18,9 +18,8 @@
     zh: {
       title: "你欠 AI 多少钱？", sub: "AI 编程年度报告 · Claude Code × Codex · " + new Date().getFullYear(),
       pickClaude: "选择 .claude 文件夹", pickCodex: "选择 .codex 文件夹",
-      copied: function (kind) { return "📋 已复制 <code>" + pathFor(kind) + "</code>。在弹出的窗口里按 " + keysHtml() + "，然后点「" + (isMac ? "选择" : "选择文件夹") + "」"; },
-      where: isMac ? "在你的用户文件夹里（/Users/你的名字）。看不到？在选择窗口里按 <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> 显示隐藏文件夹。"
-        : "在你的用户文件夹里（C:\\Users\\你的名字 或 /home/你的名字）。看不到的话，打开「显示隐藏文件」。",
+      copied: function (kind) { return "📋 已复制 <code>" + pathFor(kind) + "</code>。<b>等选择窗口弹出来后</b>，在窗口里按 " + keysHtml() + "，然后点「" + (isMac ? "选择" : "选择文件夹") + "」"; },
+      where: "两个文件夹都在你的用户文件夹里，是隐藏的。点上面的按钮，<b>等选择窗口弹出来之后</b>，按 " + keysHtml() + "，再点「选择」。",
       onlyOne: "只用了其中一个？选一个就行。",
       go: "算算我欠了多少", demo: "先看看示例", reading: "正在读取…", files: function (n) { return "✓ 读取了 " + n + " 个文件"; },
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
@@ -30,9 +29,8 @@
     en: {
       title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
       pickClaude: "Choose your .claude folder", pickCodex: "Choose your .codex folder",
-      copied: function (kind) { return "📋 Copied <code>" + pathFor(kind) + "</code>. In the window that opens, press " + keysHtml() + ", then click Select."; },
-      where: isMac ? "They're in your home folder. Can't see them? Press <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> in the picker to show hidden folders."
-        : "They're in your home folder (C:\\Users\\you or /home/you). Turn on \"show hidden files\" if you can't see them.",
+      copied: function (kind) { return "📋 Copied <code>" + pathFor(kind) + "</code>. <b>Once the file window is open</b>, press " + keysHtml() + " inside it, then click Select."; },
+      where: "Both are hidden in your home folder. Click a button above, <b>wait for the file window to open</b>, then press " + keysHtml() + " and click Select.",
       onlyOne: "Only use one of them? Just pick that one.",
       go: "Show me the bill", demo: "See a demo", reading: "Reading…", files: function (n) { return "✓ Read " + n + " files"; },
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
