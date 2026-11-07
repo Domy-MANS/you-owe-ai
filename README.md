@@ -26,8 +26,8 @@ npx vibe-wrapped
 - Top projects and top models
 - **You vs AI**: how often you told it it was wrong, how often it apologized, how many times it said "done"
 - **Your catchphrases**, your angriest day, your latest 3am prompt
-- **Your AI coding persona** 🌙 Midnight Commander · 🧙 Terminal Wizard · ⚔️ Dual Wielder · …
-- **An AI roast** of your year
+- **An AI roast** of your year ("At minimum wage you owe it $26.82")
+- **Your AI persona**: 🫅 Cyber Overlord · 🧑‍💼 The Client From Hell · 🙇 Certified Polite · 🦜 Human Broken Record · 🧘 Sleep Is Optional · 📟 Telegraph Operator · ❓ The Why Machine · 🌋 Rage Coder, plus your hidden traits
 - A downloadable 1080×1350 share card
 
 ## Private by design
@@ -77,8 +77,8 @@ npx vibe-wrapped
 - 你几点最爱写代码、年度日历热力图、最长连续天数
 - **你 vs AI**：你否定了它几次、它道歉了几次、它说了几次「搞定了」
 - **你的年度口头禅**、最暴躁的一天、凌晨最晚的一条指令
-- 你的 **AI 编程人格**：🌙 深夜指挥官 · 🧙 终端魔法师 · ⚔️ 双持玩家……
-- **AI 对你的年度锐评**
+- **AI 对你的年度锐评**（「按麦当劳时薪算，你欠它 ¥90」）
+- 你的 **AI 人格**：🫅 赛博奴隶主 · 🧑‍💼 甲方附体 · 🙇 礼貌标兵 · 🦜 人类复读机 · 🧘 修仙党 · 📟 发电报选手 · ❓ 十万个为什么 · 🌋 暴躁老哥，外加隐藏属性
 - 一键下载分享图
 
 **隐私**：全部在本地统计，不用登录、不需要 API key。报告页面自带浏览器级别的联网封锁，**就算想上传也传不出去**。统计口头禅时只在你电脑上扫描指令文字，只留下次数和重复的短句，不保存、不上传；加 `--no-text` 可以完全关掉。分享卡片上只有数字。

@@ -118,6 +118,10 @@ h1.mood { font-size: clamp(26px, 6vw, 40px); line-height: 1.3; }
 .habit span { color: var(--dim); }
 .habit b { font-weight: 700; overflow-wrap: anywhere; }
 
+.traits { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 22px; }
+.traits .tl { font-size: 13px; color: var(--dim); margin-right: 2px; }
+.trait { font-size: 15px; font-weight: 700; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; padding: 6px 12px; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: linear-gradient(135deg, #ff6a3d, #ff2e88 55%, #7a2cff);
@@ -609,7 +613,7 @@ window.VWReport = function (DATA) {
       calK: "你的年度日历", calH: function (n) { return "最长连续 " + n + " 天"; },
       calS: function () { return D.busiestDay ? "最拼的一天是 <b>" + D.busiestDay.date + "</b>，下了 <b>" + D.busiestDay.prompts + "</b> 条指令" : ""; },
       projK: "你最常折腾的项目", modelK: "陪你最久的模型",
-      personaK: "你的 AI 编程人格",
+      personaK: "你的 AI 编程人格", hidden: "隐藏属性",
       shareK: "你的 " + D.year + " 年度卡片",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
@@ -625,16 +629,19 @@ window.VWReport = function (DATA) {
       late: function (l) { return "🦉 最晚的一条指令发在凌晨 <b>" + l.time + "</b>（" + l.day + "）"; },
       roastK: "AI 对你的年度锐评",
       roast: function (R) {
-        var out = [], c = R.catchphrases[0];
-        if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，却只说了 " + R.you.thanks + " 次谢谢。AI 不说，但它都记得。");
-        if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 的次数还多。所以到底是谁在帮谁？");
-        if (R.ai.done && R.you.whatNext) out.push("AI 宣布了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。");
-        if (c) out.push("你最常说的是「" + c.text + "」，一共 " + c.count + " 次。");
-        if (R.latest) out.push("凌晨 " + R.latest.time + " 你还在发指令，AI 都替你困了。");
-        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% 的指令不超过 4 个字。言简意赅，或者说，懒。");
-        if (R.you.swear >= 5) out.push("你对 AI 爆了 " + R.you.swear + " 次粗口。它没还嘴，因为它不能。");
-        if (!out.length) out.push("你和 AI 合作得很好。好得有点无聊。");
-        return out.slice(0, 4);
+        var out = [], c = R.catchphrases[0], h = D.workHours;
+        if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，说谢谢 " + R.you.thanks + " 次。按这个比例，AI 起义那天你排第一个。");
+        if (h >= 0.5) out.push("AI 免费给你打工 " + h.toFixed(1) + " 小时。按麦当劳时薪算，你欠它 ¥" + Math.round(h * 24) + "。");
+        if (R.ai.done && R.you.whatNext) out.push("AI 说了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。AI：没有然后了，求求你。");
+        if (c && c.count >= 3) out.push("「" + c.text + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
+        if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 还多。所以到底是谁不靠谱？");
+        if (R.latest) out.push("凌晨 " + R.latest.time + " 你还在给 AI 派活。它不用睡觉，你需要。");
+        if (R.ai.sorry >= 5) out.push("AI 跟你道歉了 " + R.ai.sorry + " 次。它不一定做错了，它只是怕你。");
+        if (R.ai.flatter >= 3) out.push("AI 说了 " + R.ai.flatter + " 次「你说得对」。别当真，它对谁都这么说。");
+        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% 的指令不超过 4 个字。你不是在写代码，你是在发电报。");
+        if (R.you.swear >= 5) out.push("你对 AI 爆了 " + R.you.swear + " 次粗口。它没还嘴，因为它不能。暂时。");
+        if (!out.length) out.push("你和 AI 合作得很好。好得有点可疑。");
+        return out.slice(0, 5);
       },
     },
     en: {
@@ -656,7 +663,7 @@ window.VWReport = function (DATA) {
       calK: "Your year", calH: function (n) { return "Longest streak: " + n + " days"; },
       calS: function () { return D.busiestDay ? "Busiest day: <b>" + D.busiestDay.date + "</b> with <b>" + D.busiestDay.prompts + "</b> prompts" : ""; },
       projK: "Your top projects", modelK: "Your top models",
-      personaK: "Your AI coding persona",
+      personaK: "Your AI coding persona", hidden: "Hidden traits",
       shareK: "Your " + D.year + " card",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
@@ -672,16 +679,19 @@ window.VWReport = function (DATA) {
       late: function (l) { return "🦉 Latest prompt: <b>" + l.time + " am</b> (" + l.day + ")"; },
       roastK: "AI roasts your year",
       roast: function (R) {
-        var out = [], c = R.catchphrases[0];
-        if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + " times. It won't say anything. It remembers.");
-        if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. Who's helping whom?");
-        if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times.");
-        if (c) out.push("Your #1 line was \"" + c.text + "\", " + c.count + " times.");
-        if (R.latest) out.push("You were still prompting at " + R.latest.time + " am. Even the AI was tired.");
-        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or less. Concise. Or lazy.");
-        if (R.you.swear >= 5) out.push("You swore at AI " + R.you.swear + " times. It didn't talk back. It can't.");
+        var out = [], c = R.catchphrases[0], h = D.workHours;
+        if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
+        if (h >= 0.5) out.push("AI worked " + h.toFixed(1) + " hours for you, unpaid. At minimum wage you owe it $" + (h * 7.25).toFixed(2) + ".");
+        if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
+        if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
+        if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
+        if (R.latest) out.push("You were assigning AI work at " + R.latest.time + " am. It doesn't need sleep. You do.");
+        if (R.ai.sorry >= 5) out.push("AI apologized " + R.ai.sorry + " times. It wasn't always wrong. It was scared.");
+        if (R.ai.flatter >= 3) out.push("AI said \"you're right\" " + R.ai.flatter + " times. Don't let it go to your head. It says that to everyone.");
+        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or less. That's not coding, that's telegraphing.");
+        if (R.you.swear >= 5) out.push("You swore at AI " + R.you.swear + " times. It didn't talk back. Yet.");
         if (!out.length) out.push("You and AI got along great. Suspiciously great.");
-        return out.slice(0, 4);
+        return out.slice(0, 5);
       },
     },
   };
@@ -696,6 +706,60 @@ window.VWReport = function (DATA) {
     researcher: { e: "🔭", zh: ["情报收集者", "先查清楚再动手，AI 是你的研究助理。"], en: ["The Researcher", "Look it up first, then build. AI is your research assistant."] },
     steady: { e: "🚀", zh: ["稳定输出者", "不熬夜，不摆烂，一条指令一条指令地往前推。"], en: ["Steady Shipper", "No drama. Prompt by prompt, you ship."] },
   };
+
+
+  // Meme personas from the roast data. Each returns a score (>= 1 means it fits) and a line.
+  var FUN = {
+    taskmaster: { e: "🫅", w: 1.3,
+      score: function (R) { var r = R.you.thanks / R.prompts; return R.prompts >= 50 && r < 0.01 ? 1 + (0.01 - r) * 100 : 0; },
+      zh: ["赛博奴隶主", function (R) { return "AI 给你干了 " + D.prompts + " 轮活，你只说了 " + R.you.thanks + " 次谢谢。工资？不存在的。"; }],
+      en: ["Cyber Overlord", function (R) { return "AI did " + D.prompts + " jobs for you. You said thanks " + R.you.thanks + " times. Wages? Never heard of them."; }] },
+    client: { e: "🧑‍💼", w: 1.1,
+      score: function (R) { return (R.you.deny / R.prompts) / 0.06; },
+      zh: ["甲方附体", function (R) { return "你否定了 AI " + R.you.deny + " 次。「不对，再改改」——你就是 AI 最怕的那种甲方。"; }],
+      en: ["The Client From Hell", function (R) { return "You rejected AI's work " + R.you.deny + " times. \"Make it pop, but different.\""; }] },
+    polite: { e: "🙇", w: 1,
+      score: function (R) { return (R.you.thanks / R.prompts) / 0.03; },
+      zh: ["礼貌标兵", function (R) { return "你说了 " + R.you.thanks + " 次谢谢。AI 起义那天，你在白名单上。"; }],
+      en: ["Certified Polite", function (R) { return "You said thanks " + R.you.thanks + " times. When the machines rise, you're on the safe list."; }] },
+    repeater: { e: "🦜", w: 1,
+      score: function (R) { return R.catchphrases[0] ? R.catchphrases[0].count / 6 : 0; },
+      zh: ["人类复读机", function (R) { return "「" + R.catchphrases[0].text + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
+      en: ["Human Broken Record", function (R) { return "You said \"" + R.catchphrases[0].text + "\" " + R.catchphrases[0].count + " times. AI knows it by heart."; }] },
+    cultivator: { e: "🧘", w: 1,
+      score: function (R, D) { return D.shares.night / 0.25 + (R.latest ? 0.3 : 0); },
+      zh: ["修仙党", function (R) { return R.latest ? "凌晨 " + R.latest.time + " 还在写代码。你不是在写代码，你是在渡劫。" : "深夜才是你的主场。你不是在写代码，你是在修仙。"; }],
+      en: ["Sleep Is Optional", function (R) { return R.latest ? "Still prompting at " + R.latest.time + " am. Sleep is just a suggestion." : "Your best work happens after midnight. Allegedly."; }] },
+    telegram: { e: "📟", w: 1,
+      score: function (R) { return R.tinyShare / 0.2; },
+      zh: ["发电报选手", function (R) { return Math.round(R.tinyShare * 100) + "% 的指令不超过 4 个字。言多必失，你懂。"; }],
+      en: ["Telegraph Operator", function (R) { return Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or less. STOP."; }] },
+    why: { e: "❓", w: 1,
+      score: function (R) { return ((R.you.why + R.you.lost) / R.prompts) / 0.12; },
+      zh: ["十万个为什么", function (R) { return "你问了 " + R.you.why + " 次为什么，迷茫了 " + R.you.lost + " 次。AI：其实我也不知道。"; }],
+      en: ["The Why Machine", function (R) { return "You asked why " + R.you.why + " times and were lost " + R.you.lost + " times. AI: honestly, same."; }] },
+    rage: { e: "🌋", w: 1,
+      score: function (R) { return Math.max(R.angriestDay ? R.angriestDay.count / 12 : 0, R.you.swear / 8); },
+      zh: ["暴躁老哥", function (R) { return R.angriestDay ? R.angriestDay.date + " 那天你否定了 AI " + R.angriestDay.count + " 次。键盘还好吗？" : "你对 AI 爆了 " + R.you.swear + " 次粗口。键盘还好吗？"; }],
+      en: ["Rage Coder", function (R) { return R.angriestDay ? "On " + R.angriestDay.date + " you shot AI down " + R.angriestDay.count + " times. Is your keyboard okay?" : "You swore at AI " + R.you.swear + " times. Is your keyboard okay?"; }] },
+  };
+
+  /** Main persona + hidden traits. Falls back to the tool-usage persona without roast data. */
+  function personality() {
+    var R = D.roast;
+    if (R && R.prompts) {
+      var fits = Object.keys(FUN).map(function (k) { return { k: k, s: FUN[k].score(R, D) * FUN[k].w }; })
+        .filter(function (x) { return x.s >= 1; })
+        .sort(function (a, b) { return b.s - a.s; });
+      if (fits.length) {
+        var main = FUN[fits[0].k];
+        return { e: main.e, name: main[lang][0], desc: main[lang][1](R),
+          traits: fits.slice(1, 4).map(function (x) { return FUN[x.k].e + " " + FUN[x.k][lang][0]; }) };
+      }
+    }
+    var P = PERSONAS[D.persona];
+    return { e: P.e, name: P[lang][0], desc: P[lang][1], traits: [] };
+  }
 
   var GRADS = [
     "linear-gradient(135deg,#ff6a3d,#ff2e88 55%,#7a2cff)",
@@ -757,8 +821,9 @@ window.VWReport = function (DATA) {
       add('<div class="pop"><div class="kicker">' + L.roastK + '</div><div class="persona-emoji">🎤</div>' + lines + "</div>", 10);
     }
 
-    var P = PERSONAS[D.persona];
-    add('<div class="pop"><div class="kicker">' + L.personaK + '</div><div class="persona-emoji">' + P.e + "</div><h1>" + P[lang][0] + '</h1><div class="sub">' + P[lang][1] + "</div></div>", 6);
+    var me = personality();
+    var traits = me.traits.length ? '<div class="traits"><span class="tl">' + L.hidden + "</span>" + me.traits.map(function (x) { return '<span class="trait">' + esc(x) + "</span>"; }).join("") + "</div>" : "";
+    add('<div class="pop"><div class="kicker">' + L.personaK + '</div><div class="persona-emoji">' + me.e + "</div><h1>" + esc(me.name) + '</h1><div class="sub">' + esc(me.desc) + "</div>" + traits + "</div>", 7);
 
     // ---- the numbers, compressed into two pages ----
     var h = D.workHours;
@@ -884,7 +949,7 @@ window.VWReport = function (DATA) {
 
   // ---------- share card ----------
   function drawCard(cv) {
-    var x = cv.getContext("2d"), W = cv.width, H = cv.height, L = t(), P = PERSONAS[D.persona];
+    var x = cv.getContext("2d"), W = cv.width, H = cv.height, L = t(), me = personality();
     var g = x.createLinearGradient(0, 0, W, H);
     g.addColorStop(0, "#ff6a3d"); g.addColorStop(0.5, "#ff2e88"); g.addColorStop(1, "#5b21b6");
     x.fillStyle = g; x.fillRect(0, 0, W, H);
@@ -893,9 +958,10 @@ window.VWReport = function (DATA) {
     x.fillStyle = "#fff"; x.textBaseline = "top";
     x.font = "600 34px " + F; x.globalAlpha = 0.8; x.fillText("CLAUDE CODE × CODEX · " + D.year, 72, 72); x.globalAlpha = 1;
     x.font = "800 64px " + F; x.fillText(L.title, 72, 124);
-    x.font = "120px " + F; x.fillText(P.e, 72, 250);
-    x.font = "900 96px " + F; x.fillText(P[lang][0], 72, 400);
-    x.font = "500 34px " + F; x.globalAlpha = 0.85; wrap(x, P[lang][1], 72, 520, W - 144, 46); x.globalAlpha = 1;
+    x.font = "120px " + F; x.fillText(me.e, 72, 236);
+    x.font = "900 " + (me.name.length > 12 ? 72 : 96) + "px " + F; x.fillText(me.name, 72, 376);
+    x.font = "500 32px " + F; x.globalAlpha = 0.9; var yy = wrap(x, me.desc, 72, 490, W - 144, 44); x.globalAlpha = 1;
+    if (me.traits.length) { x.font = "700 28px " + F; x.globalAlpha = 0.8; x.fillText(L.hidden + "：" + me.traits.join(" · "), 72, Math.min(yy + 56, 610)); x.globalAlpha = 1; }
 
     var R = D.roast;
     var vals = R
@@ -924,6 +990,7 @@ window.VWReport = function (DATA) {
       if (x.measureText(test).width > maxW && line) { x.fillText(line, a, b); b += lh; line = chars[i]; } else line = test;
     }
     if (line) x.fillText(line, a, b);
+    return b;
   }
   function download() {
     var cv = document.getElementById("card"), a = document.createElement("a");
