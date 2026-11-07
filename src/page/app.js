@@ -576,9 +576,10 @@ window.VWReport = function (DATA) {
 
     // paper with a torn (zigzag) bottom edge
     var px = 90, py = 70, pw = W - 180, ph = 1130, z = 22;
-    x.fillStyle = "#fffdf7"; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw, py); x.lineTo(px + pw, py + ph);
+    x.fillStyle = "#f1e2b8"; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw, py); x.lineTo(px + pw, py + ph);
     for (var zx = px + pw; zx > px; zx -= z * 2) { x.lineTo(zx - z, py + ph + z); x.lineTo(Math.max(px, zx - 2 * z), py + ph); }
     x.closePath(); x.shadowColor = "rgba(0,0,0,0.35)"; x.shadowBlur = 40; x.fill(); x.shadowBlur = 0;
+    agePaper(x, px, py, pw, ph);
 
     var cx = px + 56, right = px + pw - 56, y = py + 56;
     x.textBaseline = "top"; x.fillStyle = "#111";
@@ -611,7 +612,7 @@ window.VWReport = function (DATA) {
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
 
     // stamp
-    x.save(); x.translate(right - 150, py + 300); x.rotate(-0.26);
+    x.save(); x.translate(right - 60, py + 20); x.rotate(-0.26);
     x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
     x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
     round(x, -sw / 2, -52, sw, 104, 14); x.stroke();
@@ -622,6 +623,33 @@ window.VWReport = function (DATA) {
     x.fillStyle = "rgba(255,255,255,0.85)"; x.font = "600 28px " + F;
     x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 64);
   }
+  /** Yellowed paper, grain, a fold, a coffee ring and some blood. Seeded, so every card looks the same. */
+  function agePaper(x, px, py, pw, ph) {
+    var seed = 7, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    x.save(); x.beginPath(); x.rect(px, py, pw, ph + 22); x.clip();
+    var spot = function (cx, cy, r, col) { var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2); };
+    spot(px + pw * 0.45, py + ph * 0.4, pw * 0.7, "rgba(255,248,225,0.55)");
+    spot(px + pw, py, pw * 0.6, "rgba(140,95,30,0.35)");
+    spot(px, py + ph, pw * 0.55, "rgba(140,95,30,0.32)");
+    for (var i = 0; i < 2600; i++) { x.fillStyle = "rgba(110,80,30," + (rnd() * 0.12).toFixed(3) + ")"; x.fillRect(px + rnd() * pw, py + rnd() * ph, 1 + rnd() * 2, 1 + rnd() * 2); }
+    x.fillStyle = "rgba(110,80,30,0.16)"; x.fillRect(px, py + ph / 2, pw, 3);
+    x.strokeStyle = "rgba(120,75,20,0.22)"; x.lineWidth = 7; x.beginPath(); x.arc(px + pw * 0.8, py + ph * 0.86, 64, 0, 6.3); x.stroke();
+    x.restore();
+    x.save(); x.globalCompositeOperation = "multiply";
+    var blood = function (cx, cy, r, n) {
+      x.fillStyle = "rgba(122,10,10,0.78)"; x.beginPath();
+      for (var a = 0; a <= 6.3; a += 0.35) { var rr = r * (0.75 + rnd() * 0.5); x.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
+      x.closePath(); x.fill();
+      for (var k = 0; k < n; k++) { var ang = rnd() * 6.28, d = r * (1.3 + rnd() * 1.6); x.beginPath(); x.arc(cx + Math.cos(ang) * d, cy + Math.sin(ang) * d, 2 + rnd() * r * 0.18, 0, 6.3); x.fill(); }
+    };
+    blood(px + 30, py + 40, 38, 9);
+    blood(px + 26, py + ph * 0.66, 20, 6);
+    x.fillStyle = "rgba(122,10,10,0.75)"; x.beginPath(); x.moveTo(px + pw * 0.2, py); x.lineTo(px + pw * 0.2 + 14, py);
+    x.quadraticCurveTo(px + pw * 0.2 + 10, py + 70, px + pw * 0.2 + 7, py + 110); x.quadraticCurveTo(px + pw * 0.2 + 2, py + 70, px + pw * 0.2, py); x.fill();
+    x.beginPath(); x.arc(px + pw * 0.2 + 7, py + 116, 8, 0, 6.3); x.fill();
+    x.restore();
+  }
+
   function round(x, a, b, w, h, r) { r = Math.min(r, w / 2, h / 2); x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
   function wrap(x, text, a, b, maxW, lh) {
     var line = "", chars = lang === "zh" ? text.split("") : text.split(" "), sep = lang === "zh" ? "" : " ";

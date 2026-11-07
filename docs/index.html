@@ -187,6 +187,37 @@ hr.rc { border: 0; border-top: 2px dashed #ccc; margin: 12px 0; }
 .credit.cA { background: #16a34a; } .credit.cB { background: #2563eb; } .credit.cC { background: #ca8a04; } .credit.cD { background: #dc2626; }
 .stamp.red { top: -24px; bottom: auto; right: -14px; font-size: clamp(20px, 5.2vw, 30px); padding: 2px 12px; border-color: rgba(220,38,38,0.85); color: rgba(220,38,38,0.9); background: transparent; }
 
+/* ===== aged paper + blood ===== */
+.receipt {
+  --paper: #f1e2b8;
+  color: #2a1f12;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(180deg, transparent 49.7%, rgba(110,80,30,0.16) 50%, rgba(255,255,255,0.25) 50.4%, transparent 50.8%),
+    radial-gradient(ellipse 70% 55% at 45% 40%, rgba(255,248,225,0.7), transparent 75%),
+    radial-gradient(ellipse 60% 50% at 100% 0%, rgba(140,95,30,0.32), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 0% 100%, rgba(140,95,30,0.30), transparent 60%),
+    radial-gradient(circle at 85% 88%, transparent 26px, rgba(120,75,20,0.22) 28px, transparent 33px),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45  0 0 0 0 .33  0 0 0 0 .12  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url%28%23n%29' opacity='.35'/%3E%3C/svg%3E");
+  background-size: auto, auto, auto, auto, auto, 160px 160px;
+}
+.receipt::after { background: linear-gradient(-45deg, transparent 10px, var(--paper) 0) 0 0 / 20px 14px repeat-x,
+                              linear-gradient(45deg, transparent 10px, var(--paper) 0) 0 0 / 20px 14px repeat-x; }
+.receipt::before { content: ""; position: absolute; width: 120px; height: 120px; pointer-events: none; mix-blend-mode: multiply;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cg fill='%237a0a0a'%3E%3Cpath d='M78 46c10-9 30-6 33 8 12 2 17 18 8 26 7 11-3 26-16 23-3 13-21 16-28 6-12 7-28-1-27-14-13-4-15-21-3-27-4-13 10-25 23-19 3-2 6-3 10-3z' opacity='.85'/%3E%3Cpath d='M111 60c9-3 22-8 34-6-10 4-21 9-31 12z' opacity='.7'/%3E%3Ccircle cx='132' cy='30' r='5'/%3E%3Ccircle cx='143' cy='45' r='2.6'/%3E%3Ccircle cx='122' cy='18' r='2'/%3E%3Ccircle cx='24' cy='122' r='6'/%3E%3Ccircle cx='38' cy='138' r='2.4'/%3E%3Ccircle cx='14' cy='104' r='2'/%3E%3Ccircle cx='118' cy='124' r='3.4'/%3E%3Cellipse cx='90' cy='136' rx='2.2' ry='7' transform='rotate%2818 90 136%29'/%3E%3Cellipse cx='60' cy='18' rx='1.8' ry='6' transform='rotate%28-30 60 18%29'/%3E%3Ccircle cx='150' cy='96' r='2'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat; opacity: 0.7; top: -26px; right: -28px; transform: rotate(-20deg); }
+.slide:first-child .receipt::before { right: auto; left: -26px; }
+.slide:nth-child(3n+2) .receipt::before { top: auto; right: auto; bottom: -34px; left: -30px; width: 96px; height: 96px; transform: rotate(40deg); }
+.slide:nth-child(3n) .receipt::before { top: auto; right: auto; bottom: -30px; left: 38%; width: 74px; height: 74px; opacity: 0.6; transform: rotate(110deg); }
+.receipt .rc-head::after { content: ""; position: absolute; top: -2px; left: 18%; width: 16px; height: 48px; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 120'%3E%3Cpath fill='%237a0a0a' opacity='.8' d='M8 0h24c-2 18-4 30-6 52-1 14 2 30-6 34-8-4-4-20-6-34C12 30 10 18 8 0z'/%3E%3Cellipse cx='20' cy='104' rx='5' ry='7' fill='%237a0a0a' opacity='.8'/%3E%3C/svg%3E") center top / contain no-repeat; mix-blend-mode: multiply; opacity: 0.8; }
+.rc-row span, .rc-item small, .rc-note, .rc-label { color: #7a6a52; }
+.rc-item, .rc-quote { border-bottom-color: rgba(110,80,30,0.25); }
+.rc-title, hr.rc { border-color: rgba(110,80,30,0.35); }
+.rc-fact { background: rgba(110,80,30,0.12); }
+.rc-clock i { background: rgba(110,80,30,0.3); }
+.rc-clock i.peak { background: #2a1f12; }
+.rc-meme { color: #3d2f1c; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: linear-gradient(135deg, #ff6a3d, #ff2e88 55%, #7a2cff);
@@ -1225,9 +1256,10 @@ window.VWReport = function (DATA) {
 
     // paper with a torn (zigzag) bottom edge
     var px = 90, py = 70, pw = W - 180, ph = 1130, z = 22;
-    x.fillStyle = "#fffdf7"; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw, py); x.lineTo(px + pw, py + ph);
+    x.fillStyle = "#f1e2b8"; x.beginPath(); x.moveTo(px, py); x.lineTo(px + pw, py); x.lineTo(px + pw, py + ph);
     for (var zx = px + pw; zx > px; zx -= z * 2) { x.lineTo(zx - z, py + ph + z); x.lineTo(Math.max(px, zx - 2 * z), py + ph); }
     x.closePath(); x.shadowColor = "rgba(0,0,0,0.35)"; x.shadowBlur = 40; x.fill(); x.shadowBlur = 0;
+    agePaper(x, px, py, pw, ph);
 
     var cx = px + 56, right = px + pw - 56, y = py + 56;
     x.textBaseline = "top"; x.fillStyle = "#111";
@@ -1260,7 +1292,7 @@ window.VWReport = function (DATA) {
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
 
     // stamp
-    x.save(); x.translate(right - 150, py + 300); x.rotate(-0.26);
+    x.save(); x.translate(right - 60, py + 20); x.rotate(-0.26);
     x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
     x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
     round(x, -sw / 2, -52, sw, 104, 14); x.stroke();
@@ -1271,6 +1303,33 @@ window.VWReport = function (DATA) {
     x.fillStyle = "rgba(255,255,255,0.85)"; x.font = "600 28px " + F;
     x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), px, H - 64);
   }
+  /** Yellowed paper, grain, a fold, a coffee ring and some blood. Seeded, so every card looks the same. */
+  function agePaper(x, px, py, pw, ph) {
+    var seed = 7, rnd = function () { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    x.save(); x.beginPath(); x.rect(px, py, pw, ph + 22); x.clip();
+    var spot = function (cx, cy, r, col) { var g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, col); g.addColorStop(1, "rgba(0,0,0,0)"); x.fillStyle = g; x.fillRect(cx - r, cy - r, r * 2, r * 2); };
+    spot(px + pw * 0.45, py + ph * 0.4, pw * 0.7, "rgba(255,248,225,0.55)");
+    spot(px + pw, py, pw * 0.6, "rgba(140,95,30,0.35)");
+    spot(px, py + ph, pw * 0.55, "rgba(140,95,30,0.32)");
+    for (var i = 0; i < 2600; i++) { x.fillStyle = "rgba(110,80,30," + (rnd() * 0.12).toFixed(3) + ")"; x.fillRect(px + rnd() * pw, py + rnd() * ph, 1 + rnd() * 2, 1 + rnd() * 2); }
+    x.fillStyle = "rgba(110,80,30,0.16)"; x.fillRect(px, py + ph / 2, pw, 3);
+    x.strokeStyle = "rgba(120,75,20,0.22)"; x.lineWidth = 7; x.beginPath(); x.arc(px + pw * 0.8, py + ph * 0.86, 64, 0, 6.3); x.stroke();
+    x.restore();
+    x.save(); x.globalCompositeOperation = "multiply";
+    var blood = function (cx, cy, r, n) {
+      x.fillStyle = "rgba(122,10,10,0.78)"; x.beginPath();
+      for (var a = 0; a <= 6.3; a += 0.35) { var rr = r * (0.75 + rnd() * 0.5); x.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
+      x.closePath(); x.fill();
+      for (var k = 0; k < n; k++) { var ang = rnd() * 6.28, d = r * (1.3 + rnd() * 1.6); x.beginPath(); x.arc(cx + Math.cos(ang) * d, cy + Math.sin(ang) * d, 2 + rnd() * r * 0.18, 0, 6.3); x.fill(); }
+    };
+    blood(px + 30, py + 40, 38, 9);
+    blood(px + 26, py + ph * 0.66, 20, 6);
+    x.fillStyle = "rgba(122,10,10,0.75)"; x.beginPath(); x.moveTo(px + pw * 0.2, py); x.lineTo(px + pw * 0.2 + 14, py);
+    x.quadraticCurveTo(px + pw * 0.2 + 10, py + 70, px + pw * 0.2 + 7, py + 110); x.quadraticCurveTo(px + pw * 0.2 + 2, py + 70, px + pw * 0.2, py); x.fill();
+    x.beginPath(); x.arc(px + pw * 0.2 + 7, py + 116, 8, 0, 6.3); x.fill();
+    x.restore();
+  }
+
   function round(x, a, b, w, h, r) { r = Math.min(r, w / 2, h / 2); x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
   function wrap(x, text, a, b, maxW, lh) {
     var line = "", chars = lang === "zh" ? text.split("") : text.split(" "), sep = lang === "zh" ? "" : " ";
