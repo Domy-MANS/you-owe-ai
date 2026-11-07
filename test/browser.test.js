@@ -73,3 +73,25 @@ test("built web page has the CSP and all the code inline", () => {
   assert.doesNotMatch(html, /<script[^>]+src=/);
   for (const g of ["VWParse", "VWStats", "VWRoast", "VWReport", "VW_DEMO", "showDirectoryPicker"]) assert.ok(html.includes(g), g);
 });
+
+test("share link round-trips the report without project names or daily history", async () => {
+  const { computeStats } = require("../src/core/stats");
+  const { demoData, demoRoast } = require("../src/demo");
+  const D = computeStats(demoData(2026), { year: 2026 });
+  D.roast = demoRoast();
+  // run the page's codec with browser-like globals
+  const window = {};
+  const ctx = vm.createContext({ window, location: { hash: "" }, document: {}, TextEncoder, TextDecoder, Blob, Response, CompressionStream, DecompressionStream, btoa, atob, Uint8Array, JSON, String, Object, RegExp });
+  const src = fs.readFileSync(path.join(__dirname, "../src/page/app.js"), "utf8");
+  vm.runInContext(src.slice(0, src.indexOf("/* Report player.")), ctx);
+  const url = await window.VWShare.link(D);
+  assert.match(url, /^https:\/\/domy-mans\.github\.io\/vibe-wrapped\/#s=z[A-Za-z0-9_-]+$/);
+  assert.ok(url.length < 3000, `link too long: ${url.length}`);
+  const back = JSON.parse(JSON.stringify(await window.VWShare.decode(url.split("#s=")[1]))); // copy out of the vm realm
+  assert.equal(back.shared, true);
+  assert.deepEqual(back.topProjects, []);
+  assert.deepEqual(back.days, {});
+  assert.equal(back.prompts, D.prompts);
+  assert.deepEqual(back.roast, D.roast);
+  assert.equal(back.persona, D.persona);
+});

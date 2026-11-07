@@ -151,6 +151,8 @@
     document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; render(); };
   }
 
-  if (/[?&]demo\b/.test(location.search)) show(window.VW_DEMO);
+  var shared = window.VWShare.fromHash();
+  if (shared) shared.then(show, function () { history.replaceState(null, "", location.pathname); render(); });
+  else if (/[?&]demo\b/.test(location.search)) show(window.VW_DEMO);
   else render();
 })();

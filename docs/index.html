@@ -122,6 +122,10 @@ h1.mood { font-size: clamp(26px, 6vw, 40px); line-height: 1.3; }
 .traits .tl { font-size: 13px; color: var(--dim); margin-right: 2px; }
 .trait { font-size: 15px; font-weight: 700; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; padding: 6px 12px; }
 
+.link-note { text-align: center; font-size: 13px; color: var(--dim); margin-top: 12px; }
+.link-note.ok { color: #fff; font-weight: 700; }
+.link-box { width: 100%; margin-top: 10px; font: 12px var(--mono); padding: 10px; border-radius: 10px; border: 1px solid var(--faint); background: rgba(0,0,0,0.3); color: #fff; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: linear-gradient(135deg, #ff6a3d, #ff2e88 55%, #7a2cff);
@@ -582,7 +586,45 @@ if (typeof module !== "undefined" && module.exports) module.exports = api;
 else root.VWRoast = api;
 })(typeof self !== "undefined" ? self : this);
 </script>
-<script>/* Report player. Called with the computed stats: VWReport(stats). */
+<script>/* Share links: the report's numbers are compressed into the URL fragment (#s=...).
+   The fragment never leaves the browser, so not even the host sees the data. */
+window.VW_BASE = "https://domy-mans.github.io/vibe-wrapped/";
+window.VWShare = (function () {
+  function b64url(bytes) {
+    var bin = ""; for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function unb64url(s) {
+    s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "=";
+    var bin = atob(s), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+  async function pipe(bytes, stream) { return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer()); }
+  /** Only what the slides need. No per-day history, no project names. */
+  function shareable(D) {
+    var o = JSON.parse(JSON.stringify(D));
+    delete o.days; o.topProjects = []; o.shared = true;
+    return o;
+  }
+  async function encode(D) {
+    var bytes = new TextEncoder().encode(JSON.stringify(shareable(D)));
+    if (typeof CompressionStream !== "undefined") return "z" + b64url(await pipe(bytes, new CompressionStream("deflate-raw")));
+    return "j" + b64url(bytes);
+  }
+  async function decode(s) {
+    var bytes = unb64url(s.slice(1));
+    if (s.charAt(0) === "z") bytes = await pipe(bytes, new DecompressionStream("deflate-raw"));
+    var D = JSON.parse(new TextDecoder().decode(bytes));
+    D.shared = true; D.topProjects = []; D.days = {};
+    return D;
+  }
+  async function link(D) { return window.VW_BASE + "#s=" + (await encode(D)); }
+  function fromHash() { var m = /#s=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? decode(m[1]) : null; }
+  return { encode: encode, decode: decode, link: link, fromHash: fromHash, shareable: shareable };
+})();
+
+/* Report player. Called with the computed stats: VWReport(stats). */
 window.VWReport = function (DATA) {
   "use strict";
   var D = DATA;
@@ -615,6 +657,8 @@ window.VWReport = function (DATA) {
       projK: "你最常折腾的项目", modelK: "陪你最久的模型",
       personaK: "你的 AI 编程人格", hidden: "隐藏属性",
       shareK: "你的 " + D.year + " 年度卡片",
+      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
+      sharedK: "有人把 TA 的 AI 年度报告分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
       empty: "今年还没有找到 Claude Code 或 Codex 的使用记录。",
@@ -682,6 +726,8 @@ window.VWReport = function (DATA) {
       projK: "Your top projects", modelK: "Your top models",
       personaK: "Your AI coding persona", hidden: "Hidden traits",
       shareK: "Your " + D.year + " card",
+      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
+      sharedK: "Someone shared their AI Wrapped with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
       empty: "No Claude Code or Codex activity found for this year yet.",
@@ -836,7 +882,7 @@ window.VWReport = function (DATA) {
       return out;
     }
 
-    add('<div class="pop"><div class="kicker">Claude Code × Codex</div><div class="big">' + D.year + "</div><h1>" + L.title + '</h1><div class="sub">' + L.introS + '</div><div class="privacy">' + L.privacy + "</div></div>", 5);
+    add('<div class="pop"><div class="kicker">' + (D.shared ? L.sharedK : "Claude Code × Codex") + '</div><div class="big">' + D.year + "</div><h1>" + (D.shared ? L.sharedTitle : L.title) + '</h1><div class="sub">' + L.introS + '</div><div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 5);
 
     // ---- the fun part first ----
     var R = D.roast;
@@ -881,7 +927,11 @@ window.VWReport = function (DATA) {
     habit += '<div class="habits">' + lines2.map(function (l) { return '<div class="habit"><span>' + l[0] + "</span><b>" + l[1] + "</b></div>"; }).join("") + "</div>";
     add('<div class="pop"><div class="kicker">' + L.habitsK + "</div><h1>" + (D.peakHour !== null ? L.habitsH(D.peakHour) : "") + "</h1>" + habit + '<div class="sub">' + L.nightMeme() + (D.topProjects.some(function (p) { return p.name === "~"; }) ? "<br>" + L.homeJoke : "") + "</div></div>");
 
-    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + L.shareK + '</div><canvas id="card" width="1080" height="1350"></canvas><div class="actions"><button class="btn" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button></div></div>", 0);
+    var acts = D.shared
+      ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
+      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
+    var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>';
+    add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + '</div><canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0);
     return out;
   }
 
@@ -923,6 +973,14 @@ window.VWReport = function (DATA) {
     var dl = document.getElementById("dl"), again = document.getElementById("again");
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
     if (again) again.onclick = function (e) { e.stopPropagation(); go(0); };
+    var share = document.getElementById("share"), own = document.getElementById("own");
+    if (own) own.onclick = function (e) { e.stopPropagation(); location.href = window.VW_BASE; };
+    if (share) share.onclick = async function (e) {
+      e.stopPropagation();
+      var url = await window.VWShare.link(D), box = document.getElementById("linkbox"), note = document.getElementById("linknote");
+      try { await navigator.clipboard.writeText(url); note.textContent = t().copied; note.classList.add("ok"); }
+      catch (err) { box.hidden = false; box.value = url; box.select(); }
+    };
   }
 
   if (still) document.documentElement.classList.add("still");
@@ -1014,7 +1072,7 @@ window.VWReport = function (DATA) {
       x.fillStyle = h === D.peakHour ? "#fff" : "rgba(255,255,255,0.45)";
       round(x, 72 + h * bw + 3, 1200 - bh, bw - 6, bh, 6); x.fill();
     }
-    x.font = "600 26px " + F; x.globalAlpha = 0.75; x.fillText("npx vibe-wrapped", 72, 1232); x.globalAlpha = 1;
+    x.font = "600 26px " + F; x.globalAlpha = 0.75; x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), 72, 1232); x.globalAlpha = 1;
   }
   function round(x, a, b, w, h, r) { r = Math.min(r, w / 2, h / 2); x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
   function wrap(x, text, a, b, maxW, lh) {
@@ -1189,7 +1247,9 @@ if (window.DATA) window.VWReport(window.DATA);
     document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; render(); };
   }
 
-  if (/[?&]demo\b/.test(location.search)) show(window.VW_DEMO);
+  var shared = window.VWShare.fromHash();
+  if (shared) shared.then(show, function () { history.replaceState(null, "", location.pathname); render(); });
+  else if (/[?&]demo\b/.test(location.search)) show(window.VW_DEMO);
   else render();
 })();
 </script>
