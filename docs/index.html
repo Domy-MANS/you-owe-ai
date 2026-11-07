@@ -79,7 +79,7 @@ h1 { font-size: clamp(34px, 7vw, 56px); line-height: 1.12; font-weight: 800; let
 .heat i.out { visibility: hidden; }
 
 .persona-emoji { font-size: 84px; line-height: 1; margin-bottom: 12px; }
-canvas#card { width: min(100%, 360px); aspect-ratio: 4 / 5; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); align-self: center; }
+canvas#card { display: block; margin: 0 auto; width: min(100%, 360px); aspect-ratio: 4 / 5; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
 .actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
 .btn { font: 700 15px var(--font); border-radius: 999px; padding: 12px 20px; border: 0; cursor: pointer; background: #fff; color: #111; }
 .btn.ghost { background: rgba(0,0,0,0.3); color: #fff; border: 1px solid var(--faint); }
@@ -1328,7 +1328,7 @@ window.VWReport = function (DATA) {
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
 
     // stamp
-    x.save(); x.translate(W - 175, py + 50); x.rotate(-0.26);
+    x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);
     x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
     x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
     round(x, -sw / 2, -52, sw, 104, 14); x.stroke();

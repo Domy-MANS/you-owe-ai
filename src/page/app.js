@@ -607,7 +607,7 @@ window.VWReport = function (DATA) {
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
 
     // stamp
-    x.save(); x.translate(W - 175, py + 50); x.rotate(-0.26);
+    x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);
     x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
     x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
     round(x, -sw / 2, -52, sw, 104, 14); x.stroke();
