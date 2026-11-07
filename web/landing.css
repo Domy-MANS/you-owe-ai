@@ -32,7 +32,7 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .pick.web { border-style: solid; font-size: 15px; margin-top: 10px; }
 
 /* ===== incoming call ===== */
-.call-bar { position: fixed; top: 10px; left: 50%; z-index: 100; width: min(94vw, 420px); transform: translate(-50%, -140%);
+.call-bar { position: fixed; top: 62px; left: 50%; z-index: 100; width: min(94vw, 420px); transform: translate(-50%, -140%);
   display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 22px; background: rgba(28,28,30,0.92); color: #fff;
   box-shadow: 0 12px 40px rgba(0,0,0,0.4); transition: transform 0.45s cubic-bezier(.2,1.2,.4,1); backdrop-filter: blur(12px); }
 .call-bar.in { transform: translate(-50%, 0); animation: buzz 0.5s 0.5s 4; }
@@ -44,7 +44,7 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .call-who b { font-size: 17px; } .call-who span { font-size: 13px; color: rgba(255,255,255,0.65); }
 .call-btn { width: 46px; height: 46px; border-radius: 50%; border: 0; font-size: 20px; color: #fff; cursor: pointer; flex: none; }
 .call-btn.no { background: #ff3b30; } .call-btn.yes { background: #34c759; }
-.call-toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(28,28,30,0.92); color: #fff;
+.call-toast { position: fixed; top: 62px; left: 50%; transform: translateX(-50%); z-index: 100; background: rgba(28,28,30,0.92); color: #fff;
   font: 600 14px var(--font); padding: 10px 16px; border-radius: 999px; transition: opacity 0.5s; }
 .call-toast.out { opacity: 0; }
 .call-ov { position: fixed; inset: 0; z-index: 90; background: linear-gradient(180deg, #2c2c2e, #111); color: #fff; font-family: var(--font);

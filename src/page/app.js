@@ -524,7 +524,7 @@ window.VWReport = function (DATA) {
     if (snd) {
       snd.textContent = soundOn ? "🔊" : "🔇";
       snd.onclick = function (e) {
-        e.stopPropagation(); soundOn = !soundOn; snd.textContent = soundOn ? "🔊" : "🔇";
+        e.stopPropagation(); soundOn = !soundOn; window.VW_SOUND = soundOn; snd.textContent = soundOn ? "🔊" : "🔇";
         try { localStorage.setItem("vw-sound", soundOn ? "on" : "off"); } catch (err) {}
         if (soundOn) audio();
       };
@@ -547,6 +547,7 @@ window.VWReport = function (DATA) {
 
   // ---- receipt printer: lines print one by one, the total ticks up, the stamp lands ----
   var soundOn = (function () { try { return localStorage.getItem("vw-sound") !== "off"; } catch (e) { return true; } })();
+  window.VW_SOUND = soundOn; // the incoming call checks this too
   var ac = null;
   function audio() {
     if (!soundOn) return null;

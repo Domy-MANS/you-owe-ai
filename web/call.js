@@ -43,8 +43,13 @@
 
   // ---- ringtone (Web Audio, no files) + vibration ----
   var audio = null, ringTimer = null;
+  function soundOn() {
+    if (typeof window.VW_SOUND === "boolean") return window.VW_SOUND;
+    try { return localStorage.getItem("vw-sound") !== "off"; } catch (e) { return true; }
+  }
   function ring() {
-    try {
+    // muted = a phone on silent: no ringtone, still vibrates
+    if (soundOn()) try {
       audio = audio || new (window.AudioContext || window.webkitAudioContext)();
       var now = audio.currentTime;
       [0, 0.45].forEach(function (d) {
@@ -65,6 +70,7 @@
     var L = t();
     var bar = el('<div class="call-bar"><div class="call-av">🤖</div><div class="call-who"><b>' + L.caller + "</b><span>" + L.incoming +
       '</span></div><button class="call-btn no" aria-label="' + L.decline + '">✕</button><button class="call-btn yes" aria-label="' + L.accept + '">✆</button></div>');
+    bar.onclick = function (e) { e.stopPropagation(); }; // taps on the banner don't turn the page
     document.body.appendChild(bar);
     requestAnimationFrame(function () { bar.classList.add("in"); });
     ring(); ringTimer = setInterval(ring, 2600);
