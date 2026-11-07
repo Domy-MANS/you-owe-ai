@@ -253,3 +253,5 @@ canvas#card { box-shadow: 0 10px 30px rgba(80,50,10,0.35); }
 
 /* header left-aligned so the stamp in the corner never covers it */
 .rc-head { text-align: left; padding-right: 110px; }
+.stamp.red { font-size: clamp(17px, 4.4vw, 26px); right: -12px; }
+.still .slide.on .stamp { animation: none; }
