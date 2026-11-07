@@ -15,7 +15,7 @@ const HELP = `you-owe-ai — your year of AI coding, Spotify-Wrapped style.
 Reads Claude Code (~/.claude/projects) and Codex (~/.codex/sessions) logs locally.
 Everything stays on your machine. The report can't make network requests.
 
-Usage: npx you-owe-ai [options]
+Usage: npx github:Domy-MANS/you-owe-ai [options]
 
   --year <yyyy>     Year to summarize (default: this year)
   --out <file>      Where to write the HTML (default: ./you-owe-ai-<year>.html)

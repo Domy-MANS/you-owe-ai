@@ -23,7 +23,7 @@ function renderHtml(stats) {
   // JSON inside <script>: escape "<" so a project name can't close the tag
   const data = JSON.stringify(stats).replace(/</g, "\\u003c");
   return `<!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

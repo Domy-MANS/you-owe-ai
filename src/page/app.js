@@ -44,7 +44,7 @@ window.VWReport = function (DATA) {
     var q = /[?&]lang=(zh|en)/.exec(location.search);
     if (q) return q[1];
     try { var s = localStorage.getItem("vw-lang"); if (s) return s; } catch (e) {}
-    return /^zh/i.test(navigator.language || "") ? "zh" : "en";
+    return "en";
   })();
 
   var T = {

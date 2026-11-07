@@ -2,7 +2,7 @@
 (function () {
   "use strict";
   var lang = /[?&]lang=(zh|en)/.exec(location.search);
-  lang = lang ? lang[1] : /^zh/i.test(navigator.language || "") ? "zh" : "en";
+  lang = lang ? lang[1] : (function () { try { return localStorage.getItem("vw-lang") || "en"; } catch (e) { return "en"; } })();
   var isMac = /Mac/i.test(navigator.platform || navigator.userAgent);
   var S = { claude: null, codex: null };
 
@@ -142,13 +142,13 @@
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="privacy">' + L.privacy + "</p>" +
-      '<p class="cli">' + L.cli + " <code>npx you-owe-ai</code></p>" +
+      '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
       "</div>";
     document.getElementById("pick-claude").onclick = function () { pick("claude"); };
     document.getElementById("pick-codex").onclick = function () { pick("codex"); };
     document.getElementById("go").onclick = function () { show(makeStats()); };
     document.getElementById("demo").onclick = function () { show(window.VW_DEMO); };
-    document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; render(); };
+    document.getElementById("l-lang").onclick = function () { lang = lang === "zh" ? "en" : "zh"; try { localStorage.setItem("vw-lang", lang); } catch (e) {} render(); };
   }
 
   var shared = window.VWShare.fromHash();

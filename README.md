@@ -7,7 +7,7 @@
 Pick your `.claude` and `.codex` folders and it builds your report right in the page. Nothing to install. Prefer the terminal?
 
 ```bash
-npx you-owe-ai
+npx github:Domy-MANS/you-owe-ai
 ```
 
 ![Slides](docs/slides-en.png)
@@ -63,7 +63,7 @@ Reads `~/.claude/projects` (respects `CLAUDE_CONFIG_DIR`) and `~/.codex/sessions
 选一下 `.claude` 和 `.codex` 文件夹，报告就在网页里生成，不用安装任何东西。习惯用终端的话：
 
 ```bash
-npx you-owe-ai
+npx github:Domy-MANS/you-owe-ai
 ```
 
 ![幻灯片](docs/slides-zh.png)
