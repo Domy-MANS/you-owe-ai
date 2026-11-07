@@ -4,12 +4,21 @@
   var lang = /[?&]lang=(zh|en)/.exec(location.search);
   lang = lang ? lang[1] : (function () { try { return localStorage.getItem("vw-lang") || "en"; } catch (e) { return "en"; } })();
   var isMac = /Mac/i.test(navigator.platform || navigator.userAgent);
+  var isWin = /Win/i.test(navigator.platform || navigator.userAgent);
+  function pathFor(kind) { return isWin ? "%USERPROFILE%\\." + kind : "~/." + kind; }
+  function keysHtml() {
+    var k = function (x) { return "<kbd>" + x + "</kbd>"; };
+    return isMac ? k("⌘") + k("⇧") + k("G") + " → " + k("⌘") + k("V") + " → " + k("Enter")
+      : isWin ? k("Ctrl") + k("V") + " → " + k("Enter")
+      : k("Ctrl") + k("L") + " → " + k("Ctrl") + k("V") + " → " + k("Enter");
+  }
   var S = { claude: null, codex: null };
 
   var T = {
     zh: {
       title: "你欠 AI 多少钱？", sub: "AI 编程年度报告 · Claude Code × Codex · " + new Date().getFullYear(),
       pickClaude: "选择 .claude 文件夹", pickCodex: "选择 .codex 文件夹",
+      copied: function (kind) { return "📋 已复制 <code>" + pathFor(kind) + "</code>。在弹出的窗口里按 " + keysHtml() + "，然后点「" + (isMac ? "选择" : "选择文件夹") + "」"; },
       where: isMac ? "在你的用户文件夹里（/Users/你的名字）。看不到？在选择窗口里按 <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> 显示隐藏文件夹。"
         : "在你的用户文件夹里（C:\\Users\\你的名字 或 /home/你的名字）。看不到的话，打开「显示隐藏文件」。",
       onlyOne: "只用了其中一个？选一个就行。",
@@ -21,6 +30,7 @@
     en: {
       title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
       pickClaude: "Choose your .claude folder", pickCodex: "Choose your .codex folder",
+      copied: function (kind) { return "📋 Copied <code>" + pathFor(kind) + "</code>. In the window that opens, press " + keysHtml() + ", then click Select."; },
       where: isMac ? "They're in your home folder. Can't see them? Press <kbd>⌘</kbd> <kbd>Shift</kbd> <kbd>.</kbd> in the picker to show hidden folders."
         : "They're in your home folder (C:\\Users\\you or /home/you). Turn on \"show hidden files\" if you can't see them.",
       onlyOne: "Only use one of them? Just pick that one.",
@@ -83,6 +93,9 @@
   async function pick(kind) {
     var btn = document.getElementById("pick-" + kind), status = document.getElementById("st-" + kind);
     var entries;
+    try { if (navigator.clipboard) navigator.clipboard.writeText(pathFor(kind)).catch(function () {}); } catch (e) {}
+    status.innerHTML = t().copied(kind);
+    status.className = "st hint";
     try {
       entries = window.showDirectoryPicker ? await pickWithHandle(kind) : await pickWithInput();
     } catch (e) {

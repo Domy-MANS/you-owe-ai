@@ -27,3 +27,5 @@ kbd { font: 600 12px var(--mono); background: rgba(110,80,30,0.12); border: 1px 
 .cli { font-size: 13px; color: var(--dim); margin-top: 14px; }
 code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2px 6px; border-radius: 6px; }
 .chip.lang { position: fixed; top: 16px; right: 16px; z-index: 60; }
+.st.hint { color: #2a1f12; background: rgba(110,80,30,0.1); border-radius: 8px; padding: 8px 10px; margin: 2px 0 8px; line-height: 1.7; }
+.st code { font-size: 12px; }
