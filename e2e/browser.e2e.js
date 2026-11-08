@@ -365,7 +365,7 @@ test("debt clock: off by default (no requests at all); with a counter, only the 
     window.__clockFake = (path, body) => { window.__calls.push([path, body]); return path === "/stats" ? { n: 41, sum: 1000 } : path === "/confess" ? { n: 42, sum: 1100, order: 42, pct: 87 } : { n: 41, sum: 1000 }; };
   };
   const pg = await open(`${PAGE}?lang=zh&still`, { setup: fake }); await sleep(400);
-  assert.match(await text(pg, "#hclock"), /已有 41 人向 AI 认罪，共欠 AI ¥4,000/);
+  assert.match(await text(pg, "#hclock"), /已有 41 人收到 AI 的账单，共欠 AI ¥4,000/);
   assert.match(await text(pg, ".land .privacy"), /匿名上报你的账单总额/);
   // the demo isn't counted
   await pg.click("#demo"); await sleep(600);
@@ -379,7 +379,7 @@ test("debt clock: off by default (no requests at all); with a counter, only the 
   assert.deepEqual(Object.keys(sent[0]).sort(), ["amount", "cur", "id", "via"], "only the total, its currency, how it was made, and a random id");
   assert.equal(sent[0].cur, "cny"); assert.equal(sent[0].via, "testimony");
   assert.doesNotMatch(JSON.stringify(sent), /秘密|doubao|豆包/);
-  assert.match(await text(pg, "#vclock"), /你是第 42 个向 AI 认罪的人。全人类共欠 AI ¥4,400，你比 87% 的人欠得多/);
+  assert.match(await text(pg, "#vclock"), /你是第 42 个收到 AI 账单的人。全人类共欠 AI ¥4,400，你比 87% 的人欠得多/);
   // withdraw: tells the server, and this browser stops reporting
   await pg.$eval("#clock-out", (b) => b.click()); await sleep(200); // it sits on the last page
   assert.match(await text(pg, "#vclock"), /已撤回/);
@@ -388,6 +388,41 @@ test("debt clock: off by default (no requests at all); with a counter, only the 
   assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").length), 1, "no more reports after withdrawing");
   assert.deepEqual(pg.errors, []);
   await pg.close();
+});
+
+test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts it, and a share link carries it", async () => {
+  const fake = () => {
+    window.__calls = [];
+    ["vw-clock-off", "vw-plea"].forEach((k) => localStorage.removeItem(k)); // earlier tests share this browser's storage
+    window.__clockFake = (path, body) => { window.__calls.push([path, body]); return path === "/stats" ? { n: 10, sum: 100, guilty: 3, refuse: 7 } : { n: 11, sum: 120, order: 11, pct: 50, guilty: 3, refuse: body && body.plea === "refuse" ? 8 : 7 }; };
+  };
+  const pg = await open(`${PAGE}?lang=zh`, { setup: fake }); await sleep(400);
+  assert.match(await text(pg, "#hclock"), /已有 10 人收到 AI 的账单.*其中 70% 表示就是不还/);
+  await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(600);
+  const idxOf = () => pg.$$eval(".slide", (s) => s.findIndex((e) => e.querySelector("#plea")));
+  const pi = await idxOf();
+  assert.ok(pi > 0, "a court ruling page");
+  assert.equal(await pg.$$eval(".slide", (s) => s.findIndex((e) => e.querySelector("#card"))), pi + 1, "right before the IOU");
+  for (let i = 0; i < pi; i++) await pg.keyboard.press("ArrowRight");
+  await sleep(300);
+  // autoplay must not move on from here by itself
+  await pg.$eval(".plea-btn", () => {}); 
+  await pg.click('.plea-btn[data-p="refuse"]'); await sleep(400);
+  const box = await text(pg, "#plea");
+  assert.match(box, /就是不还.*选择了赖账/);
+  assert.match(box, /有 73% 的人和你一样，就是不还/, "8 of 11 who chose");
+  assert.match(box, /老赖/);
+  const sent = await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").map((c) => c[1].plea));
+  assert.deepEqual(sent, [null, "refuse"], "first report without a plea, then the plea");
+  assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "refuse");
+  // a share link carries the plea; the friend sees it, without buttons
+  const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse" })));
+  const fr = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1000);
+  const theirs = await fr.$$eval(".slide", (s) => { const x = s.find((e) => e.querySelector("#plea")); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
+  assert.match(theirs, /TA 的选择/); assert.match(theirs, /TA选择了赖账/);
+  assert.equal(await fr.$$eval(".plea-btn", (b) => b.length), 0);
+  assert.deepEqual(pg.errors, []); assert.deepEqual(fr.errors, []);
+  await fr.close(); await pg.close();
 });
 
 test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {

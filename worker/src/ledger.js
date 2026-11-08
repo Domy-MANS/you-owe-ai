@@ -17,11 +17,13 @@ export function schema(run) {
   run("CREATE TABLE IF NOT EXISTS bills (id TEXT PRIMARY KEY, usd REAL NOT NULL, cur TEXT, via TEXT, ts INTEGER NOT NULL)");
   run("CREATE INDEX IF NOT EXISTS bills_usd ON bills (usd)");
   run("CREATE TABLE IF NOT EXISTS ipday (k TEXT PRIMARY KEY, n INTEGER NOT NULL)");
+  // v2: the plea ("guilty" = I'll pay, "refuse" = not paying), null until chosen
+  try { run("ALTER TABLE bills ADD COLUMN plea TEXT"); } catch (e) { /* already there */ }
 }
 
 export function totals(run) {
-  const r = run("SELECT COUNT(*) AS n, COALESCE(SUM(usd), 0) AS sum FROM bills")[0];
-  return { n: Number(r.n), sum: Math.round(Number(r.sum)) };
+  const r = run("SELECT COUNT(*) AS n, COALESCE(SUM(usd), 0) AS sum, SUM(plea = 'guilty') AS guilty, SUM(plea = 'refuse') AS refuse FROM bills")[0];
+  return { n: Number(r.n), sum: Math.round(Number(r.sum)), guilty: Number(r.guilty || 0), refuse: Number(r.refuse || 0) };
 }
 
 /** Adds (or updates) one browser's bill. Returns the totals and where this bill stands. */
@@ -32,10 +34,11 @@ export function confess(run, body, ipKey, now = Date.now()) {
   const amount = Number(body.amount);
   if (!cur || !Number.isFinite(amount)) return { error: "bad amount" };
   const via = VIA.has(body.via) ? body.via : "mixed";
+  const plea = body.plea === "guilty" || body.plea === "refuse" ? body.plea : null;
   const usd = Math.max(MIN, Math.min(MAX, cur === "cny" ? amount / CNY_PER_USD : amount));
 
   const old = run("SELECT ts FROM bills WHERE id = ?", id)[0];
-  if (old) run("UPDATE bills SET usd = ?, cur = ?, via = ? WHERE id = ?", usd, cur, via, id);
+  if (old) run("UPDATE bills SET usd = ?, cur = ?, via = ?, plea = COALESCE(?, plea) WHERE id = ?", usd, cur, via, plea, id);
   else {
     // a light brake on scripted spam: new bills per IP (hashed) per day
     const day = new Date(now).toISOString().slice(0, 10), k = ipKey + ":" + day;
@@ -43,7 +46,7 @@ export function confess(run, body, ipKey, now = Date.now()) {
     if (used && Number(used.n) >= PER_IP_PER_DAY) return { error: "slow down", ...totals(run) };
     run("INSERT INTO ipday (k, n) VALUES (?, 1) ON CONFLICT(k) DO UPDATE SET n = n + 1", k);
     if (Math.random() < 0.01) run("DELETE FROM ipday WHERE k NOT LIKE ?", "%:" + day);
-    run("INSERT INTO bills (id, usd, cur, via, ts) VALUES (?, ?, ?, ?, ?)", id, usd, cur, via, now);
+    run("INSERT INTO bills (id, usd, cur, via, ts, plea) VALUES (?, ?, ?, ?, ?, ?)", id, usd, cur, via, now, plea);
   }
   const ts = old ? Number(old.ts) : now;
   const t = totals(run);

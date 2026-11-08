@@ -41,7 +41,8 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 | Client review | Your AI employee rates you, one to five stars |
 | Client file | Your persona (Cyber Overlord, The Client From Hell, Human Broken Record and more), credit rating and hidden traits |
 | You vs them | When a friend's link is involved: your bill next to theirs, and a verdict |
-| IOU | A 1080 × 1350 receipt with every charge and a QR code back to the site, ready to post |
+| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. The court waits for your answer, then tells you how many people chose the same |
+| IOU | A 1080 × 1350 receipt with every charge, your plea stamped across it (GUILTY or DEADBEAT), where you rank among everyone, and a QR code back to the site, ready to post |
 
 Rates are in US dollars at the federal minimum wage. The Chinese version bills in yuan at McDonald's hourly pay.
 
@@ -65,12 +66,14 @@ Already made yours? Then send your link back. Your browser remembers your own bi
 
 ## The AI debt clock
 
-The home page keeps a running count of everyone who has confessed and how much humanity owes AI in total. Your last page tells you which confessor you are and how many people you owe more than, and your IOU prints it. Chinese and English bills are on one scale (¥4 to the bill dollar, the ratio between the two price lists).
+[![The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay](https://you-owe-ai.domy-mans.workers.dev/chart.svg)](https://domy-mans.github.io/you-owe-ai/)
+
+Live, and updated within minutes: every real bill adds to it. The home page shows how many people got their AI bill, how much humanity owes AI in total, and how many refuse to pay. Your last page tells you which bill you are and how many people you owe more than, and your IOU prints it. Chinese and English bills are on one scale (¥4 to the bill dollar, the ratio between the two price lists).
 
 ## Privacy
 
 - **Your chats never leave your computer.** The page ships with a Content-Security-Policy, enforced by the browser, that blocks every network request except one: the debt clock.
-- **The debt clock gets one number.** When you make a real bill, the page sends its total, its currency and how it was made (testimony, import or folders), under a random ID that only lives in your browser, to [a tiny counter](worker/) that adds up how many people confessed and how much humanity owes AI. No chat text, catchphrases, names or anything else. Tap **Don't count me** on the last page to withdraw it, and that browser stops reporting. Demos and other people's shared bills are never counted. Open the Network tab in DevTools to check.
+- **The debt clock gets one number.** When you make a real bill, the page sends its total, its currency, how it was made (testimony, import or folders) and your plea once you choose it, under a random ID that only lives in your browser, to [a tiny counter](worker/) that adds up how many people confessed and how much humanity owes AI. No chat text, catchphrases, names or anything else. Tap **Don't count me** on the last page to withdraw it, and that browser stops reporting. Demos and other people's shared bills are never counted. Open the Network tab in DevTools to check.
 - **Only counts are kept.** To find catchphrases and moods, prompt text is scanned in your browser. The report keeps counts and short repeated phrases, never your conversations.
 - **The IOU shows numbers only.** No project names, no conversation titles.
 - **Share links leave out** project names and day-by-day history. They hold the numbers and catchphrases the pages show.

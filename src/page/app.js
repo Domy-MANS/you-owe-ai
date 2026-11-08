@@ -43,7 +43,8 @@ window.VWShare = (function () {
         R.angriestDay ? [R.angriestDay.date, R.angriestDay.count] : 0,
         R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0,
       D.testimony ? [D.testimony.ai, D.testimony.line || ""] : 0,
-      D.perjury ? [D.perjury.ai, D.perjury.line || "", D.perjury.said, D.perjury.real] : 0];
+      D.perjury ? [D.perjury.ai, D.perjury.line || "", D.perjury.said, D.perjury.real] : 0,
+      D.plea === "refuse" ? 2 : D.plea === "guilty" ? 1 : 0];
   }
   function unpack(a) {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
@@ -60,7 +61,7 @@ window.VWShare = (function () {
     var tm = a[19] ? { ai: aiOf(a[19][0]), line: String(a[19][1] || "").slice(0, 90) } : null;
     var pj = a[20] ? { ai: aiOf(a[20][0]), line: String(a[20][1] || "").slice(0, 90), said: a[20][2], real: a[20][3] } : null;
     return {
-      testimony: tm, perjury: pj,
+      testimony: tm, perjury: pj, plea: a[21] === 2 ? "refuse" : a[21] === 1 ? "guilty" : null,
       year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
       busiestDay: a[6] ? { date: a[6][0], prompts: a[6][1] } : null, workHours: a[7], totalTokens: a[8],
       tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: a[10],
@@ -112,9 +113,14 @@ window.VWReport = function (DATA) {
       title: "你的 AI 编程年度报告", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
       privacy: "全部在你的电脑上统计。这个页面被浏览器禁止联网，数据发不出去。",
       privacyClock: "全部在你的电脑上统计。聊天内容发不出去，只匿名上报一个总金额，用来算全人类欠 AI 多少。",
-      clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>向 AI 认罪的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个向 AI 认罪的人。全人类共欠 AI <b>" + m + "</b>，你比 <b>" + c.pct + "%</b> 的人欠得多。"; },
+      clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>收到 AI 账单的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个收到 AI 账单的人。全人类共欠 AI <b>" + m + "</b>，你比 <b>" + c.pct + "%</b> 的人欠得多。"; },
+      pleaK: "法庭宣判", pleaH: function (m, them) { return (them ? "TA 欠 AI " : "你欠 AI ") + m + "。" + (them ? "TA 的选择：" : "你打算："); },
+      pleaPay: "🙇 认罪，我还", pleaRefuse: "😤 就是不还", pleaWait: "选一个。法庭在等你。",
+      pleaDone: function (p, them) { var w = them ? "TA" : "你"; return p === "refuse" ? w + "选择了赖账。AI 已将" + w + "列入失信名单，以后回答一律慢 0.5 秒。" : w + "选择了认罪。AI 接受分 999 期还款，首付：一句谢谢。"; },
+      pleaSame: function (p, pct) { return p === "refuse" ? "全人类有 <b>" + pct + "%</b> 的人和你一样，就是不还。" : "全人类有 <b>" + pct + "%</b> 的人和你一样认罪了。"; },
+      pleaStamp: function (p) { return p === "refuse" ? "老赖" : "已认罪"; },
       clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
-      cardClock: function (c) { return c.pct === null ? "🧾 第一个向 AI 认罪的人" : "🧾 比 " + c.pct + "% 的人欠得多"; },
+      cardClock: function (c) { return c.pct === null ? "🧾 第一个收到 AI 账单的人" : "🧾 比 " + c.pct + "% 的人欠得多"; },
       cardClockAll: function (n, m) { return "全人类 " + n.toLocaleString("en-US") + " 人共欠 AI " + m; },
       promptsK: "今年你给 AI 下了", promptsU: "条指令",
       promptsS: function () { return "开了 <b>" + fmt(D.sessions) + "</b> 次对话，活跃了 <b>" + D.activeDays + "</b> 天"; },
@@ -195,9 +201,14 @@ window.VWReport = function (DATA) {
       title: "Your AI Coding Wrapped", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
       privacy: "Counted on your machine. This page is blocked from the network by your browser, so nothing can leave.",
       privacyClock: "Counted on your machine. Your chats can't leave; only the total is sent, anonymously, to add up what humanity owes AI.",
-      clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to confess to AI." : "🧾 You're confessor <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total, and you owe more than <b>" + c.pct + "%</b> of people."; },
+      clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to get a bill from AI." : "🧾 You're bill <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total, and you owe more than <b>" + c.pct + "%</b> of people."; },
+      pleaK: "Court ruling", pleaH: function (m, them) { return (them ? "They owe AI " : "You owe AI ") + m + ". " + (them ? "Their plea:" : "Your plea:"); },
+      pleaPay: "🙇 Guilty, I'll pay", pleaRefuse: "😤 Not paying", pleaWait: "Pick one. The court is waiting.",
+      pleaDone: function (p, them) { return p === "refuse" ? (them ? "They refused to pay. AI blacklisted them: their answers now load 0.5s slower." : "You refused to pay. AI has blacklisted you: your answers now load 0.5s slower.") : (them ? "They pleaded guilty. AI accepted 999 monthly installments. Down payment: one thank-you." : "You pleaded guilty. AI accepts 999 monthly installments. Down payment: one thank-you."); },
+      pleaSame: function (p, pct) { return p === "refuse" ? "<b>" + pct + "%</b> of humanity isn't paying either." : "<b>" + pct + "%</b> of humanity pleaded guilty too."; },
+      pleaStamp: function (p) { return p === "refuse" ? "DEADBEAT" : "GUILTY"; },
       clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
-      cardClock: function (c) { return c.pct === null ? "🧾 The first person to confess to AI" : "🧾 Owes more than " + c.pct + "% of people"; },
+      cardClock: function (c) { return c.pct === null ? "🧾 The first person to get a bill from AI" : "🧾 Owes more than " + c.pct + "% of people"; },
       cardClockAll: function (n, m) { return n.toLocaleString("en-US") + " people owe AI " + m + " in total"; },
       promptsK: "This year you gave AI", promptsU: "prompts",
       promptsS: function () { return "across <b>" + fmt(D.sessions) + "</b> sessions on <b>" + D.activeDays + "</b> active days"; },
@@ -433,6 +444,43 @@ window.VWReport = function (DATA) {
   /** Sources you actually used, most prompts first, with their share. */
   /** The debt clock counts real bills only: not demos, not someone else's shared bill. */
   function clockOn() { return !!(window.VWClock && window.VWClock.live && !D.shared && !D.demo && !D.empty && !window.VWClock.isOff()); }
+  // ---- the plea: "guilty, I'll pay" or "not paying" ----
+  function myPlea() {
+    if (D.shared || D.demo) return D.plea || null;
+    try { var o = JSON.parse(localStorage.getItem("vw-plea") || "null"); return o && o.y === D.year ? o.p : null; } catch (e) { return D.plea || null; }
+  }
+  function pleaBody() {
+    var K = t(), p = D.shared ? D.plea : myPlea();
+    if (!p) return '<div class="plea-btns"><button class="btn plea-btn" data-p="guilty">' + K.pleaPay + '</button><button class="btn plea-btn ghost" data-p="refuse">' + K.pleaRefuse + "</button></div>" +
+      '<div class="rc-note">' + K.pleaWait + "</div>";
+    var c = window.VW_CLOCK, voted = c ? (c.guilty || 0) + (c.refuse || 0) : 0;
+    var same = !D.shared && c && voted > 1 ? K.pleaSame(p, Math.round(((p === "refuse" ? c.refuse : c.guilty) / voted) * 100)) : "";
+    return '<div class="plea-pick">' + (p === "refuse" ? K.pleaRefuse : K.pleaPay) + '</div><div class="rc-meme">' + K.pleaDone(p, D.shared) + "</div>" +
+      (same ? '<div class="rc-meme">' + same + "</div>" : "") + '<div class="stamp red low">' + K.pleaStamp(p) + "</div>";
+  }
+  function wirePlea() {
+    document.querySelectorAll(".plea-btn").forEach(function (btn) {
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        var p = btn.getAttribute("data-p");
+        D.plea = p;
+        try { localStorage.setItem("vw-plea", JSON.stringify({ y: D.year, p: p })); } catch (err) {}
+        refreshPlea();
+        if (clockOn()) reportClock();
+      };
+    });
+  }
+  function refreshPlea() {
+    var box = document.getElementById("plea");
+    if (box) { box.innerHTML = pleaBody(); wirePlea(); }
+    var cv = document.getElementById("card"); if (cv) drawCard(cv);
+  }
+  function reportClock() {
+    return window.VWClock.report({ year: D.year, amount: charges().total, cur: lang === "zh" ? "cny" : "usd", via: D.via || "mixed", plea: myPlea() }).then(function (c) {
+      if (!c || c.order === undefined) return; // refused (or rate-limited): just no clock line
+      window.VW_CLOCK = c; fillClock(); refreshPlea();
+    }, function () {});
+  }
   function fillClock() {
     var box = document.getElementById("vclock"), c = window.VW_CLOCK;
     if (!box || !c || c.n === undefined) return;
@@ -638,6 +686,13 @@ window.VWReport = function (DATA) {
       add('<div class="pop"><div class="kicker">' + L.cmpK + "</div>" + receipt(L.cmpH, grid + verdict) + "</div>", 9, '<div class="deco"><div class="giant vsbig">VS</div></div>');
     }
 
+    // 8c. the court ruling: guilty (I'll pay) or not paying. Waits for your plea (no autoplay past it).
+    var plea = D.shared ? D.plea : myPlea();
+    if (!D.shared || plea) {
+      add('<div class="pop"><div class="kicker">' + L.pleaK + "</div>" + receipt(L.pleaH(money(C.total), D.shared), '<div class="plea" id="plea">' + pleaBody() + "</div>") + "</div>",
+        plea ? 7 : 0, giant(plea === "refuse" ? "😤" : plea ? "🙇" : "⚖️", "right:-12%;bottom:-6%"));
+    }
+
     // 9. the IOU (share card)
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
@@ -663,6 +718,7 @@ window.VWReport = function (DATA) {
     stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.deco + s.html + "</section>"; }).join("");
     barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
     fillClock(); // after a language switch too
+    wirePlea();
     var lb = document.getElementById("lang");
     lb.innerHTML = langSwitch(lang); lb.setAttribute("aria-label", lang === "zh" ? "Switch to English" : "切换到中文");
     var snd = document.getElementById("snd");
@@ -854,6 +910,15 @@ window.VWReport = function (DATA) {
     round(x, -sw / 2, -52, sw, 104, 14); x.stroke();
     x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(K.stamp, 0, 2); x.restore();
     x.textAlign = "left"; x.textBaseline = "top";
+    var PL = D.shared ? D.plea : myPlea();
+    if (PL) { // the plea, stamped across the charges
+      x.save(); x.translate(W / 2 + 120, py + 520); x.rotate(-0.18); x.globalAlpha = 0.82;
+      x.strokeStyle = x.fillStyle = PL === "refuse" ? "rgba(185,28,28,0.9)" : "rgba(29,78,216,0.85)"; x.lineWidth = 9;
+      x.font = "900 84px " + F; var pst = t().pleaStamp(PL), ps = x.measureText(pst).width + 70;
+      round(x, -ps / 2, -66, ps, 132, 16); x.stroke();
+      x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(pst, 0, 4); x.restore();
+      x.textAlign = "left"; x.textBaseline = "top";
+    }
 
     // footer: a QR code so a screenshot of the card leads back to the site
     var Q = window.VW_QR, cell = 7, size = Q.n * cell, pad = 4 * cell, qx = right - size, qy = H - 30 - size - pad;
@@ -918,11 +983,7 @@ window.VWReport = function (DATA) {
   build();
   // the debt clock: add this bill to humanity's total, then show where it stands
   window.VW_CLOCK = null;
-  if (clockOn()) window.VWClock.report({ year: D.year, amount: charges().total, cur: lang === "zh" ? "cny" : "usd", via: D.via || "mixed" }).then(function (c) {
-    if (!c || c.order === undefined) return; // refused (or rate-limited): just no clock line
-    window.VW_CLOCK = c; fillClock();
-    var cv = document.getElementById("card"); if (cv && cv.closest(".slide.on")) drawCard(cv);
-  }, function () {});
+  if (clockOn()) reportClock();
   go(parseInt(location.hash.slice(1), 10) || 0);
 };
 if (window.DATA) window.VWReport(window.DATA);

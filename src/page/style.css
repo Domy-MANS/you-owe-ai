@@ -309,3 +309,11 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .stamp.red.low { top: auto; bottom: -14px; right: -6px; transform: rotate(-12deg); }
 .clock-line { font-size: 14px; line-height: 1.6; text-align: center; margin-top: 10px; color: #7a1d1d; }
 .clock-out { font: 600 12px var(--font); color: #7a6a52; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
+
+/* the plea */
+.plea { position: relative; }
+.plea-btns { display: grid; gap: 10px; margin: 6px 0 10px; }
+.plea-btn { padding: 15px; font-size: 17px; }
+.plea-btns .plea-btn:not(.ghost) { background: var(--ink, #2a1f12); color: #f1e2b8; }
+.plea-btns .plea-btn.ghost { background: transparent; color: var(--ink, #2a1f12); border: 2px solid currentColor; }
+.plea-pick { font: 900 clamp(24px, 7vw, 34px) var(--font); margin: 4px 0 8px; }

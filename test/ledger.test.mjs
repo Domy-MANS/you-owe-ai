@@ -54,5 +54,36 @@ test("withdrawing removes your bill from the clock", () => {
   const run = ledger();
   confess(run, { id: id(1), amount: 10, cur: "usd" }, "a");
   confess(run, { id: id(2), amount: 20, cur: "usd" }, "b");
-  assert.deepEqual(withdraw(run, { id: id(1) }), { n: 1, sum: 20 });
+  assert.deepEqual(withdraw(run, { id: id(1) }), { n: 1, sum: 20, guilty: 0, refuse: 0 });
+});
+
+test("pleas: guilty or refuse, counted; a later report without a plea keeps it", () => {
+  const run = ledger();
+  confess(run, { id: id(1), amount: 10, cur: "usd" }, "a");
+  confess(run, { id: id(2), amount: 10, cur: "usd", plea: "refuse" }, "b");
+  confess(run, { id: id(3), amount: 10, cur: "usd", plea: "nonsense" }, "c");
+  let t = confess(run, { id: id(1), amount: 12, cur: "usd", plea: "guilty" }, "a");
+  assert.deepEqual([t.n, t.guilty, t.refuse], [3, 1, 1]);
+  t = confess(run, { id: id(2), amount: 50, cur: "usd" }, "b"); // e.g. imported more chats later
+  assert.equal(t.refuse, 1, "plea kept");
+  t = confess(run, { id: id(2), amount: 50, cur: "usd", plea: "guilty" }, "b");
+  assert.deepEqual([t.guilty, t.refuse], [2, 0], "changed their mind");
+});
+
+test("an existing ledger from before pleas upgrades in place", () => {
+  const db = new DatabaseSync(":memory:");
+  const run = (q, ...b) => (/^\s*(SELECT)/i.test(q) ? db.prepare(q).all(...b) : (db.prepare(q).run(...b), []));
+  run("CREATE TABLE bills (id TEXT PRIMARY KEY, usd REAL NOT NULL, cur TEXT, via TEXT, ts INTEGER NOT NULL)");
+  run("INSERT INTO bills (id, usd, cur, via, ts) VALUES ('old-browser-id-0001', 5, 'usd', 'mixed', 1)");
+  schema(run); schema(run); // twice: the column add is idempotent
+  assert.deepEqual(totals(run), { n: 1, sum: 5, guilty: 0, refuse: 0 });
+});
+
+test("the README chart: headline numbers, a bar split by plea, and an empty state", async () => {
+  const { chartSvg } = await import("../worker/src/chart.js");
+  const svg = chartSvg({ n: 12346, sum: 864500, guilty: 3100, refuse: 8200 }, "zh", new Date("2026-11-08T12:00:00Z"));
+  for (const s of ["12,346", "¥3,458,000", "73%", "认罪，我还", "就是不还", "3,100", "8,200", "2026-11-08 12:00"]) assert.ok(svg.includes(s), s);
+  assert.ok(chartSvg({ n: 3, sum: 10, guilty: 0, refuse: 0 }).includes("No pleas yet"));
+  assert.ok(chartSvg({ n: 0, sum: 0, guilty: 0, refuse: 0 }).includes("Be the first"));
+  assert.ok(!/undefined|NaN/.test(svg));
 });

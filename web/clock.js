@@ -27,7 +27,7 @@ window.VWClock = (function () {
     if (!live || isOff()) return Promise.reject(new Error("off"));
     var id = myId(o.year);
     if (!id) return Promise.reject(new Error("no storage"));
-    return req("/confess", { id: id, amount: Math.round(o.amount * 100) / 100, cur: o.cur, via: o.via });
+    return req("/confess", { id: id, amount: Math.round(o.amount * 100) / 100, cur: o.cur, via: o.via, plea: o.plea || undefined });
   }
   function withdraw() {
     try { localStorage.setItem("vw-clock-off", "1"); } catch (e) {}

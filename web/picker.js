@@ -53,7 +53,7 @@
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       privacyClock: "🔒 所有计算都在你的浏览器里完成，聊天内容发不出去。页面只会匿名上报你的账单总额，用来算全人类欠 AI 多少，看完账单可以撤回。",
-      clockHome: function (n, m) { return "🧾 已有 <b>" + n.toLocaleString("en-US") + "</b> 人向 AI 认罪，共欠 AI <b>" + m + "</b>"; },
+      clockHome: function (n, m, r) { return "🧾 已有 <b>" + n.toLocaleString("en-US") + "</b> 人收到 AI 的账单，共欠 AI <b>" + m + "</b>" + (r === null ? "" : "，其中 <b>" + r + "%</b> 表示就是不还"); },
       cli: "习惯用终端？", lang: "EN",
       importWeb: "📦 导入 ChatGPT / Claude 聊天记录",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
@@ -71,7 +71,7 @@
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       privacyClock: "🔒 Everything is computed in your browser, and your chats can't leave it. Only your bill's total is sent, anonymously, to add up what humanity owes AI. You can withdraw it after.",
-      clockHome: function (n, m) { return "🧾 <b>" + n.toLocaleString("en-US") + "</b> people have confessed. Together they owe AI <b>" + m + "</b>"; },
+      clockHome: function (n, m, r) { return "🧾 <b>" + n.toLocaleString("en-US") + "</b> people got their AI bill. Together they owe AI <b>" + m + "</b>" + (r === null ? "" : ", and <b>" + r + "%</b> refuse to pay"); },
       cli: "Prefer the terminal?", lang: "中文",
       importWeb: "📦 Import ChatGPT / Claude chats",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
@@ -267,7 +267,8 @@
   function homeClock() {
     var el = document.getElementById("hclock");
     if (!el || !window.VWClock || !window.VWClock.live) return;
-    var fill = function () { if (clockStats && clockStats.n > 0) { el.innerHTML = t().clockHome(clockStats.n, window.VWClock.money(clockStats.sum, lang)); el.hidden = false; } };
+    var fill = function () { if (clockStats && clockStats.n > 0) { var voted = (clockStats.guilty || 0) + (clockStats.refuse || 0);
+      el.innerHTML = t().clockHome(clockStats.n, window.VWClock.money(clockStats.sum, lang), voted ? Math.round(((clockStats.refuse || 0) / voted) * 100) : null); el.hidden = false; } };
     if (clockStats) fill(); else window.VWClock.stats().then(function (s) { clockStats = s; fill(); }, function () {});
   }
 

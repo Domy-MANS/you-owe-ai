@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { schema, totals, confess, withdraw } from "./ledger.js";
+import { chartSvg } from "./chart.js";
 
 const ORIGINS = ["https://domy-mans.github.io"];
 
@@ -36,6 +37,11 @@ export default {
     const path = new URL(req.url).pathname;
     try {
       if (req.method === "GET" && path === "/stats") return json(await ledger.stats());
+      if (req.method === "GET" && path === "/chart.svg") {
+        // for the README; GitHub's image proxy re-fetches after max-age
+        const lang = new URL(req.url).searchParams.get("lang") === "zh" ? "zh" : "en";
+        return new Response(chartSvg(await ledger.stats(), lang), { headers: { "Content-Type": "image/svg+xml; charset=utf-8", "Cache-Control": "public, max-age=300" } });
+      }
       if (req.method === "POST" && (path === "/confess" || path === "/withdraw")) {
         if (!ORIGINS.includes(origin)) return json({ error: "origin" }, 403);
         const body = JSON.parse((await req.text()).slice(0, 1000));
