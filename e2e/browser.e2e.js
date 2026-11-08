@@ -174,6 +174,43 @@ test("share links: short, same total for the viewer, old links still open", asyn
   for (const p of [pg, viewer, old]) { assert.deepEqual(p.errors, []); await p.close(); }
 });
 
+test("a crafted share link can't inject anything: every string from a link is cleaned", async () => {
+  const pg = await open(`${PAGE}?lang=zh&still`);
+  const X = '<img src=x onerror="window.__pwned=1">';
+  const link = await pg.evaluate(async (X) => {
+    const D = JSON.parse(JSON.stringify(window.VW_DEMO)); D.demo = false;
+    D.roast.catchphrases[0].text = X; D.roast.catchphrases_zh && (D.roast.catchphrases_zh[0].text = X);
+    D.testimony = { ai: X, line: X }; D.topModels = [{ name: X, count: 1 }]; D.persona = X; D.prompts = X;
+    D.roast.angriestDay = { date: X, count: 9 }; D.roast.latest = { time: X, day: X };
+    return window.VWShare.link(D);
+  }, X);
+  for (const lang of ["zh", "en"]) {
+    const v = await open(`${PAGE}?lang=${lang}&still${link.slice(link.indexOf("#"))}`); await sleep(800);
+    const n = await v.$$eval(".slide", (s) => s.length);
+    for (let i = 0; i < n; i++) { await v.keyboard.press("ArrowRight"); await sleep(60); }
+    await sleep(500);
+    assert.equal(await v.evaluate(() => window.__pwned), undefined, "no script ran");
+    assert.equal(await v.$$eval('img[src="x"]', (e) => e.length), 0, "no injected elements");
+    assert.deepEqual(v.errors, []);
+    await v.close();
+  }
+  // the old (v1) link format too
+  const v1 = await pg.evaluate(async (X) => {
+    const D = JSON.parse(JSON.stringify(window.VWShare.shareable(window.VW_DEMO)));
+    D.roast.catchphrases[0].text = X; D.persona = X; D.prompts = X;
+    const bytes = new TextEncoder().encode(JSON.stringify(D));
+    const z = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
+    let bin = ""; z.forEach((c) => (bin += String.fromCharCode(c)));
+    return "z" + btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }, X);
+  const old = await open(`${PAGE}?lang=zh&still#s=${v1}`); await sleep(800);
+  for (let i = 0; i < 12; i++) { await old.keyboard.press("ArrowRight"); await sleep(60); }
+  await sleep(400);
+  assert.equal(await old.evaluate(() => window.__pwned), undefined);
+  assert.equal(await old.$$eval('img[src="x"]', (e) => e.length), 0);
+  await old.close(); await pg.close();
+});
+
 test("the page cannot reach the network", async () => {
   const pg = await open(`${PAGE}?lang=en`);
   const blocked = await pg.evaluate(() => new Promise((resolve) => {

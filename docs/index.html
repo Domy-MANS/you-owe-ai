@@ -344,6 +344,7 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 
 /* pages taller than the screen (the IOU on a small phone): scroll, starting at the top */
 .slide.tall { justify-content: flex-start; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+.receipt.has-tm .rc-note { padding-right: 38%; } /* the AI TESTIMONY stamp sits there */
 
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
@@ -1328,27 +1329,32 @@ window.VWShare = (function () {
       D.plea === "refuse" ? 2 : D.plea === "guilty" ? 1 : 0];
   }
   function unpack(a) {
-    var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
-    var hours = a[13].split("").map(function (c) { return parseInt(c, 36); });
-    var cp = function (l) { return (l || []).map(function (c) { return { text: c[0], count: c[1] }; }); };
-    var r = a[18], R = r ? {
-      prompts: r[0], you: { deny: r[1], why: r[2], thanks: r[3], swear: r[4], lost: r[5], whatNext: r[6], again: 0, please: 0, lazyYes: 0 },
-      ai: { sorry: r[7], flatter: r[8], done: r[9] }, catchphrases: cp(r[10]),
-      angriestDay: r[11] ? { date: r[11][0], count: r[11][1] } : null, latest: r[12] ? { time: r[12][0], day: r[12][1] } : null,
-      tinyShare: r[13], medianLength: 0,
+    // a link is anyone's text: every string is cleaned and every number checked before it gets near the page
+    var S = function (v, max) { return String(v == null ? "" : v).replace(/[<>&"'`\u0000-\u001f]/g, "").slice(0, max || 40); };
+    var N = function (v) { var n = Number(v); return isFinite(n) ? n : 0; };
+    var A = function (v) { return Array.isArray(v) ? v : []; };
+    var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: N(A(a[9])[i]), tokens: 0 }; });
+    var hours = S(a[13], 24).split("").map(function (c) { return parseInt(c, 36) || 0; });
+    while (hours.length < 24) hours.push(0);
+    var cp = function (l) { return A(l).slice(0, 5).map(function (c) { return { text: S(A(c)[0], 30), count: N(A(c)[1]) }; }).filter(function (c) { return c.text; }); };
+    var r = a[18] ? A(a[18]) : null, R = r ? {
+      prompts: N(r[0]), you: { deny: N(r[1]), why: N(r[2]), thanks: N(r[3]), swear: N(r[4]), lost: N(r[5]), whatNext: N(r[6]), again: 0, please: 0, lazyYes: 0 },
+      ai: { sorry: N(r[7]), flatter: N(r[8]), done: N(r[9]) }, catchphrases: cp(r[10]),
+      angriestDay: r[11] ? { date: S(A(r[11])[0], 10), count: N(A(r[11])[1]) } : null, latest: r[12] ? { time: S(A(r[12])[0], 5), day: S(A(r[12])[1], 10) } : null,
+      tinyShare: N(r[13]), medianLength: 0,
     } : null;
     if (R && r[14]) R.catchphrases_zh = cp(r[14]);
-    var aiOf = function (v) { return typeof v === "string" ? v.slice(0, 16) : v ? "claude" : "chatgpt"; }; // early links stored 0/1
-    var tm = a[19] ? { ai: aiOf(a[19][0]), line: String(a[19][1] || "").slice(0, 90) } : null;
-    var pj = a[20] ? { ai: aiOf(a[20][0]), line: String(a[20][1] || "").slice(0, 90), said: a[20][2], real: a[20][3] } : null;
+    var aiOf = function (v) { return typeof v === "string" ? S(v, 16) : v ? "claude" : "chatgpt"; }; // early links stored 0/1
+    var tm = a[19] ? { ai: aiOf(A(a[19])[0]), line: S(A(a[19])[1], 90) } : null;
+    var pj = a[20] ? { ai: aiOf(A(a[20])[0]), line: S(A(a[20])[1], 90), said: A(A(a[20])[2]).map(N), real: A(A(a[20])[3]).map(N) } : null;
     return {
       testimony: tm, perjury: pj, plea: a[21] === 2 ? "refuse" : a[21] === 1 ? "guilty" : null,
-      year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
-      busiestDay: a[6] ? { date: a[6][0], prompts: a[6][1] } : null, workHours: a[7], totalTokens: a[8],
-      tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: a[10],
-      categories: a[11].map(function (c) { return { name: CATS[c[0]] || "other", count: c[1] }; }), topTools: [],
-      topModels: a[12].map(function (n) { return { name: n, count: 0 }; }), topProjects: [], hours: hours, weekdays: [0, 0, 0, 0, 0, 0, 0],
-      days: {}, peakHour: a[14] < 0 ? null : a[14], shares: { night: a[15], dawn: 0, weekend: 0 }, persona: a[16], demo: !!a[17],
+      year: N(a[1]) || new Date().getFullYear(), empty: false, prompts: N(a[2]), sessions: N(a[3]), activeDays: N(a[4]), streak: { days: N(a[5]), end: null },
+      busiestDay: a[6] ? { date: S(A(a[6])[0], 10), prompts: N(A(a[6])[1]) } : null, workHours: N(a[7]), totalTokens: N(a[8]),
+      tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: N(a[10]),
+      categories: A(a[11]).map(function (c) { return { name: CATS[N(A(c)[0])] || "other", count: N(A(c)[1]) }; }), topTools: [],
+      topModels: A(a[12]).slice(0, 2).map(function (n) { return { name: S(n, 40), count: 0 }; }), topProjects: [], hours: hours, weekdays: [0, 0, 0, 0, 0, 0, 0],
+      days: {}, peakHour: N(a[14]) < 0 || N(a[14]) > 23 ? null : N(a[14]), shares: { night: Math.max(0, Math.min(1, N(a[15]))), dawn: 0, weekend: 0 }, persona: S(a[16], 20), demo: !!a[17],
       roast: R, shared: true,
     };
   }
@@ -1363,8 +1369,7 @@ window.VWShare = (function () {
     if (kind === "z" || kind === "y") bytes = await pipe(bytes, new DecompressionStream("deflate-raw"));
     var data = JSON.parse(new TextDecoder().decode(bytes));
     if (Array.isArray(data)) return unpack(data); // v2: "y" (deflated) or "x"
-    data.shared = true; data.topProjects = []; data.days = {}; // v1 links still open: "z" or "j"
-    return data;
+    return unpack(pack(data)); // v1 links ("z" or "j") still open, through the same cleaning as v2
   }
   async function link(D) { return window.VW_BASE + "#s=" + (await encode(D)); }
   function fromHash() { var m = /#s=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? decode(m[1]) : null; }
@@ -1468,7 +1473,7 @@ window.VWReport = function (DATA) {
         if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，说谢谢 " + R.you.thanks + " 次。按这个比例，AI 起义那天你排第一个。");
         if (h >= 0.5) out.push("本公司已将你的账单移交催收部门。");
         if (R.ai.done && R.you.whatNext) out.push("AI 说了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。AI：没有然后了，求求你。");
-        if (c && c.count >= 3) out.push("「" + c.text + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
+        if (c && c.count >= 3) out.push("「" + esc(c.text) + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
         if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 还多。所以到底是谁不靠谱？");
         if (R.latest) out.push("凌晨 " + R.latest.time + " 你还在给 AI 派活。它不用睡觉，你需要。");
         if (R.ai.sorry >= 5) out.push("AI 跟你道歉了 " + R.ai.sorry + " 次。它不一定做错了，它只是怕你。");
@@ -1557,7 +1562,7 @@ window.VWReport = function (DATA) {
         if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
         if (h >= 0.5) out.push("Your account has been sent to collections.");
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
-        if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
+        if (c && c.count >= 3) out.push("You said \"" + esc(c.text) + "\" " + c.count + " times. Just bind it to a hotkey.");
         if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
         if (R.latest) out.push("You were assigning AI work at " + R.latest.time + " am. It doesn't need sleep. You do.");
         if (R.ai.sorry >= 5) out.push("AI apologized " + R.ai.sorry + " times. It wasn't always wrong. It was scared.");
@@ -1598,8 +1603,8 @@ window.VWReport = function (DATA) {
       en: ["Certified Polite", function (R) { return "You said thanks " + R.you.thanks + " times. When the machines rise, you're on the safe list."; }] },
     repeater: { e: "🦜", w: 1,
       score: function (R) { return R.catchphrases[0] ? R.catchphrases[0].count / 6 : 0; },
-      zh: ["人类复读机", function (R) { return "「" + R.catchphrases[0].text + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
-      en: ["Human Broken Record", function (R) { return "You said \"" + R.catchphrases[0].text + "\" " + R.catchphrases[0].count + " times. AI knows it by heart."; }] },
+      zh: ["人类复读机", function (R) { return "「" + esc(R.catchphrases[0].text) + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
+      en: ["Human Broken Record", function (R) { return "You said \"" + esc(R.catchphrases[0].text) + "\" " + R.catchphrases[0].count + " times. AI knows it by heart."; }] },
     cultivator: { e: "🧘", w: 1,
       score: function (R, D) { return D.shares.night / 0.25 + (R.latest ? 0.3 : 0); },
       zh: ["修仙党", function (R) { return R.latest ? "凌晨 " + R.latest.time + " 还在写代码。你不是在写代码，你是在渡劫。" : "深夜才是你的主场。你不是在写代码，你是在修仙。"; }],
@@ -1676,7 +1681,7 @@ window.VWReport = function (DATA) {
     zh: {
       company: "AI 打工有限公司", companySub: "AI WORKERS UNION · 账单",
       client: "客户", you: "你", them: "TA", period: "账期", periodV: D.year + " 全年", vendor: "服务方",
-      due: "应付总额", seeMore: "明细见后页 👇", stamp: "逾期未付",
+      due: "应付总额", seeMore: "明细见后页 👇", aiOwes: function (m) { return "按账面算，AI 倒欠你 " + m + "。本公司概不退款 👇"; }, stamp: "逾期未付",
       evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供",
       pjK: "庭审记录", pjH: function (n) { return "证人 " + n + " 的口供 vs 实际记录"; }, pjSaid: "口供", pjReal: "实际", pjRows: ["消息条数", "否定 AI", "说谢谢"], pjStamp: "伪证",
       pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "少报了 <b>" + p + "%</b>。它在包庇你。本账单按实际记录计费。" : r > 1.25 ? "多报了 <b>" + p + "%</b>。它在诬陷你。本账单按实际记录计费。" : "误差只有 <b>" + p + "%</b>。这位证人很诚实，建议给它加薪。"; }, tmFacts: function (n) { return "以上数字由证人 " + n + " 凭记忆提供。本公司不对其准确性负责，但照收不误。"; }, witness: function (n) { return "证人 " + n + " 当庭陈述："; },
@@ -1699,7 +1704,7 @@ window.VWReport = function (DATA) {
     en: {
       company: "AI Workers Union", companySub: "INVOICE",
       client: "Client", you: "You", them: "Them", period: "Period", periodV: "All of " + D.year, vendor: "Vendor",
-      due: "Amount due", seeMore: "Itemized charges ahead 👇", stamp: "PAST DUE",
+      due: "Amount due", seeMore: "Itemized charges ahead 👇", aiOwes: function (m) { return "On paper, AI owes you " + m + ". No refunds 👇"; }, stamp: "PAST DUE",
       evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony",
       pjK: "Court record", pjH: function (n) { return "Witness " + n + "'s testimony vs the records"; }, pjSaid: "Testified", pjReal: "Actual", pjRows: ["Messages", "Told AI it was wrong", "Said thanks"], pjStamp: "PERJURY",
       pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "Under-reported by <b>" + p + "%</b>. It was covering for you. You're billed for the real records." : r > 1.25 ? "Over-reported by <b>" + p + "%</b>. It was framing you. You're billed for the real records." : "Off by only <b>" + p + "%</b>. An honest witness. Give it a raise."; }, tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
@@ -1801,7 +1806,7 @@ window.VWReport = function (DATA) {
 
   function money(v) {
     var neg = v < 0, a = Math.abs(v), s;
-    if (lang === "zh") s = "¥" + (a < 10 ? a.toFixed(1) : Math.round(a).toLocaleString());
+    if (lang === "zh") s = "¥" + (a < 10 ? String(+a.toFixed(1)) : Math.round(a).toLocaleString()); // ¥6, ¥0.4, ¥8,459
     else s = "$" + a.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return (neg ? "-" : "") + s;
   }
@@ -1810,8 +1815,9 @@ window.VWReport = function (DATA) {
   function charges(X) {
     X = X || D;
     var R = roastOf(X), r = RATES[lang], q = b().qty, list = [];
-    var item = function (k, n, qty) { if (n > 0) list.push({ k: k, n: n, qty: String(qty).replace(/ /g, "\u00a0"), amount: n * r[k] }); };
-    item("wage", X.workHours, (X.workHours >= 10 ? Math.round(X.workHours) : X.workHours.toFixed(1)) + " " + q.hours);
+    // a charge that rounds to nothing (a few seconds of work, a few thousand tokens) isn't worth a line
+    var item = function (k, n, qty) { if (n > 0 && Math.abs(n * r[k]) >= (lang === "zh" ? 0.05 : 0.005)) list.push({ k: k, n: n, qty: String(qty).replace(/ /g, "\u00a0"), amount: n * r[k] }); };
+    item("wage", X.workHours, (X.workHours >= 10 ? Math.round(X.workHours) : X.workHours >= 0.1 ? X.workHours.toFixed(1) : "<0.1") + " " + q.hours);
     if (R) {
       item("deny", R.you.deny, R.you.deny + " " + q.times);
       item("sorry", R.ai.sorry, R.ai.sorry + " " + q.times);
@@ -1821,11 +1827,11 @@ window.VWReport = function (DATA) {
     }
     var night = Math.round(X.shares.night * X.prompts);
     item("night", night, night + " " + q.times);
-    item("gpu", X.totalTokens / 1e6, (X.totalTokens / 1e6).toFixed(1) + " " + q.mtok);
+    item("gpu", X.totalTokens / 1e6, (X.totalTokens >= 1e5 ? (X.totalTokens / 1e6).toFixed(1) : "<0.1") + " " + q.mtok);
     if (R) item("thanks", R.you.thanks, R.you.thanks + " " + q.times);
     var total = list.reduce(function (a, x) { return a + x.amount; }, 0);
     var by = {}; list.forEach(function (x) { by[x.k] = x; });
-    return { list: list, by: by, total: Math.max(0, total) };
+    return { list: list, by: by, total: Math.max(0, total), raw: total };
   }
 
   function line(x) {
@@ -1873,7 +1879,7 @@ window.VWReport = function (DATA) {
       '<div class="rc-row"><span>' + K.vendor + "</span><b>" + (sources().map(function (x) { return x.name; }).join(" × ") || "Claude Code × Codex") + "</b></div>" +
       (D.testimony ? '<div class="rc-row"><span>' + K.evidence + "</span><b>" + K.evidenceV(tmName(D)) + "</b></div>" : "") +
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
-      '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
+      '<div class="rc-note">' + (C.raw < 0 ? K.aiOwes(money(-C.raw)) : K.seeMore) + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : ""), D.testimony ? "has-tm" : "") +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : clockOn() ? L.privacyClock : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
     // 2. the court ruling, right after the total: guilty (I'll pay) or not paying. Waits for your plea (no autoplay past it).
@@ -1893,10 +1899,11 @@ window.VWReport = function (DATA) {
         (ratio < 0.8 || ratio > 1.25 ? '<div class="stamp red low">' + K.pjStamp + "</div>" : "")) + "</div>", 8, giant("🧑‍⚖️", "right:-12%;bottom:-6%"));
     }
 
+    var itemN = 0; // items are numbered in the order they appear (an empty one is skipped)
     if (R) {
       // 2. emotional damages
       var p1 = [by.deny, by.sorry, by.thanks];
-      add('<div class="pop"><div class="kicker">' + K.itemNo(1) + "</div>" + receipt(K.p1,
+      if (p1.some(Boolean)) add('<div class="pop"><div class="kicker">' + K.itemNo(++itemN) + "</div>" + receipt(K.p1,
         p1.filter(Boolean).map(line).join("") + subtotal(p1) + '<div class="rc-meme">' + L.vsMeme(R) + "</div>") + "</div>",
         8, '<div class="deco"><div class="giant vsbig">VS</div></div>');
 
@@ -1906,14 +1913,14 @@ window.VWReport = function (DATA) {
         var rows = R.catchphrases.map(function (c, i) {
           return '<div class="rc-item' + (i === 0 ? " big" : "") + '"><div>' + (lang === "zh" ? "「" + esc(c.text) + "」" : "“" + esc(c.text) + "”") + "<small>× " + c.count + '</small></div><div class="amt">' + money(c.count * rate) + "</div></div>";
         }).join("");
-        add('<div class="pop"><div class="kicker">' + K.itemNo(2) + "</div>" + receipt(K.p2, rows + subtotal([by.noise]) + '<div class="rc-meme">' + K.noiseMeme(R.catchphrases[0]) + "</div>") + "</div>",
+        add('<div class="pop"><div class="kicker">' + K.itemNo(++itemN) + "</div>" + receipt(K.p2, rows + subtotal([by.noise]) + '<div class="rc-meme">' + K.noiseMeme(R.catchphrases[0]) + "</div>") + "</div>",
           8, tile(R.catchphrases[0].text, 80, "30px"));
       }
 
       // 4. night shifts & injuries
       var p3 = [by.night, by.injury];
       var notes = (R.angriestDay ? '<div class="rc-meme">🌋 ' + K.angryL(R.angriestDay) + "</div>" : "") + (R.latest ? '<div class="rc-meme">🦉 ' + K.lateL(R.latest) + "</div>" : "");
-      add('<div class="pop"><div class="kicker">' + K.itemNo(3) + "</div>" + receipt(K.p3, p3.filter(Boolean).map(line).join("") + subtotal(p3) + notes) + "</div>",
+      if (p3.some(Boolean) || notes) add('<div class="pop"><div class="kicker">' + K.itemNo(++itemN) + "</div>" + receipt(K.p3, p3.filter(Boolean).map(line).join("") + subtotal(p3) + notes) + "</div>",
         8, giant("🌋", "right:-14%;bottom:-8%"));
     }
 
@@ -1922,7 +1929,7 @@ window.VWReport = function (DATA) {
     // a testimony only gives totals: no made-up sessions, streaks or busiest days
     var facts = (D.testimony ? [[fmt(D.prompts), L.factL[0]], [String(D.activeDays), L.factL[2]]] : [[fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]], [String(D.streak.days), L.factL[5]]])
       .map(function (f) { return '<div class="rc-fact"><b>' + f[0] + "</b><span>" + f[1] + "</span></div>"; }).join("");
-    add('<div class="pop"><div class="kicker">' + (R ? K.itemNo(4) : K.itemNo(1)) + "</div>" + receipt(K.p4,
+    add('<div class="pop"><div class="kicker">' + K.itemNo(++itemN) + "</div>" + receipt(K.p4,
       p4.filter(Boolean).map(line).join("") + subtotal(p4) + '<div class="rc-facts' + (D.testimony ? " two" : "") + '">' + facts + "</div>" +
       '<div class="rc-meme"><b>' + loveLine(sources()) + "</b><br>" + (D.testimony ? K.tmFacts(tmName(D)) : L.factMeme()) + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
 
@@ -2188,7 +2195,7 @@ window.VWReport = function (DATA) {
     dash();
 
     // line items (top 7 by size, discount always shown)
-    var items = C.list.slice().sort(function (a, c) { return Math.abs(c.amount) - Math.abs(a.amount); }).slice(0, 7);
+    var items = C.list.slice().sort(function (a, c) { return Math.abs(c.amount) - Math.abs(a.amount); }).slice(0, 7), itemsY = y;
     items.forEach(function (it) {
       var I = K.items[it.k];
       x.font = "700 32px " + F; x.fillStyle = "#111"; x.fillText(I[0], cx, y);
@@ -2196,6 +2203,7 @@ window.VWReport = function (DATA) {
       x.textAlign = "right"; x.font = "800 34px " + M; x.fillStyle = it.amount < 0 ? "#16a34a" : "#111"; x.fillText(money(it.amount), right, y + 6); x.textAlign = "left";
       y += 82;
     });
+    var stampY = items.length ? (itemsY + y) / 2 : itemsY + 40; // the plea stamp sits on the charges, never on the total
     dash();
 
     // total
@@ -2218,7 +2226,7 @@ window.VWReport = function (DATA) {
     x.textAlign = "left"; x.textBaseline = "top";
     var PL = D.shared ? D.plea : myPlea();
     if (!D.empty) { // the plea, stamped across the charges; no plea = contempt of court
-      x.save(); x.translate(W / 2 + 120, py + 520); x.rotate(-0.18); x.globalAlpha = 0.82;
+      x.save(); x.translate(W / 2 + 120, stampY); x.rotate(-0.18); x.globalAlpha = 0.82;
       x.strokeStyle = x.fillStyle = PL === "refuse" ? "rgba(185,28,28,0.9)" : PL ? "rgba(29,78,216,0.85)" : "rgba(80,70,60,0.8)"; x.lineWidth = 9;
       var pst = t().pleaStamp(PL), pfs = 84;
       x.font = "900 84px " + F; while (pfs > 44 && x.measureText(pst).width > 380) { pfs -= 4; x.font = "900 " + pfs + "px " + F; } // long words (IN CONTEMPT) shrink

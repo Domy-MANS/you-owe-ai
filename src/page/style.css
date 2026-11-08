@@ -323,3 +323,4 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 
 /* pages taller than the screen (the IOU on a small phone): scroll, starting at the top */
 .slide.tall { justify-content: flex-start; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
+.receipt.has-tm .rc-note { padding-right: 38%; } /* the AI TESTIMONY stamp sits there */
