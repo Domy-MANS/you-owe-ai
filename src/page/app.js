@@ -469,11 +469,13 @@ window.VWReport = function (DATA) {
       // only two pleas, so changing your mind is one tap: the button says which way
       (D.shared ? "" : '<button class="btn ghost plea-appeal" id="appeal" data-p="' + (p === "refuse" ? "guilty" : "refuse") + '">' + (p === "refuse" ? K.flipToPay : K.flipToRefuse) + "</button>");
   }
-  var changed = null;    // [old, new] after changing your mind
+  var changed = null;    // [original, now] when you ended up somewhere other than where you started
+  var orig;              // the plea before the first flip
   var backTo = -1;       // came to court from the IOU ("go back and plead"): return there once the plea is in
   function plead(p, flip) {
     var prev = myPlea();
-    changed = flip && prev && prev !== p ? [prev, p] : null;
+    if (flip && orig === undefined) orig = prev;
+    changed = orig && orig !== p ? [orig, p] : null; // flipping back to where you started isn't a new verdict
     D.plea = p;
     if (!D.demo) try { localStorage.setItem("vw-plea", JSON.stringify({ y: D.year, p: p })); } catch (err) {} // a demo's plea isn't yours
     refreshPlea();

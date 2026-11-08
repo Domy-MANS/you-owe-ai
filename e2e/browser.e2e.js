@@ -528,6 +528,9 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "guilty");
   assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").pop()[1].plea), "guilty");
   assert.equal(await pg.$$eval(".slide", (s) => s.findIndex((e) => e.querySelector("#plea"))), await pg.$$eval(".slide", (s) => s.findIndex((e) => e.classList.contains("on"))), "still on the court page");
+  await pg.click("#appeal"); await sleep(400); // back where you started: no verdict change to report
+  assert.doesNotMatch(await text(pg, "#plea"), /改判/, "flipping back to the original choice isn't a change");
+  assert.match(await text(pg, "#appeal"), /良心发现/);
   // a share link carries the plea; the friend sees it, without buttons
   const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse" })));
   const fr = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1000);
