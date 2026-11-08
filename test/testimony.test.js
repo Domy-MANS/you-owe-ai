@@ -110,3 +110,21 @@ test("a Doubao bill's share link keeps the name", async () => {
   const a = window.VWShare.pack(D); a[19] = [1, "old"];
   assert.equal(window.VWShare.unpack(a).testimony.ai, "claude");
 });
+
+test("loose JSON from real AIs still reads: trailing commas, comments, full-width punctuation, single quotes, bare keys, extra braces", () => {
+  const ok = {
+    "```json\n{\"ai\":\"doubao\",\"prompts\":58,\"thanks\":3,}\n```": ["doubao", 58],
+    "{\n \"ai\":\"deepseek\", // 我是DeepSeek\n \"prompts\": 120 /* 大约 */\n}": ["deepseek", 120],
+    "｛\"ai\"：\"kimi\"，\"prompts\"：30｝": ["kimi", 30],
+    "{'ai': 'qwen', 'prompts': 40}": ["qwen", 40],
+    "说明 {a} 然后\n```json\n{\"ai\":\"gemini\",\"prompts\":12}\n```\n希望有帮助 {笑}": ["gemini", 12],
+    "{ai: \"grok\", prompts: 77}": ["grok", 77],
+  };
+  for (const [text, [ai, prompts]] of Object.entries(ok)) {
+    const t = TM.parse(text);
+    assert.deepEqual([t.ai, t.prompts], [ai, prompts], text);
+  }
+  // text inside strings is left alone
+  assert.equal(TM.parse('{"ai":"claude","prompts":9,"roast":"老板，辛苦了 // 真的 https://x.com"}').line, "老板，辛苦了 // 真的 https://x.com");
+  assert.throws(() => TM.parse("我看不到你的聊天记录。"), (e) => e.code === "no-code");
+});

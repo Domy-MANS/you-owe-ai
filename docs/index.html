@@ -1207,15 +1207,51 @@ else root.VWRoast = api;
   function int(v, max) { return Math.max(0, Math.min(max, Math.round(num(v)))); }
   function clean(s, max) { return String(s == null ? "" : s).replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max); }
 
+  // AIs don't always write strict JSON: trailing commas, comments, full-width punctuation, single quotes
+  function loosen(s) {
+    s = s.replace(/｛/g, "{").replace(/｝/g, "}").replace(/：/g, ":").replace(/，/g, ",").replace(/＂/g, '"').replace(/［/g, "[").replace(/］/g, "]");
+    s = s.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'\\])\/\/[^\n]*/g, "$1").replace(/#[^\n"]*$/gm, "");
+    s = s.replace(/,\s*([}\]])/g, "$1");
+    if (s.indexOf('"') < 0) s = s.replace(/'/g, '"');
+    s = s.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":'); // bare keys
+    return s;
+  }
+  // every {...} block in the reply (code fences first), outermost ones, balanced by brace depth
+  function blocks(text) {
+    var out = [], fence = /```[a-zA-Z]*\s*([\s\S]*?)```/g, m;
+    while ((m = fence.exec(text))) out.push(m[1]);
+    var t = text.replace(/｛/g, "{").replace(/｝/g, "}");
+    for (var i = 0; i < t.length; i++) {
+      if (t[i] !== "{") continue;
+      var depth = 0, inStr = false;
+      for (var j = i; j < t.length; j++) {
+        var c = t[j];
+        if (inStr) { if (c === "\\") j++; else if (c === '"') inStr = false; continue; }
+        if (c === '"') inStr = true;
+        else if (c === "{") depth++;
+        else if (c === "}" && --depth === 0) { out.push(t.slice(i, j + 1)); i = j; break; }
+      }
+    }
+    var a = t.indexOf("{"), b = t.lastIndexOf("}");
+    if (a >= 0 && b > a) out.push(t.slice(a, b + 1));
+    return out;
+  }
+  function findJson(text) {
+    var bl = blocks(text);
+    for (var k = 0; k < 2; k++) for (var i = 0; i < bl.length; i++) {
+      var src = bl[i].slice(bl[i].indexOf("{"), bl[i].lastIndexOf("}") + 1), o = null;
+      try { o = JSON.parse(k ? loosen(src) : src); } catch (e) { continue; }
+      if (o && typeof o === "object" && "prompts" in o) return o;
+    }
+    return null;
+  }
+
   /** Reads the AI's reply (the whole message is fine: we find the JSON in it). */
   function parse(text) {
     text = String(text || "").replace(/[“”]/g, '"');
     if (text.length > 400 && text.indexOf(TEMPLATE) >= 0) throw err("is-prompt", "that's the subpoena, not the reply");
-    var a = text.indexOf("{"), b = text.lastIndexOf("}");
-    if (a < 0 || b < a) throw err("no-code", "no JSON in the reply");
-    var o;
-    try { o = JSON.parse(text.slice(a, b + 1)); } catch (e) { throw err("no-code", "the JSON doesn't parse"); }
-    if (!o || typeof o !== "object" || !("prompts" in o)) throw err("no-code", "not a testimony");
+    var o = findJson(text);
+    if (!o) throw err("no-code", "no testimony JSON in the reply");
     var prompts = int(o.prompts, 50000);
     if (!prompts) throw err("no-memory", "the AI says it can't see your history");
     var night = num(o.night_share); if (night > 1) night /= 100;
