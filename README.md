@@ -32,12 +32,12 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 
 ## The invoice
 
-![Item 1 emotional damages, the court ruling (Not paying, with an Appeal button), and the IOU stamped DEADBEAT with its place on the debt clock](docs/img/bill-en.png)
+![Item 1 emotional damages, the court ruling (Not paying, with a Fine, I'll pay button), and the IOU stamped DEADBEAT with its place on the debt clock](docs/img/bill-en.png)
 
 | Page | What's on it |
 |---|---|
 | Invoice | The amount due, with a PAST DUE stamp |
-| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. Autoplay stops here until you answer, then the court tells you how many people chose the same. Skip it and you're **in contempt**, which gets stamped too. Changed your mind? **Appeal** and choose again |
+| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. Autoplay stops here until you answer, then the court tells you how many people chose the same. Skip it and you're **in contempt**, which gets stamped too. Changed your mind? One tap flips it (**Take it back** / **Fine, I'll pay**) |
 | Item 1: Emotional damages | Times you told AI it was wrong, AI apologies, and a discount for every "thanks" |
 | Item 2: Noise pollution | Your most repeated prompts, billed per repeat |
 | Item 3: Night shifts and injuries | Prompts after 10pm, your angriest day, and your latest prompt |

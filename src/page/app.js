@@ -119,7 +119,7 @@ window.VWReport = function (DATA) {
       privacyClock: "全部在你的电脑上统计。聊天内容发不出去，只匿名上报一个总金额，用来算全人类欠 AI 多少。",
       clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>收到 AI 账单的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个收到 AI 账单的人。全人类共欠 AI <b>" + m + "</b>，" + (c.pct === 0 ? "你是欠得<b>最少</b>的，AI 最良心的老板。" : c.pct === 100 ? "你欠得<b>比所有人都多</b>。" : "你比 <b>" + c.pct + "%</b> 的人欠得多。"); },
       pleaK: "法庭宣判", pleaH: function (m, them) { return (them ? "TA 欠 AI " : "你欠 AI ") + m + "。" + (them ? "TA 的选择：" : "你打算："); },
-      pleaPay: "🙇 认罪，我还", pleaRefuse: "😤 就是不还", pleaWait: "选一个。法庭在等你。", appeal: "⚖️ 不服，上诉", appealOpen: function (old) { return "原判：" + old + "。上诉受理，重新选："; }, keep: "算了，维持原判", changed: function (a, b) { return "改判：" + a + " → " + b; },
+      pleaPay: "🙇 认罪，我还", pleaRefuse: "😤 就是不还", pleaWait: "选一个。法庭在等你。", flipToRefuse: "😬 后悔了，翻供", flipToPay: "🥲 良心发现，还吧", changed: function (a, b) { return "改判：" + a + " → " + b; },
       pleaDone: function (p, them) { var w = them ? "TA " : "你", w2 = them ? " TA " : "你"; return p === "refuse" ? w + "选择了赖账。AI 已将" + w2 + "列入失信名单，以后回答一律慢 0.5 秒。" : w + "选择了认罪。AI 接受分 999 期还款，首付：一句谢谢。"; },
       pleaSame: function (p, pct) { return p === "refuse" ? "全人类有 <b>" + pct + "%</b> 的人和你一样，就是不还。" : "全人类有 <b>" + pct + "%</b> 的人和你一样认罪了。"; },
       pleaStamp: function (p) { return p === "refuse" ? "老赖" : p ? "已认罪" : "拒不到庭"; },
@@ -208,7 +208,7 @@ window.VWReport = function (DATA) {
       privacyClock: "Counted on your machine. Your chats can't leave; only the total is sent, anonymously, to add up what humanity owes AI.",
       clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to get a bill from AI." : "🧾 You're bill <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total" + (c.pct === 0 ? ", and you owe the <b>least</b> of anyone: AI's kindest boss." : c.pct === 100 ? ", and you owe <b>more than anyone</b>." : ", and you owe more than <b>" + c.pct + "%</b> of people."); },
       pleaK: "Court ruling", pleaH: function (m, them) { return (them ? "They owe AI " : "You owe AI ") + m + ". " + (them ? "Their plea:" : "Your plea:"); },
-      pleaPay: "🙇 Guilty, I'll pay", pleaRefuse: "😤 Not paying", pleaWait: "Pick one. The court is waiting.", appeal: "⚖️ Appeal", appealOpen: function (old) { return "Original verdict: " + old + ". Appeal granted, choose again:"; }, keep: "Never mind, keep the verdict", changed: function (a, b) { return "Verdict changed: " + a + " → " + b; },
+      pleaPay: "🙇 Guilty, I'll pay", pleaRefuse: "😤 Not paying", pleaWait: "Pick one. The court is waiting.", flipToRefuse: "😬 Take it back", flipToPay: "🥲 Fine, I'll pay", changed: function (a, b) { return "Verdict changed: " + a + " → " + b; },
       pleaDone: function (p, them) { return p === "refuse" ? (them ? "They refused to pay. AI blacklisted them: their answers now load 0.5s slower." : "You refused to pay. AI has blacklisted you: your answers now load 0.5s slower.") : (them ? "They pleaded guilty. AI accepted 999 monthly installments. Down payment: one thank-you." : "You pleaded guilty. AI accepts 999 monthly installments. Down payment: one thank-you."); },
       pleaSame: function (p, pct) { return p === "refuse" ? "<b>" + pct + "%</b> of humanity isn't paying either." : "<b>" + pct + "%</b> of humanity pleaded guilty too."; },
       pleaStamp: function (p) { return p === "refuse" ? "DEADBEAT" : p ? "GUILTY" : "IN CONTEMPT"; },
@@ -457,39 +457,35 @@ window.VWReport = function (DATA) {
   }
   function pleaBody() {
     var K = t(), p = D.shared ? D.plea : myPlea();
-    if (!p || appealing) return (appealing ? '<div class="rc-note">' + K.appealOpen(p === "refuse" ? K.pleaRefuse : K.pleaPay) + "</div>" : "") +
-      '<div class="plea-btns"><button class="btn plea-btn" data-p="guilty">' + K.pleaPay + '</button><button class="btn plea-btn ghost" data-p="refuse">' + K.pleaRefuse + "</button></div>" +
-      (appealing ? '<button class="plea-keep" id="keep">' + K.keep + "</button>" : '<div class="rc-note">' + K.pleaWait + "</div>");
+    if (!p) return '<div class="plea-btns"><button class="btn plea-btn" data-p="guilty">' + K.pleaPay + '</button><button class="btn plea-btn ghost" data-p="refuse">' + K.pleaRefuse + "</button></div>" +
+      '<div class="rc-note">' + K.pleaWait + "</div>";
     var c = window.VW_CLOCK, voted = c ? (c.guilty || 0) + (c.refuse || 0) : 0;
     var same = !D.shared && c && voted > 1 ? K.pleaSame(p, Math.round(((p === "refuse" ? c.refuse : c.guilty) / voted) * 100)) : "";
     return '<div class="plea-pick">' + (p === "refuse" ? K.pleaRefuse : K.pleaPay) + "</div>" + (changed ? '<div class="rc-note plea-changed">' + K.changed(K.pleaStamp(changed[0]), K.pleaStamp(changed[1])) + "</div>" : "") +
       '<div class="rc-meme">' + K.pleaDone(p, D.shared) + "</div>" +
       (same ? '<div class="rc-meme">' + same + "</div>" : "") + '<div class="stamp red low' + (p === "guilty" ? " guilty" : "") + '">' + K.pleaStamp(p) + "</div>" +
-      (D.shared ? "" : '<button class="btn ghost plea-appeal" id="appeal">' + K.appeal + "</button>");
+      // only two pleas, so changing your mind is one tap: the button says which way
+      (D.shared ? "" : '<button class="btn ghost plea-appeal" id="appeal" data-p="' + (p === "refuse" ? "guilty" : "refuse") + '">' + (p === "refuse" ? K.flipToPay : K.flipToRefuse) + "</button>");
   }
-  var appealing = false; // the court reopens the case: pick again (or keep the verdict; leaving the page keeps it too)
-  var changed = null;    // [old, new] after an appeal that changed the verdict
+  var changed = null;    // [old, new] after changing your mind
   var backTo = -1;       // came to court from the IOU ("go back and plead"): return there once the plea is in
+  function plead(p, flip) {
+    var prev = myPlea();
+    changed = flip && prev && prev !== p ? [prev, p] : null;
+    D.plea = p;
+    if (!D.demo) try { localStorage.setItem("vw-plea", JSON.stringify({ y: D.year, p: p })); } catch (err) {} // a demo's plea isn't yours
+    refreshPlea();
+    if (clockOn()) reportClock();
+    clearTimeout(timer);
+    if (backTo >= 0) { var to = backTo; backTo = -1; timer = setTimeout(function () { go(to); }, 1500); } // see the new stamp
+    else if (!manual && !flip) timer = setTimeout(function () { go(idx + 1); }, 5000); // verdict read, the bill goes on
+  }
   function wirePlea() {
     document.querySelectorAll(".plea-btn").forEach(function (btn) {
-      btn.onclick = function (e) {
-        e.stopPropagation();
-        var p = btn.getAttribute("data-p"), prev = myPlea();
-        changed = appealing && prev && prev !== p ? [prev, p] : null;
-        D.plea = p; appealing = false;
-        if (!D.demo) try { localStorage.setItem("vw-plea", JSON.stringify({ y: D.year, p: p })); } catch (err) {} // a demo's plea isn't yours
-        refreshPlea();
-        if (clockOn()) reportClock();
-        // verdict read, the bill goes on (unless the reader is turning pages themselves)
-        clearTimeout(timer);
-        if (backTo >= 0) { var to = backTo; backTo = -1; timer = setTimeout(function () { go(to); }, 1500); } // see the new stamp
-        else if (!manual) timer = setTimeout(function () { go(idx + 1); }, 5000);
-      };
+      btn.onclick = function (e) { e.stopPropagation(); plead(btn.getAttribute("data-p"), false); };
     });
-    var keep = document.getElementById("keep");
-    if (keep) keep.onclick = function (e) { e.stopPropagation(); appealing = false; refreshPlea(); };
     var ap = document.getElementById("appeal");
-    if (ap) ap.onclick = function (e) { e.stopPropagation(); appealing = true; changed = null; manual = true; clearTimeout(timer); refreshPlea(); };
+    if (ap) ap.onclick = function (e) { e.stopPropagation(); manual = true; plead(ap.getAttribute("data-p"), true); };
   }
   function refreshPlea() {
     var box = document.getElementById("plea");
@@ -857,7 +853,6 @@ window.VWReport = function (DATA) {
 
   function go(i) {
     var from = stage.children[idx], next = Math.max(0, Math.min(list_.length - 1, i));
-    if (from && next !== idx && from.querySelector("#plea") && appealing) { appealing = false; refreshPlea(); } // walked away from the appeal: the verdict stands
     if (from && next !== idx && from.querySelector("#plea")) backTo = -1;
     idx = next;
     document.getElementById("hint").style.visibility = idx === 0 ? "" : "hidden";

@@ -472,21 +472,13 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   const sent = await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").map((c) => c[1].plea));
   assert.deepEqual(sent, [null, "refuse"], "first report without a plea, then the plea");
   assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "refuse");
-  // appeal: the court reopens, showing the original verdict; walking away keeps it
+  // changed your mind: one tap, and the button says which way
   for (let i = last; i > pi; i--) { await pg.keyboard.press("ArrowLeft"); await sleep(60); }
   await sleep(300); assert.equal(await onIdx(), pi);
-  await pg.click("#appeal"); await sleep(300);
-  assert.match(await text(pg, "#plea"), /原判：😤 就是不还。上诉受理/);
-  await pg.keyboard.press("ArrowRight"); await sleep(200); await pg.keyboard.press("ArrowLeft"); await sleep(300);
-  assert.equal(await pg.$$eval("#plea .plea-btn", (b) => b.length), 0, "left mid-appeal: the verdict stands");
-  assert.match(await text(pg, "#plea"), /选择了赖账/);
-  // "keep the verdict" also closes the appeal
-  await pg.click("#appeal"); await sleep(200); await pg.click("#keep"); await sleep(200);
-  assert.match(await text(pg, "#plea"), /选择了赖账/);
-  // appeal and change it: the new plea replaces the old one everywhere
-  await pg.click("#appeal"); await sleep(300);
-  await pg.click('.plea-btn[data-p="guilty"]'); await sleep(400);
+  assert.match(await text(pg, "#appeal"), /良心发现/, "after 'not paying', the way back is paying");
+  await pg.click("#appeal"); await sleep(400);
   assert.match(await text(pg, "#plea"), /改判：老赖 → 已认罪/);
+  assert.match(await text(pg, "#appeal"), /翻供/, "after pleading guilty, the way back is taking it back");
   assert.match(await text(pg, "#plea"), /选择了认罪.*已认罪/);
   assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "guilty");
   assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").pop()[1].plea), "guilty");
