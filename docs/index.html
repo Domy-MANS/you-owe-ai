@@ -1018,12 +1018,12 @@ else root.VWRoast = api;
         var media = m.content && (m.content.parts || []).some(function (x) { return x && typeof x === "object"; });
         if (m.author.role === "user" && !meta.is_visually_hidden_from_conversation && (text.trim() || media)) {
           s.prompts++; touch(s, ts);
-          out.prompts.push({ ts: ts, tool: "chatgpt" });
-          if (text.trim()) out.texts.push({ ts: ts, text: text }); // images count as prompts, not as catchphrases
+          out.prompts.push({ ts: ts, tool: "chatgpt", c: s.id });
+          if (text.trim()) out.texts.push({ ts: ts, text: text, c: s.id }); // images count as prompts, not as catchphrases
         } else if (m.author.role === "assistant") {
           touch(s, ts);
           if (meta.model_slug) s.models[meta.model_slug] = (s.models[meta.model_slug] || 0) + 1;
-          if (text) out.replies.push({ ts: ts, text: text });
+          if (text) out.replies.push({ ts: ts, text: text, c: s.id });
         }
       });
       if (s.start !== null) out.sessions.push(s);
@@ -1045,9 +1045,9 @@ else root.VWRoast = api;
           (m.content || []).some(function (b) { return b.type === "image" || b.type === "document"; });
         if (m.sender === "human" && (text.trim() || media)) {
           s.prompts++;
-          out.prompts.push({ ts: ts, tool: "claudeai" });
-          if (text.trim()) out.texts.push({ ts: ts, text: text });
-        } else if (m.sender === "assistant" && text) out.replies.push({ ts: ts, text: text });
+          out.prompts.push({ ts: ts, tool: "claudeai", c: s.id });
+          if (text.trim()) out.texts.push({ ts: ts, text: text, c: s.id });
+        } else if (m.sender === "assistant" && text) out.replies.push({ ts: ts, text: text, c: s.id });
       });
       if (s.start !== null) out.sessions.push(s);
     });
@@ -1099,7 +1099,35 @@ else root.VWRoast = api;
     throw fail("unknown", "this doesn't look like a ChatGPT or Claude export");
   }
 
-  var api = { listZip: listZip, parseChatGPT: parseChatGPT, parseClaudeAI: parseClaudeAI, detect: detect, readExport: readExport };
+  /**
+   * Several imports as one, each conversation counted once: the same export twice, or an older
+   * and a newer export of the same account, don't add up. When a conversation shows up again,
+   * the copy with more messages (the newer export) wins. `kind` keeps one source only.
+   */
+  function merge(list, kind) {
+    var by = {}, order = [];
+    (list || []).forEach(function (w) {
+      if (!w || (kind && w.kind !== kind)) return;
+      var tool = w.kind, items = {};
+      var bucket = function (id) { return items[id] || (items[id] = { session: null, prompts: [], texts: [], replies: [] }); };
+      w.sessions.forEach(function (s) { bucket(s.id).session = s; });
+      ["prompts", "texts", "replies"].forEach(function (f) { (w[f] || []).forEach(function (x) { bucket(x.c)[f].push(x); }); });
+      Object.keys(items).forEach(function (id) {
+        var k = tool + ":" + id, it = items[id];
+        if (!by[k]) order.push(k);
+        if (!by[k] || it.prompts.length + it.replies.length >= by[k].prompts.length + by[k].replies.length) by[k] = it;
+      });
+    });
+    var out = { sessions: [], prompts: [], texts: [], replies: [] };
+    order.forEach(function (k) {
+      var it = by[k];
+      if (it.session) out.sessions.push(it.session);
+      out.prompts = out.prompts.concat(it.prompts); out.texts = out.texts.concat(it.texts); out.replies = out.replies.concat(it.replies);
+    });
+    return out;
+  }
+
+  var api = { merge: merge, listZip: listZip, parseChatGPT: parseChatGPT, parseClaudeAI: parseClaudeAI, detect: detect, readExport: readExport };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.VWWebChat = api;
 })(typeof self !== "undefined" ? self : this);
@@ -2263,7 +2291,8 @@ if (window.DATA) window.VWReport(window.DATA);
       ],
       homeLater: "等邮件的时候，可以先", homeTestify: "🧑‍⚖️ 让 AI 出庭作证（30 秒）",
       drop: "把导出的 zip 拖到这里，或者点这里选择", reading: "正在对账…",
-      got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT" : "Claude 网页版") + " 对话"; },
+      got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT " : k === "claudeai" ? "Claude 网页版" : "ChatGPT 和 Claude 网页版") + "对话（重复的只算一次）。还有别的导出文件，可以继续拖进来"; },
+      skipped: function (n) { return "有 " + n + " 个文件不是聊天记录，已跳过"; },
       recalc: "重新算账", later: "邮件还没到？先挂了，拿到 zip 后点首页的「导入网页聊天」也行。",
       bad: "这个文件好像不是 ChatGPT 或 Claude 的导出。",
       badCodes: {
@@ -2305,7 +2334,8 @@ if (window.DATA) window.VWReport(window.DATA);
       ],
       homeLater: "While you wait for the email, you can", homeTestify: "🧑‍⚖️ make AI testify (30 sec)",
       drop: "Drop the export zip here, or click to choose it", reading: "Auditing…",
-      got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : "Claude.ai") + " conversations"; },
+      got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : k === "claudeai" ? "Claude.ai" : "ChatGPT and Claude.ai") + " conversations (repeats count once). More exports? Drop them in too"; },
+      skipped: function (n) { return n + (n === 1 ? " file wasn't" : " files weren't") + " a chat export, skipped"; },
       recalc: "Recalculate my bill", later: "Email not here yet? Hang up for now and use \"Import web chats\" on the home page later.",
       bad: "That doesn't look like a ChatGPT or Claude export.",
       badCodes: {
@@ -2406,7 +2436,7 @@ if (window.DATA) window.VWReport(window.DATA);
       '<div class="call-top"><div class="call-av big">' + (ctx.ai ? "⚖️" : "🤖") + '</div><b class="call-name"></b><span class="call-time"></span>' + (quiet ? '<p class="call-sub"></p>' : "") + "</div>" +
       '<div class="call-lines"></div><div class="call-import" hidden>' +
       '<div class="call-pick"><button class="call-opt" data-k="gpt"></button><button class="call-opt" data-k="cla"></button></div>' +
-      '<ol class="call-steps"></ol><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span></span></label>' +
+      '<ol class="call-steps"></ol><label class="call-drop"><input type="file" accept=".zip,.json" multiple hidden><span></span></label>' +
       '<p class="call-later"></p></div><button class="call-btn no end">✕</button></div>');
     document.body.appendChild(ov);
     var box = ov.querySelector(".call-lines"), label = ov.querySelector(".call-drop span");
@@ -2432,7 +2462,9 @@ if (window.DATA) window.VWReport(window.DATA);
       else if (st.drop === "reading") label.textContent = L.reading;
       else if (st.drop === "bad") label.textContent = (st.badCode && L.badCodes[st.badCode]) || L.bad;
       else {
-        label.innerHTML = L.got(st.result.sessions.length, st.result.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
+        var kinds = st.result.map(function (w) { return w.kind; }).filter(function (k, i, a) { return a.indexOf(k) === i; });
+        label.innerHTML = L.got(window.VWWebChat.merge(st.result).sessions.length, kinds.length === 1 ? kinds[0] : "both") +
+          (st.skipped ? '<br><small>' + L.skipped(st.skipped) + "</small>" : "") + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
         label.querySelector(".go-recalc").onclick = function (e) {
           e.preventDefault(); end();
           var b = document.querySelector(".call-missed"); if (b) b.remove();
@@ -2449,17 +2481,25 @@ if (window.DATA) window.VWReport(window.DATA);
     timers.push(setTimeout(function () { ov.querySelector(".call-import").hidden = false; }, quiet ? 0 : 600 + total * 1300));
     ov.querySelectorAll(".call-opt").forEach(function (b) { b.onclick = function () { st.steps = b.dataset.k; relabel(); }; });
     var input = ov.querySelector("input");
-    async function take(file) {
+    // several files at once is fine (Claude's export comes as several zips): the ones that aren't chats are skipped
+    async function take(files) {
+      files = Array.prototype.slice.call(files || []);
+      if (!files.length) return;
+      var prev = st.drop === "got" ? st.result : [], got = [], firstErr = null;
       st.drop = "reading"; relabel();
-      try { st.result = await window.VWWebChat.readExport(file); st.drop = "got"; }
-      catch (err) { st.drop = "bad"; st.badCode = err && err.code; }
+      for (var i = 0; i < files.length; i++) {
+        try { got.push(await window.VWWebChat.readExport(files[i])); }
+        catch (err) { firstErr = firstErr || err; }
+      }
+      if (got.length || prev.length) { st.result = prev.concat(got); st.skipped = files.length - got.length; st.drop = "got"; }
+      else { st.drop = "bad"; st.badCode = firstErr && firstErr.code; }
       relabel();
     }
-    input.onchange = function () { if (input.files[0]) take(input.files[0]); };
+    input.onchange = function () { take(input.files); input.value = ""; };
     var drop = ov.querySelector(".call-drop");
     drop.ondragover = function (e) { e.preventDefault(); drop.classList.add("over"); };
     drop.ondragleave = function () { drop.classList.remove("over"); };
-    drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) take(e.dataTransfer.files[0]); };
+    drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); take(e.dataTransfer.files); };
     function end() { clearInterval(clock); timers.forEach(clearTimeout); offLang(relabel); ov.remove(); }
     // hanging up without importing leaves the phone in the corner, to come back after the report
     ov.querySelector(".end").onclick = function () { end(); if (!quiet) missedBadge("later", onImported); };
@@ -2697,7 +2737,9 @@ window.VWTestify = (function () {
     var cl = VWParse.parseClaude(c.files, c.history), cx = VWParse.parseCodex(x.files);
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
-    S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    // every import, each conversation once (the same export twice, or two overlapping exports, don't add up)
+    var web = VWWebChat.merge(S.web);
+    sessions = sessions.concat(web.sessions); prompts = prompts.concat(web.prompts); texts = texts.concat(web.texts); replies = replies.concat(web.replies);
     // AI testimony: an estimate, used only when there are no real records from that AI.
     // With real records it's cross-examined instead (the "perjury" page), never counted twice.
     var tm = S.testimony, tool = tm && VWTestimony.toolOf(tm.ai);
@@ -2708,8 +2750,8 @@ window.VWTestify = (function () {
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
     if (tm && !realN) { stats.roast = VWTestimony.mergeRoast(stats.roast, tm); stats.testimony = { ai: tm.ai, line: tm.line }; }
     if (tm && realN) {
-      var mine = S.web.filter(function (w) { return w.kind === tool; });
-      var rr = VWRoast.computeRoast([].concat.apply([], mine.map(function (w) { return w.texts; })), [].concat.apply([], mine.map(function (w) { return w.replies; })), { year: year });
+      var mine = VWWebChat.merge(S.web, tool);
+      var rr = VWRoast.computeRoast(mine.texts, mine.replies, { year: year });
       stats.perjury = { ai: tm.ai, line: tm.line, said: [tm.prompts, tm.deny, tm.thanks], real: [realN, rr ? rr.you.deny : 0, rr ? rr.you.thanks : 0] };
     }
     var ways = [];
@@ -2732,7 +2774,7 @@ window.VWTestify = (function () {
   }
 
   function addWeb(r) {
-    S.web.push(r);
+    S.web = S.web.concat(r);
     show(makeStats(), true);
     window.VWCall.toast(t().updated(window.VW_TOTAL));
   }
@@ -2810,8 +2852,8 @@ window.VWTestify = (function () {
     };
     document.getElementById("web").onclick = function () {
       window.VWCall.answer(function (r) {
-        S.web.push(r);
-        var st = document.getElementById("st-web"); st.textContent = t().webGot(S.web.reduce(function (a, w) { return a + w.sessions.length; }, 0)); st.className = "st ok";
+        S.web = S.web.concat(r);
+        var st = document.getElementById("st-web"); st.textContent = t().webGot(VWWebChat.merge(S.web).sessions.length); st.className = "st ok";
         document.getElementById("go").disabled = false;
       }, { quiet: true });
     };

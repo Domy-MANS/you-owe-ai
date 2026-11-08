@@ -10,7 +10,7 @@ const { computeStats, defaultYear } = require("../src/core/stats");
 const { renderHtml } = require("../src/render");
 const { demoData, demoRoast } = require("../src/demo");
 const { collectPrompts, collectReplies, computeRoast } = require("../src/roast");
-const { readExport } = require("../src/core/webchat");
+const { readExport, merge } = require("../src/core/webchat");
 
 const HELP = `you-owe-ai — your year of AI coding, Spotify-Wrapped style.
 Reads Claude Code (~/.claude/projects) and Codex (~/.codex/sessions) logs locally.
@@ -72,15 +72,20 @@ async function main() {
     data = { sessions: [...c.sessions, ...x.sessions], prompts: [...c.prompts, ...x.prompts] };
     if (!o.noText) { texts = collectPrompts(); replies = collectReplies(); }
   }
+  const imported = [];
   for (const file of o.imports) {
     try {
       const w = await readExport(fs.readFileSync(file));
-      data.sessions.push(...w.sessions); data.prompts.push(...w.prompts); texts.push(...w.texts); replies.push(...w.replies);
+      imported.push(w);
       console.error(`+ ${w.sessions.length} ${w.kind === "chatgpt" ? "ChatGPT" : "Claude.ai"} conversations from ${path.basename(file)}`);
     } catch (e) {
       console.error(`Couldn't read ${file}: ${e.message}`);
       process.exit(1);
     }
+  }
+  if (imported.length) { // each conversation once, even if two exports overlap
+    const w = merge(imported);
+    data.sessions.push(...w.sessions); data.prompts.push(...w.prompts); texts.push(...w.texts); replies.push(...w.replies);
   }
   if (o.year === null) o.year = o.demo ? new Date().getFullYear() : defaultYear(data.prompts);
   const stats = computeStats(data, { year: o.year });

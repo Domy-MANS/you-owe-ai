@@ -50,7 +50,7 @@ Rates are in US dollars at the federal minimum wage. The Chinese version bills i
 
 ![The incoming call, the call screen where the web AI asks for your chat export, and the missed-call button left after you hang up](docs/img/call-en.png)
 
-A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. Hang up and a phone button stays in the corner, so you can finish reading and call back later. You can also import an export from the home page. Claude's export arrives as several files: the one you need is `conversations-000.zip`. On a phone, this is the way in: phones can't open the `.claude` and `.codex` folders, but they can import a chat export.
+A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. Hang up and a phone button stays in the corner, so you can finish reading and call back later. You can also import an export from the home page. Claude's export arrives as several files: the one you need is `conversations-000.zip`. You can pick several files at once, and the ones that aren't chats are skipped. Importing the same chat twice, or two exports that overlap, counts each conversation once. On a phone, this is the way in: phones can't open the `.claude` and `.codex` folders, but they can import a chat export.
 
 ## No export? Make AI testify
 

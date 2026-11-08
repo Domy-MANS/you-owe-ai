@@ -171,7 +171,9 @@
     var cl = VWParse.parseClaude(c.files, c.history), cx = VWParse.parseCodex(x.files);
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
-    S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    // every import, each conversation once (the same export twice, or two overlapping exports, don't add up)
+    var web = VWWebChat.merge(S.web);
+    sessions = sessions.concat(web.sessions); prompts = prompts.concat(web.prompts); texts = texts.concat(web.texts); replies = replies.concat(web.replies);
     // AI testimony: an estimate, used only when there are no real records from that AI.
     // With real records it's cross-examined instead (the "perjury" page), never counted twice.
     var tm = S.testimony, tool = tm && VWTestimony.toolOf(tm.ai);
@@ -182,8 +184,8 @@
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
     if (tm && !realN) { stats.roast = VWTestimony.mergeRoast(stats.roast, tm); stats.testimony = { ai: tm.ai, line: tm.line }; }
     if (tm && realN) {
-      var mine = S.web.filter(function (w) { return w.kind === tool; });
-      var rr = VWRoast.computeRoast([].concat.apply([], mine.map(function (w) { return w.texts; })), [].concat.apply([], mine.map(function (w) { return w.replies; })), { year: year });
+      var mine = VWWebChat.merge(S.web, tool);
+      var rr = VWRoast.computeRoast(mine.texts, mine.replies, { year: year });
       stats.perjury = { ai: tm.ai, line: tm.line, said: [tm.prompts, tm.deny, tm.thanks], real: [realN, rr ? rr.you.deny : 0, rr ? rr.you.thanks : 0] };
     }
     var ways = [];
@@ -206,7 +208,7 @@
   }
 
   function addWeb(r) {
-    S.web.push(r);
+    S.web = S.web.concat(r);
     show(makeStats(), true);
     window.VWCall.toast(t().updated(window.VW_TOTAL));
   }
@@ -284,8 +286,8 @@
     };
     document.getElementById("web").onclick = function () {
       window.VWCall.answer(function (r) {
-        S.web.push(r);
-        var st = document.getElementById("st-web"); st.textContent = t().webGot(S.web.reduce(function (a, w) { return a + w.sessions.length; }, 0)); st.className = "st ok";
+        S.web = S.web.concat(r);
+        var st = document.getElementById("st-web"); st.textContent = t().webGot(VWWebChat.merge(S.web).sessions.length); st.className = "st ok";
         document.getElementById("go").disabled = false;
       }, { quiet: true });
     };

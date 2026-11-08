@@ -73,12 +73,12 @@
         var media = m.content && (m.content.parts || []).some(function (x) { return x && typeof x === "object"; });
         if (m.author.role === "user" && !meta.is_visually_hidden_from_conversation && (text.trim() || media)) {
           s.prompts++; touch(s, ts);
-          out.prompts.push({ ts: ts, tool: "chatgpt" });
-          if (text.trim()) out.texts.push({ ts: ts, text: text }); // images count as prompts, not as catchphrases
+          out.prompts.push({ ts: ts, tool: "chatgpt", c: s.id });
+          if (text.trim()) out.texts.push({ ts: ts, text: text, c: s.id }); // images count as prompts, not as catchphrases
         } else if (m.author.role === "assistant") {
           touch(s, ts);
           if (meta.model_slug) s.models[meta.model_slug] = (s.models[meta.model_slug] || 0) + 1;
-          if (text) out.replies.push({ ts: ts, text: text });
+          if (text) out.replies.push({ ts: ts, text: text, c: s.id });
         }
       });
       if (s.start !== null) out.sessions.push(s);
@@ -100,9 +100,9 @@
           (m.content || []).some(function (b) { return b.type === "image" || b.type === "document"; });
         if (m.sender === "human" && (text.trim() || media)) {
           s.prompts++;
-          out.prompts.push({ ts: ts, tool: "claudeai" });
-          if (text.trim()) out.texts.push({ ts: ts, text: text });
-        } else if (m.sender === "assistant" && text) out.replies.push({ ts: ts, text: text });
+          out.prompts.push({ ts: ts, tool: "claudeai", c: s.id });
+          if (text.trim()) out.texts.push({ ts: ts, text: text, c: s.id });
+        } else if (m.sender === "assistant" && text) out.replies.push({ ts: ts, text: text, c: s.id });
       });
       if (s.start !== null) out.sessions.push(s);
     });
@@ -154,7 +154,35 @@
     throw fail("unknown", "this doesn't look like a ChatGPT or Claude export");
   }
 
-  var api = { listZip: listZip, parseChatGPT: parseChatGPT, parseClaudeAI: parseClaudeAI, detect: detect, readExport: readExport };
+  /**
+   * Several imports as one, each conversation counted once: the same export twice, or an older
+   * and a newer export of the same account, don't add up. When a conversation shows up again,
+   * the copy with more messages (the newer export) wins. `kind` keeps one source only.
+   */
+  function merge(list, kind) {
+    var by = {}, order = [];
+    (list || []).forEach(function (w) {
+      if (!w || (kind && w.kind !== kind)) return;
+      var tool = w.kind, items = {};
+      var bucket = function (id) { return items[id] || (items[id] = { session: null, prompts: [], texts: [], replies: [] }); };
+      w.sessions.forEach(function (s) { bucket(s.id).session = s; });
+      ["prompts", "texts", "replies"].forEach(function (f) { (w[f] || []).forEach(function (x) { bucket(x.c)[f].push(x); }); });
+      Object.keys(items).forEach(function (id) {
+        var k = tool + ":" + id, it = items[id];
+        if (!by[k]) order.push(k);
+        if (!by[k] || it.prompts.length + it.replies.length >= by[k].prompts.length + by[k].replies.length) by[k] = it;
+      });
+    });
+    var out = { sessions: [], prompts: [], texts: [], replies: [] };
+    order.forEach(function (k) {
+      var it = by[k];
+      if (it.session) out.sessions.push(it.session);
+      out.prompts = out.prompts.concat(it.prompts); out.texts = out.texts.concat(it.texts); out.replies = out.replies.concat(it.replies);
+    });
+    return out;
+  }
+
+  var api = { merge: merge, listZip: listZip, parseChatGPT: parseChatGPT, parseClaudeAI: parseClaudeAI, detect: detect, readExport: readExport };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.VWWebChat = api;
 })(typeof self !== "undefined" ? self : this);

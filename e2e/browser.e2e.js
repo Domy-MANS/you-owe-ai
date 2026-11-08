@@ -104,7 +104,7 @@ test("the call: decline → missed badge → call back → hang up → call-back
   const pg = await open(`${PAGE}?lang=en`);
   await pg.click("#demo"); await sleep(800);
   const before = await pg.evaluate(() => window.VW_TOTAL);
-  await pg.evaluate(() => window.VWCall.incoming((r) => { window.__imported = r.sessions.length; }));
+  await pg.evaluate(() => window.VWCall.incoming((r) => { window.__imported = window.VWWebChat.merge(r).sessions.length; }));
   await sleep(700);
   await pg.click(".call-bar .no"); await sleep(900);
   assert.equal(await exists(pg, ".call-missed .dot"), true, "red dot after declining");
@@ -118,6 +118,11 @@ test("the call: decline → missed badge → call back → hang up → call-back
   await pg.click('.call-opt[data-k="gpt"]');
   await (await pg.$(".call-drop input")).uploadFile(zipPath); await sleep(1200);
   assert.match(await text(pg, ".call-drop span"), /Found 40 ChatGPT conversations/);
+  // the same export again, plus a file that isn't one, in one go: still 40, the junk is skipped
+  const junk = path.join(path.dirname(zipPath), "notes.json"); fs.writeFileSync(junk, '{"hi":1}');
+  await (await pg.$(".call-drop input")).uploadFile(zipPath, junk); await sleep(1200);
+  assert.match(await text(pg, ".call-drop span"), /Found 40 ChatGPT conversations \(repeats count once\)/);
+  assert.match(await text(pg, ".call-drop span"), /1 file wasn't a chat export/);
   await pg.click(".go-recalc"); await sleep(400);
   assert.equal(await pg.evaluate(() => window.__imported), 40);
   assert.equal(await exists(pg, ".call-missed"), false, "badge gone once imported");

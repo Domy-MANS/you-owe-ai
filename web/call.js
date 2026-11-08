@@ -35,7 +35,8 @@
       ],
       homeLater: "等邮件的时候，可以先", homeTestify: "🧑‍⚖️ 让 AI 出庭作证（30 秒）",
       drop: "把导出的 zip 拖到这里，或者点这里选择", reading: "正在对账…",
-      got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT" : "Claude 网页版") + " 对话"; },
+      got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT " : k === "claudeai" ? "Claude 网页版" : "ChatGPT 和 Claude 网页版") + "对话（重复的只算一次）。还有别的导出文件，可以继续拖进来"; },
+      skipped: function (n) { return "有 " + n + " 个文件不是聊天记录，已跳过"; },
       recalc: "重新算账", later: "邮件还没到？先挂了，拿到 zip 后点首页的「导入网页聊天」也行。",
       bad: "这个文件好像不是 ChatGPT 或 Claude 的导出。",
       badCodes: {
@@ -77,7 +78,8 @@
       ],
       homeLater: "While you wait for the email, you can", homeTestify: "🧑‍⚖️ make AI testify (30 sec)",
       drop: "Drop the export zip here, or click to choose it", reading: "Auditing…",
-      got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : "Claude.ai") + " conversations"; },
+      got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : k === "claudeai" ? "Claude.ai" : "ChatGPT and Claude.ai") + " conversations (repeats count once). More exports? Drop them in too"; },
+      skipped: function (n) { return n + (n === 1 ? " file wasn't" : " files weren't") + " a chat export, skipped"; },
       recalc: "Recalculate my bill", later: "Email not here yet? Hang up for now and use \"Import web chats\" on the home page later.",
       bad: "That doesn't look like a ChatGPT or Claude export.",
       badCodes: {
@@ -178,7 +180,7 @@
       '<div class="call-top"><div class="call-av big">' + (ctx.ai ? "⚖️" : "🤖") + '</div><b class="call-name"></b><span class="call-time"></span>' + (quiet ? '<p class="call-sub"></p>' : "") + "</div>" +
       '<div class="call-lines"></div><div class="call-import" hidden>' +
       '<div class="call-pick"><button class="call-opt" data-k="gpt"></button><button class="call-opt" data-k="cla"></button></div>' +
-      '<ol class="call-steps"></ol><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span></span></label>' +
+      '<ol class="call-steps"></ol><label class="call-drop"><input type="file" accept=".zip,.json" multiple hidden><span></span></label>' +
       '<p class="call-later"></p></div><button class="call-btn no end">✕</button></div>');
     document.body.appendChild(ov);
     var box = ov.querySelector(".call-lines"), label = ov.querySelector(".call-drop span");
@@ -204,7 +206,9 @@
       else if (st.drop === "reading") label.textContent = L.reading;
       else if (st.drop === "bad") label.textContent = (st.badCode && L.badCodes[st.badCode]) || L.bad;
       else {
-        label.innerHTML = L.got(st.result.sessions.length, st.result.kind) + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
+        var kinds = st.result.map(function (w) { return w.kind; }).filter(function (k, i, a) { return a.indexOf(k) === i; });
+        label.innerHTML = L.got(window.VWWebChat.merge(st.result).sessions.length, kinds.length === 1 ? kinds[0] : "both") +
+          (st.skipped ? '<br><small>' + L.skipped(st.skipped) + "</small>" : "") + '<br><button class="btn go-recalc">' + L.recalc + "</button>";
         label.querySelector(".go-recalc").onclick = function (e) {
           e.preventDefault(); end();
           var b = document.querySelector(".call-missed"); if (b) b.remove();
@@ -221,17 +225,25 @@
     timers.push(setTimeout(function () { ov.querySelector(".call-import").hidden = false; }, quiet ? 0 : 600 + total * 1300));
     ov.querySelectorAll(".call-opt").forEach(function (b) { b.onclick = function () { st.steps = b.dataset.k; relabel(); }; });
     var input = ov.querySelector("input");
-    async function take(file) {
+    // several files at once is fine (Claude's export comes as several zips): the ones that aren't chats are skipped
+    async function take(files) {
+      files = Array.prototype.slice.call(files || []);
+      if (!files.length) return;
+      var prev = st.drop === "got" ? st.result : [], got = [], firstErr = null;
       st.drop = "reading"; relabel();
-      try { st.result = await window.VWWebChat.readExport(file); st.drop = "got"; }
-      catch (err) { st.drop = "bad"; st.badCode = err && err.code; }
+      for (var i = 0; i < files.length; i++) {
+        try { got.push(await window.VWWebChat.readExport(files[i])); }
+        catch (err) { firstErr = firstErr || err; }
+      }
+      if (got.length || prev.length) { st.result = prev.concat(got); st.skipped = files.length - got.length; st.drop = "got"; }
+      else { st.drop = "bad"; st.badCode = firstErr && firstErr.code; }
       relabel();
     }
-    input.onchange = function () { if (input.files[0]) take(input.files[0]); };
+    input.onchange = function () { take(input.files); input.value = ""; };
     var drop = ov.querySelector(".call-drop");
     drop.ondragover = function (e) { e.preventDefault(); drop.classList.add("over"); };
     drop.ondragleave = function () { drop.classList.remove("over"); };
-    drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) take(e.dataTransfer.files[0]); };
+    drop.ondrop = function (e) { e.preventDefault(); drop.classList.remove("over"); take(e.dataTransfer.files); };
     function end() { clearInterval(clock); timers.forEach(clearTimeout); offLang(relabel); ov.remove(); }
     // hanging up without importing leaves the phone in the corner, to come back after the report
     ov.querySelector(".end").onclick = function () { end(); if (!quiet) missedBadge("later", onImported); };

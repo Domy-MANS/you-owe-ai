@@ -94,3 +94,24 @@ test("newer ChatGPT exports split the chats into conversations-000.json, -001.js
   const bytes = await W.readExport(zip);
   assert.equal(bytes.prompts.length, 4, "same from bytes (the CLI)");
 });
+
+test("merge: the same export twice, or an older and a newer one, count each conversation once", async () => {
+  const g = await W.readExport(makeZip({ "conversations.json": JSON.stringify(chatgpt) }));
+  const c = await W.readExport(Buffer.from(JSON.stringify(claudeai)));
+  const once = W.merge([g, c]);
+  const twice = W.merge([g, c, g, c]);
+  assert.deepEqual([twice.sessions.length, twice.prompts.length, twice.texts.length, twice.replies.length],
+    [once.sessions.length, once.prompts.length, once.texts.length, once.replies.length]);
+  assert.equal(once.sessions.length, 2);
+  // a newer export: the same chat with one more message, plus a new chat; the longer copy wins
+  const newer = JSON.parse(JSON.stringify(claudeai));
+  newer[0].chat_messages.push({ sender: "human", created_at: "2026-04-02T09:02:00Z", text: "好的" });
+  newer.push({ uuid: "x2", created_at: "2026-05-01T09:00:00Z", chat_messages: [{ sender: "human", created_at: "2026-05-01T09:00:00Z", text: "hi" }] });
+  const n = await W.readExport(Buffer.from(JSON.stringify(newer)));
+  for (const order of [[c, n], [n, c]]) {
+    const m = W.merge(order, "claudeai");
+    assert.equal(m.sessions.length, 2);
+    assert.equal(m.prompts.length, 4, "3 in the longer copy of x1, 1 in x2");
+  }
+  assert.equal(W.merge([g, c], "chatgpt").sessions.length, 1, "one source only");
+});
