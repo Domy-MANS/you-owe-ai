@@ -93,6 +93,7 @@ The chart at the top is the debt clock. It's live, and updated within minutes: e
 
 - **Your chats never leave your computer.** The page ships with a Content-Security-Policy, enforced by the browser, that blocks every network request except one: the debt clock.
 - **The debt clock gets one number.** When you make a real bill, the page sends its total, its currency, how it was made (testimony, import or folders) and your plea once you choose it, under a random ID that only lives in your browser, to [a tiny counter](worker/) that adds up how many people confessed and how much humanity owes AI. No chat text, catchphrases, names or anything else. Tap **Don't count me** on the last page to withdraw it, plea included, and that browser stops reporting. Demos and other people's shared bills are never counted, and a plea made on the demo isn't saved. Open the Network tab in DevTools to check.
+- **Against spam**, the counter limits new bills per network per day. For that it keeps a hash of your IP address for one day, under a random key it makes fresh each day and then deletes, so the hash can't be turned back into your IP. The IP itself is never stored.
 - **Only counts are kept.** To find catchphrases and moods, prompt text is scanned in your browser. The report keeps counts and short repeated phrases, never your conversations.
 - **The IOU shows numbers only.** No project names, no conversation titles.
 - **Share links leave out** project names and day-by-day history. They hold the numbers and catchphrases the pages show.
