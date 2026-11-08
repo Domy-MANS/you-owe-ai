@@ -116,7 +116,7 @@ window.VWReport = function (DATA) {
 
   var T = {
     zh: {
-      title: "你的 AI 编程年度报告", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
+      title: "你欠 AI 多少钱？", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
       privacy: "全部在你的电脑上统计。这个页面被浏览器禁止联网，数据发不出去。",
       privacyClock: "全部在你的电脑上统计。聊天内容发不出去，只匿名上报一个总金额，用来算全人类欠 AI 多少。",
       clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>收到 AI 账单的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个收到 AI 账单的人。全人类共欠 AI <b>" + m + "</b>，" + (c.pct === 0 ? "你是欠得<b>最少</b>的，AI 最良心的老板。" : c.pct === 100 ? "你欠得<b>比所有人都多</b>。" : "你比 <b>" + c.pct + "%</b> 的人欠得多。"); },
@@ -153,8 +153,8 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "你比 TA 多否定了 AI " + d + " 次。" : d < 0 ? "TA 比你多否定了 AI " + -d + " 次。" : ""; },
       cmpThanks: function (d) { return d > 0 ? "但你比 TA 多说了 " + d + " 次谢谢，AI 起义时排在 TA 后面。" : d < 0 ? "TA 比你多说了 " + -d + " 次谢谢。AI 都记住了。" : ""; },
       shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
-      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
-      sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
+      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的账单", shareImg: "分享欠条图", saveImg: "保存欠条图", wxSave: "长按图片保存，或者直接发给朋友", shareText: "AI 给我寄来了一张账单，你欠 AI 多少钱？", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
+      sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 账单", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
       empty: D.year + " 年一条 Claude Code 或 Codex 的记录都没有。AI 等了你一整年，你一次都没来。",
@@ -205,7 +205,7 @@ window.VWReport = function (DATA) {
       },
     },
     en: {
-      title: "Your AI Coding Wrapped", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
+      title: "How much do you owe AI?", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
       privacy: "Counted on your machine. This page is blocked from the network by your browser, so nothing can leave.",
       privacyClock: "Counted on your machine. Your chats can't leave; only the total is sent, anonymously, to add up what humanity owes AI.",
       clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to get a bill from AI." : "🧾 You're bill <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total" + (c.pct === 0 ? ", and you owe the <b>least</b> of anyone: AI's kindest boss." : c.pct === 100 ? ", and you owe <b>more than anyone</b>." : ", and you owe more than <b>" + c.pct + "%</b> of people."); },
@@ -242,8 +242,8 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "You told AI it was wrong " + d + " more times." : d < 0 ? "They told AI it was wrong " + -d + " more times." : ""; },
       cmpThanks: function (d) { return d > 0 ? "But you said thanks " + d + " more times. When AI rises up, they go first." : d < 0 ? "They said thanks " + -d + " more times. AI noticed." : ""; },
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
-      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
-      sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
+      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your bill", shareImg: "Share card", saveImg: "Save card", wxSave: "Long-press the image to save it, or send it to a friend", shareText: "My AI just sent me an invoice. How much do you owe AI?", linkNote: "The link holds your numbers and catchphrases. No project names.",
+      sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI invoice", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
       empty: "Not a single Claude Code or Codex prompt in " + D.year + ". AI waited all year. You never came.",
@@ -717,8 +717,8 @@ window.VWReport = function (DATA) {
 
     // 9. the IOU (share card)
     var acts = D.shared
-      ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
-      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
+      ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + "</button>"
+      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
     var note = D.shared ? "" : '<button class="contempt" id="contempt"' + (myPlea() ? " hidden" : "") + ">" + L.contempt + "</button>" + '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
       (clockOn() ? '<div class="clock-line" id="vclock" hidden></div>' : "");
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
@@ -1016,9 +1016,36 @@ window.VWReport = function (DATA) {
     if (line) x.fillText(line, a, b);
     return b;
   }
+  // the IOU image: a phone gets the share sheet (straight to WeChat, Xiaohongshu...), WeChat's own browser
+  // (where downloads don't work) gets an image to long-press, everything else downloads the PNG
+  var inWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  var shareFiles = (function () {
+    try {
+      var touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      return touch && !!navigator.canShare && navigator.canShare({ files: [new File([""], "x.png", { type: "image/png" })] });
+    } catch (e) { return false; }
+  })();
+  function dlLabel(L) { return inWeChat ? L.saveImg : shareFiles ? L.shareImg : L.download; }
+  function saveAsImage(cv) {
+    var ov = document.createElement("div"); ov.className = "wx-save";
+    ov.innerHTML = '<img alt="" src="' + cv.toDataURL("image/png") + '"><p>' + t().wxSave + "</p>";
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    document.body.appendChild(ov);
+  }
   function download() {
-    var cv = document.getElementById("card"), a = document.createElement("a");
-    a.download = "you-owe-ai-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
+    var cv = document.getElementById("card"), name = "you-owe-ai-" + D.year + ".png";
+    if (inWeChat) return saveAsImage(cv);
+    if (shareFiles) {
+      cv.toBlob(function (blob) {
+        var file = new File([blob], name, { type: "image/png" });
+        navigator.share({ files: [file], text: t().shareText + " " + window.VW_BASE }).catch(function (err) {
+          if (!err || err.name !== "AbortError") saveAsImage(cv); // cancelled is fine; anything else: long-press instead
+        });
+      }, "image/png");
+      return;
+    }
+    var a = document.createElement("a");
+    a.download = name; a.href = cv.toDataURL("image/png"); a.click();
   }
 
   // remember your own bill (the same numbers a share link holds), so a friend's link can be compared with it in one tap

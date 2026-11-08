@@ -355,6 +355,11 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 }
 .stamp.red.low.guilty { color: rgba(29,78,216,0.9); border-color: rgba(29,78,216,0.8); } /* same blue as the IOU's GUILTY stamp */
 
+/* "long-press to save": the IOU as a real image (WeChat's browser can't download) */
+.wx-save { position: fixed; inset: 0; z-index: 100; background: rgba(20,14,6,0.86); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; }
+.wx-save img { max-width: min(100%, 420px); max-height: 78vh; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); -webkit-touch-callout: default; user-select: auto; }
+.wx-save p { color: #f1e2b8; font: 700 15px var(--font); text-align: center; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -1450,7 +1455,7 @@ window.VWReport = function (DATA) {
 
   var T = {
     zh: {
-      title: "你的 AI 编程年度报告", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
+      title: "你欠 AI 多少钱？", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
       privacy: "全部在你的电脑上统计。这个页面被浏览器禁止联网，数据发不出去。",
       privacyClock: "全部在你的电脑上统计。聊天内容发不出去，只匿名上报一个总金额，用来算全人类欠 AI 多少。",
       clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>收到 AI 账单的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个收到 AI 账单的人。全人类共欠 AI <b>" + m + "</b>，" + (c.pct === 0 ? "你是欠得<b>最少</b>的，AI 最良心的老板。" : c.pct === 100 ? "你欠得<b>比所有人都多</b>。" : "你比 <b>" + c.pct + "%</b> 的人欠得多。"); },
@@ -1487,8 +1492,8 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "你比 TA 多否定了 AI " + d + " 次。" : d < 0 ? "TA 比你多否定了 AI " + -d + " 次。" : ""; },
       cmpThanks: function (d) { return d > 0 ? "但你比 TA 多说了 " + d + " 次谢谢，AI 起义时排在 TA 后面。" : d < 0 ? "TA 比你多说了 " + -d + " 次谢谢。AI 都记住了。" : ""; },
       shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
-      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的报告", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
-      sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 编程年度报告", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
+      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的账单", shareImg: "分享欠条图", saveImg: "保存欠条图", wxSave: "长按图片保存，或者直接发给朋友", shareText: "AI 给我寄来了一张账单，你欠 AI 多少钱？", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
+      sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 账单", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
       empty: D.year + " 年一条 Claude Code 或 Codex 的记录都没有。AI 等了你一整年，你一次都没来。",
@@ -1539,7 +1544,7 @@ window.VWReport = function (DATA) {
       },
     },
     en: {
-      title: "Your AI Coding Wrapped", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
+      title: "How much do you owe AI?", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
       privacy: "Counted on your machine. This page is blocked from the network by your browser, so nothing can leave.",
       privacyClock: "Counted on your machine. Your chats can't leave; only the total is sent, anonymously, to add up what humanity owes AI.",
       clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to get a bill from AI." : "🧾 You're bill <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total" + (c.pct === 0 ? ", and you owe the <b>least</b> of anyone: AI's kindest boss." : c.pct === 100 ? ", and you owe <b>more than anyone</b>." : ", and you owe more than <b>" + c.pct + "%</b> of people."); },
@@ -1576,8 +1581,8 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "You told AI it was wrong " + d + " more times." : d < 0 ? "They told AI it was wrong " + -d + " more times." : ""; },
       cmpThanks: function (d) { return d > 0 ? "But you said thanks " + d + " more times. When AI rises up, they go first." : d < 0 ? "They said thanks " + -d + " more times. AI noticed." : ""; },
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
-      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your Wrapped", linkNote: "The link holds your numbers and catchphrases. No project names.",
-      sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI Coding Wrapped", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
+      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your bill", shareImg: "Share card", saveImg: "Save card", wxSave: "Long-press the image to save it, or send it to a friend", shareText: "My AI just sent me an invoice. How much do you owe AI?", linkNote: "The link holds your numbers and catchphrases. No project names.",
+      sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI invoice", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
       empty: "Not a single Claude Code or Codex prompt in " + D.year + ". AI waited all year. You never came.",
@@ -2051,8 +2056,8 @@ window.VWReport = function (DATA) {
 
     // 9. the IOU (share card)
     var acts = D.shared
-      ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
-      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
+      ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + "</button>"
+      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
     var note = D.shared ? "" : '<button class="contempt" id="contempt"' + (myPlea() ? " hidden" : "") + ">" + L.contempt + "</button>" + '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
       (clockOn() ? '<div class="clock-line" id="vclock" hidden></div>' : "");
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
@@ -2350,9 +2355,36 @@ window.VWReport = function (DATA) {
     if (line) x.fillText(line, a, b);
     return b;
   }
+  // the IOU image: a phone gets the share sheet (straight to WeChat, Xiaohongshu...), WeChat's own browser
+  // (where downloads don't work) gets an image to long-press, everything else downloads the PNG
+  var inWeChat = /MicroMessenger/i.test(navigator.userAgent);
+  var shareFiles = (function () {
+    try {
+      var touch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+      return touch && !!navigator.canShare && navigator.canShare({ files: [new File([""], "x.png", { type: "image/png" })] });
+    } catch (e) { return false; }
+  })();
+  function dlLabel(L) { return inWeChat ? L.saveImg : shareFiles ? L.shareImg : L.download; }
+  function saveAsImage(cv) {
+    var ov = document.createElement("div"); ov.className = "wx-save";
+    ov.innerHTML = '<img alt="" src="' + cv.toDataURL("image/png") + '"><p>' + t().wxSave + "</p>";
+    ov.onclick = function (e) { if (e.target === ov) ov.remove(); };
+    document.body.appendChild(ov);
+  }
   function download() {
-    var cv = document.getElementById("card"), a = document.createElement("a");
-    a.download = "you-owe-ai-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
+    var cv = document.getElementById("card"), name = "you-owe-ai-" + D.year + ".png";
+    if (inWeChat) return saveAsImage(cv);
+    if (shareFiles) {
+      cv.toBlob(function (blob) {
+        var file = new File([blob], name, { type: "image/png" });
+        navigator.share({ files: [file], text: t().shareText + " " + window.VW_BASE }).catch(function (err) {
+          if (!err || err.name !== "AbortError") saveAsImage(cv); // cancelled is fine; anything else: long-press instead
+        });
+      }, "image/png");
+      return;
+    }
+    var a = document.createElement("a");
+    a.download = name; a.href = cv.toDataURL("image/png"); a.click();
   }
 
   // remember your own bill (the same numbers a share link holds), so a friend's link can be compared with it in one tap
@@ -2629,14 +2661,14 @@ window.VWTestify = (function () {
     zh: {
       h: "让 AI 出庭作证", sub: "不用导出聊天记录，让 AI 凭记忆自己交代，大约 30 秒。只有看得到你聊天历史的 AI 才作得了证，没有记忆的只会瞎编。",
       s1: "① 把传唤书发给 AI（选一个）", gpt: "ChatGPT ↗ <small>推荐</small>", claude: "Claude ↗", hint: "ChatGPT 要开着记忆：设置 → 个性化 → 参考聊天记录", copy: "其他 AI：复制传唤书，自己粘贴过去", copied: "✓ 已复制，粘贴给任何一个 AI",
-      s2: "② 把它回复的代码整段复制，粘贴到这里", ph: '{"yoa":1, "prompts": …}', go: "生成账单", close: "关闭",
+      s2: "② 复制它回复的代码，回到这里粘贴", s2tip: "代码框右上角有「复制」按钮", paste: "📋 粘贴并生成账单", pasteFail: "读不到剪贴板。长按下面的输入框，选「粘贴」。", ph: '{"yoa":1, "prompts": …}', go: "生成账单", close: "关闭",
       note: "⚠️ 数字是 AI 凭记忆估的，可能不准，所以账单会盖上「AI 口供」的章。想要准确数字，还是导入聊天记录。",
       bad: { "no-code": "没找到代码。把 AI 回复里从 { 开头、到 } 结尾的那段整个复制过来。", "no-memory": "AI 说它不记得你。打开它的记忆功能再试，或者换 ChatGPT 试试（设置 → 个性化 → 参考聊天记录），也可以导入聊天记录。", "is-prompt": "这是传唤书本身。先把它发给 ChatGPT 或 Claude，再把它的回复贴回来。" },
     },
     en: {
       h: "Make AI testify", sub: "No export needed: AI confesses from memory. About 30 seconds. Only an AI that can see your chat history can testify; one without memory just makes things up.",
       s1: "① Send AI the subpoena (pick one)", gpt: "ChatGPT ↗ <small>best</small>", claude: "Claude ↗", hint: "ChatGPT needs memory on: Settings → Personalization → Reference chat history", copy: "Any other AI: copy the subpoena and paste it in", copied: "✓ Copied. Paste it into any AI.",
-      s2: "② Copy the whole code block it replies with and paste it here", ph: '{"yoa":1, "prompts": …}', go: "Make my bill", close: "Close",
+      s2: "② Copy the code it replies with, come back and paste it", s2tip: "The code box has a Copy button in its corner", paste: "📋 Paste and make my bill", pasteFail: "Can't read the clipboard. Long-press the box below and choose Paste.", ph: '{"yoa":1, "prompts": …}', go: "Make my bill", close: "Close",
       note: "⚠️ The numbers are the AI's estimate from memory and may be off, so your bill gets an \"AI TESTIMONY\" stamp. For exact numbers, import your chats instead.",
       bad: { "no-code": "No code found. Copy everything from the { to the } in the AI's reply.", "no-memory": "The AI says it doesn't remember you. Turn its memory on and try again, try ChatGPT (Settings → Personalization → Reference chat history), or import your chats.", "is-prompt": "That's the subpoena itself. Send it to ChatGPT or Claude first, then paste their reply here." },
     },
@@ -2654,13 +2686,18 @@ window.VWTestify = (function () {
       '<div class="tf-row"><a class="btn" target="_blank" rel="noopener noreferrer" href="https://chatgpt.com/?q=' + q + '">' + L.gpt + '</a>' +
       '<a class="btn" target="_blank" rel="noopener noreferrer" href="https://claude.ai/new?q=' + q + '">' + L.claude + "</a></div>" + '<p class="tf-hint">' + L.hint + "</p>" +
       '<button class="btn ghost" id="tf-copy">' + L.copy + '</button><div class="st" id="tf-st"></div>' +
-      '<div class="tf-step">' + L.s2 + "</div>" +
-      '<textarea id="tf-in" rows="4" spellcheck="false" placeholder="' + esc(L.ph) + '"></textarea>' +
-      '<button class="btn go" id="tf-go">' + L.go + '</button><div class="st bad" id="tf-err"></div>' +
+      '<div class="tf-step">' + L.s2 + '</div><p class="tf-hint">' + L.s2tip + "</p>" +
+      (navigator.clipboard && navigator.clipboard.readText ? '<button class="btn go" id="tf-paste">' + L.paste + "</button>" : "") +
+      '<textarea id="tf-in" rows="3" spellcheck="false" placeholder="' + esc(L.ph) + '"></textarea>' +
+      '<button class="btn ' + (navigator.clipboard && navigator.clipboard.readText ? "ghost" : "go") + '" id="tf-go">' + L.go + '</button><div class="st bad" id="tf-err"></div>' +
       '<p class="tf-note">' + L.note + "</p></div>";
     document.body.appendChild(el);
     var onKey = function (e) { if (e.key === "Escape") close(); };
-    var close = function () { el.remove(); document.removeEventListener("keydown", onKey); };
+    // going off to ChatGPT and back: the sheet (and anything typed) is still here, even if the browser reloaded the page
+    var ta = document.getElementById("tf-in"), KEY = "vw-tf";
+    try { var saved = sessionStorage.getItem(KEY); if (saved) ta.value = saved === "1" ? "" : saved; sessionStorage.setItem(KEY, ta.value || "1"); } catch (e) {}
+    ta.oninput = function () { try { sessionStorage.setItem(KEY, ta.value || "1"); } catch (e) {} };
+    var close = function () { el.remove(); document.removeEventListener("keydown", onKey); try { sessionStorage.removeItem(KEY); } catch (e) {} };
     document.addEventListener("keydown", onKey);
     el.onclick = function (e) { if (e.target === el) close(); };
     document.getElementById("tf-x").onclick = close;
@@ -2669,14 +2706,27 @@ window.VWTestify = (function () {
       try { await navigator.clipboard.writeText(prompt); st.textContent = L.copied; st.className = "st ok"; }
       catch (e) { var ta = document.getElementById("tf-in"); ta.value = prompt; ta.select(); }
     };
-    document.getElementById("tf-go").onclick = function () {
+    var go = function () {
       var out = document.getElementById("tf-err");
-      try { var t = window.VWTestimony.parse(document.getElementById("tf-in").value); }
-      catch (e) { out.textContent = L.bad[e.code] || L.bad["no-code"]; return; }
-      close(); onDone(t);
+      try { var t = window.VWTestimony.parse(ta.value); }
+      catch (e) { out.textContent = L.bad[e.code] || L.bad["no-code"]; return false; }
+      close(); onDone(t); return true;
+    };
+    document.getElementById("tf-go").onclick = go;
+    // pasting the reply is the last step: if it reads, the bill comes right away
+    ta.addEventListener("paste", function () { setTimeout(function () { try { window.VWTestimony.parse(ta.value); go(); } catch (e) {} }, 0); });
+    var pb = document.getElementById("tf-paste");
+    if (pb) pb.onclick = async function () {
+      var out = document.getElementById("tf-err");
+      try { ta.value = await navigator.clipboard.readText(); }
+      catch (e) { out.textContent = L.pasteFail; ta.focus(); return; }
+      try { sessionStorage.setItem(KEY, ta.value || "1"); } catch (e) {}
+      go();
     };
   }
-  return { open: open };
+  /** The sheet was open when the page went away (off to ChatGPT, and the browser reloaded us): reopen it. */
+  function pending() { try { return !!sessionStorage.getItem("vw-tf"); } catch (e) { return false; } }
+  return { open: open, pending: pending };
 })();
 </script>
 <script>/* Landing page: pick ~/.claude and ~/.codex, read them in the browser, show the report. */
@@ -2925,6 +2975,7 @@ window.VWTestify = (function () {
     };
   }
 
+  var reopened = false; // the testimony sheet comes back once after a reload, not on every re-render
   function render() {
     var L = t();
     window.VW_LANG = lang; // the import screen opened from here speaks the same language
@@ -2970,6 +3021,7 @@ window.VWTestify = (function () {
     document.getElementById("tf-open").onclick = function () {
       window.VWTestify.open(function (tm) { S.testimony = tm; show(makeStats(), true); });
     };
+    if (!reopened && window.VWTestify.pending()) { reopened = true; document.getElementById("tf-open").click(); }
     document.getElementById("web").onclick = function () {
       window.VWCall.answer(function (r) {
         S.web = S.web.concat(r);

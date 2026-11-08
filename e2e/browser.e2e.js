@@ -211,6 +211,51 @@ test("a crafted share link can't inject anything: every string from a link is cl
   await old.close(); await pg.close();
 });
 
+test("testimony on a phone: the sheet survives a trip to ChatGPT (reload), and pasting the reply makes the bill at once", async () => {
+  const pg = await open(`${PAGE}?lang=zh`, { setup: () => { try { localStorage.clear(); } catch (e) {} } });
+  await sleep(400);
+  await pg.click("#tf-open"); await sleep(200);
+  await pg.type("#tf-in", '{"ai":"chatgpt",');
+  await pg.reload(); await sleep(600);
+  assert.equal(await exists(pg, "#tf"), true, "the sheet came back after the reload");
+  assert.equal(await pg.$eval("#tf-in", (e) => e.value), '{"ai":"chatgpt",', "with what was typed");
+  // a paste that reads: straight to the bill
+  await pg.evaluate(() => { const ta = document.getElementById("tf-in"); ta.value = '```json\n{"ai":"chatgpt","prompts":300,"deny":20,"thanks":5,"catchphrases":[{"text":"继续","count":30}],"roast":"老板很急"}\n```'; ta.dispatchEvent(new Event("paste")); });
+  await sleep(1200);
+  assert.equal(await exists(pg, "#tf"), false, "sheet closed");
+  assert.ok(await pg.$$eval(".slide", (s) => s.length) > 3, "the bill is showing");
+  await pg.reload(); await sleep(600);
+  assert.equal(await exists(pg, "#tf"), false, "done: the sheet doesn't come back");
+  assert.deepEqual(pg.errors, []);
+  await pg.close();
+});
+
+test("sharing the IOU: WeChat gets an image to long-press, a phone gets the share sheet with the image", async () => {
+  const wx = await open(`${PAGE}?lang=zh&still`, { setup: () => { Object.defineProperty(navigator, "userAgent", { get: () => "Mozilla/5.0 (iPhone) MicroMessenger/8.0" }); } });
+  await sleep(300);
+  await wx.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(500);
+  assert.equal(await wx.$eval("#dl", (e) => e.textContent), "保存欠条图");
+  await wx.$eval("#dl", (e) => e.click()); await sleep(400);
+  assert.equal(await wx.$eval(".wx-save img", (i) => i.src.slice(0, 22)), "data:image/png;base64,");
+  assert.match(await wx.$eval(".wx-save p", (e) => e.textContent), /长按图片保存/);
+  await wx.close();
+
+  const ph = await open(`${PAGE}?lang=en&still`, { setup: () => {
+    window.__shared = null;
+    navigator.canShare = () => true;
+    navigator.share = (d) => { window.__shared = { n: d.files.length, type: d.files[0].type, text: d.text }; return Promise.resolve(); };
+  } });
+  await sleep(300);
+  await ph.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(500);
+  assert.equal(await ph.$eval("#dl", (e) => e.textContent), "Share card");
+  await ph.$eval("#dl", (e) => e.click()); await sleep(600);
+  const sh = await ph.evaluate(() => window.__shared);
+  assert.deepEqual([sh.n, sh.type], [1, "image/png"]);
+  assert.match(sh.text, /How much do you owe AI\? https:\/\/domy-mans\.github\.io\/you-owe-ai\//);
+  assert.deepEqual(ph.errors, []);
+  await ph.close();
+});
+
 test("the page cannot reach the network", async () => {
   const pg = await open(`${PAGE}?lang=en`);
   const blocked = await pg.evaluate(() => new Promise((resolve) => {

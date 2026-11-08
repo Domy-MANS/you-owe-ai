@@ -244,6 +244,7 @@
     };
   }
 
+  var reopened = false; // the testimony sheet comes back once after a reload, not on every re-render
   function render() {
     var L = t();
     window.VW_LANG = lang; // the import screen opened from here speaks the same language
@@ -289,6 +290,7 @@
     document.getElementById("tf-open").onclick = function () {
       window.VWTestify.open(function (tm) { S.testimony = tm; show(makeStats(), true); });
     };
+    if (!reopened && window.VWTestify.pending()) { reopened = true; document.getElementById("tf-open").click(); }
     document.getElementById("web").onclick = function () {
       window.VWCall.answer(function (r) {
         S.web = S.web.concat(r);
