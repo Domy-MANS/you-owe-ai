@@ -63,9 +63,14 @@ Open a friend's share link, tap **Make my own**, and your bill ends with a page 
 
 Already made yours? Then send your link back. Your browser remembers your own bill, so when you open their link the comparison page is already there, with no folders to pick again.
 
+## The AI debt clock
+
+The home page keeps a running count of everyone who has confessed and how much humanity owes AI in total. Your last page tells you which confessor you are and how many people you owe more than, and your IOU prints it. Chinese and English bills are on one scale (¥4 to the bill dollar, the ratio between the two price lists).
+
 ## Privacy
 
-- **Nothing leaves your computer.** The page ships with a Content-Security-Policy that blocks every network request, and the browser enforces it. Open the Network tab in DevTools to check.
+- **Your chats never leave your computer.** The page ships with a Content-Security-Policy, enforced by the browser, that blocks every network request except one: the debt clock.
+- **The debt clock gets one number.** When you make a real bill, the page sends its total, its currency and how it was made (testimony, import or folders), under a random ID that only lives in your browser, to [a tiny counter](worker/) that adds up how many people confessed and how much humanity owes AI. No chat text, catchphrases, names or anything else. Tap **Don't count me** on the last page to withdraw it, and that browser stops reporting. Demos and other people's shared bills are never counted. Open the Network tab in DevTools to check.
 - **Only counts are kept.** To find catchphrases and moods, prompt text is scanned in your browser. The report keeps counts and short repeated phrases, never your conversations.
 - **The IOU shows numbers only.** No project names, no conversation titles.
 - **Share links leave out** project names and day-by-day history. They hold the numbers and catchphrases the pages show.
@@ -103,7 +108,8 @@ This reads both folders directly, writes the invoice to an HTML file and opens i
 ```text
 src/core/    Log parsing, stats, the roast, export import and AI testimony (shared by the web page and the CLI)
 src/page/    The invoice: slides, share card, share links
-web/         The home page, folder picker, incoming call and the testimony sheet
+web/         The home page, folder picker, incoming call, the testimony sheet and the debt clock
+worker/      The debt clock's counter (a Cloudflare Worker with one SQLite Durable Object)
 bin/         The command line
 docs/        The built web page (GitHub Pages) and README images
 test/        Unit tests: node --test test/

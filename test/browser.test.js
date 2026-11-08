@@ -71,6 +71,11 @@ test("built web page has the CSP and all the code inline", () => {
   const html = fs.readFileSync(path.join(__dirname, "../docs/index.html"), "utf8");
   assert.match(html, /Content-Security-Policy" content="default-src 'none'/);
   assert.doesNotMatch(html, /<script[^>]+src=/);
+  // the only address the page may talk to is the debt clock (or nothing, if worker/URL isn't set)
+  const connect = /connect-src ([^;"]+)/.exec(html)[1].trim();
+  let url = ""; try { url = fs.readFileSync(path.join(__dirname, "../worker/URL"), "utf8").trim(); } catch (e) {}
+  assert.equal(connect, url || "'none'");
+  assert.match(html, /img-src data: blob:;/, "no images from anywhere");
   for (const g of ["VWParse", "VWStats", "VWRoast", "VWReport", "VW_DEMO", "showDirectoryPicker"]) assert.ok(html.includes(g), g);
 });
 
