@@ -12,7 +12,7 @@
       : isWin ? k("Ctrl") + k("V") + " → " + k("Enter")
       : k("Ctrl") + k("L") + " → " + k("Ctrl") + k("V") + " → " + k("Enter");
   }
-  var S = { claude: null, codex: null, web: [] };
+  var S = { claude: null, codex: null, web: [], testimony: null };
   var isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform) && !window.showDirectoryPicker);
 
   // ---- the friend whose share link brought you here ----
@@ -54,9 +54,10 @@
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       cli: "习惯用终端？", lang: "EN",
       importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）",
-      phoneNote: "在手机上，导入 ChatGPT 或 Claude 的聊天记录就能算账。Claude Code 和 Codex 的记录在电脑上，要用电脑打开。",
+      phoneNote: "在手机上，让 ChatGPT 或 Claude 出庭作证，或者导入聊天记录，就能算账。Claude Code 和 Codex 的记录在电脑上，要用电脑打开。",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
       webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
+      testify: "🧑‍⚖️ 让 AI 出庭作证（30 秒，不用导出）", testifyPC: "🧑‍⚖️ 只用网页版？让 AI 出庭作证（30 秒）",
     },
     en: {
       title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
@@ -69,9 +70,10 @@
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       cli: "Prefer the terminal?", lang: "中文",
       importWeb: "📦 Import web chats (ChatGPT / Claude, optional)",
-      phoneNote: "On a phone, import your ChatGPT or Claude chats to get your bill. Claude Code and Codex logs live on your computer, so open this there for those.",
+      phoneNote: "On a phone, have ChatGPT or Claude testify, or import your chats, to get your bill. Claude Code and Codex logs live on your computer, so open this there for those.",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
       webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
+      testify: "🧑‍⚖️ Make AI testify (30 sec, no export)", testifyPC: "🧑‍⚖️ Only use the web apps? Make AI testify (30 sec)",
     },
   };
   function t() { return T[lang]; }
@@ -166,9 +168,11 @@
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
     S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    if (S.testimony) { var tr = VWTestimony.toRecords(S.testimony); sessions = sessions.concat(tr.sessions); prompts = prompts.concat(tr.prompts); }
     var year = VWStats.defaultYear(prompts);
     var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
+    if (S.testimony) { stats.roast = VWTestimony.mergeRoast(stats.roast, S.testimony); stats.testimony = { ai: S.testimony.ai, line: S.testimony.line }; }
     return stats;
   }
 
@@ -179,7 +183,7 @@
     document.body.classList.add("playing");
     window.VWReport(stats);
     // a few seconds into a real bill, the web AI calls to collect on your web chats
-    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
+    if (real && !S.web.length && !S.testimony && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
   }
 
   function addWeb(r) {
@@ -197,7 +201,8 @@
       "<h1>" + L.title + "</h1>" +
       '<p class="where phone-note">' + L.phoneNote + "</p>" +
       '<div class="steps">' +
-      '<button class="pick web main" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
+      '<button class="pick web main" id="tf-open">' + L.testify + "</button>" +
+      '<button class="pick web" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
@@ -230,6 +235,7 @@
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
       '<button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
+      '<button class="pick web" id="tf-open">' + L.testifyPC + "</button>" +
       "</div>" +
       '<p class="privacy">' + L.privacy + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
@@ -243,6 +249,9 @@
       document.getElementById("pick-codex").onclick = function () { pick("codex"); };
     }
     document.getElementById("go").onclick = function () { show(makeStats(), true); };
+    document.getElementById("tf-open").onclick = function () {
+      window.VWTestify.open(function (tm) { S.testimony = tm; show(makeStats(), true); });
+    };
     document.getElementById("web").onclick = function () {
       window.VWCall.answer(function (r) {
         S.web.push(r);

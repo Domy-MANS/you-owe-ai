@@ -41,7 +41,8 @@ window.VWShare = (function () {
       R ? [R.prompts, R.you.deny, R.you.why, R.you.thanks, R.you.swear, R.you.lost, R.you.whatNext,
         R.ai.sorry, R.ai.flatter, R.ai.done, cp(R.catchphrases),
         R.angriestDay ? [R.angriestDay.date, R.angriestDay.count] : 0,
-        R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0];
+        R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0,
+      D.testimony ? [D.testimony.ai === "claude" ? 1 : 0, D.testimony.line || ""] : 0];
   }
   function unpack(a) {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
@@ -54,7 +55,9 @@ window.VWShare = (function () {
       tinyShare: r[13], medianLength: 0,
     } : null;
     if (R && r[14]) R.catchphrases_zh = cp(r[14]);
+    var tm = a[19] ? { ai: a[19][0] ? "claude" : "chatgpt", line: String(a[19][1] || "").slice(0, 90) } : null;
     return {
+      testimony: tm,
       year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
       busiestDay: a[6] ? { date: a[6][0], prompts: a[6][1] } : null, workHours: a[7], totalTokens: a[8],
       tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: a[10],
@@ -367,6 +370,7 @@ window.VWReport = function (DATA) {
       company: "AI 打工有限公司", companySub: "AI WORKERS UNION · 账单",
       client: "客户", you: "你", them: "TA", period: "账期", periodV: D.year + " 全年", vendor: "服务方",
       due: "应付总额", seeMore: "明细见后页 👇", stamp: "逾期未付",
+      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供", witness: function (n) { return "证人 " + n + " 当庭陈述："; },
       itemNo: function (n) { return "明细 " + "①②③④⑤"[n - 1]; },
       subtotal: "小计",
       items: {
@@ -387,6 +391,7 @@ window.VWReport = function (DATA) {
       company: "AI Workers Union", companySub: "INVOICE",
       client: "Client", you: "You", them: "Them", period: "Period", periodV: "All of " + D.year, vendor: "Vendor",
       due: "Amount due", seeMore: "Itemized charges ahead 👇", stamp: "PAST DUE",
+      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony", witness: function (n) { return "Witness " + n + " testified:"; },
       itemNo: function (n) { return "Item #" + n; },
       subtotal: "Subtotal",
       items: {
@@ -409,6 +414,7 @@ window.VWReport = function (DATA) {
   var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
   function srcName(k) { var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
   /** Sources you actually used, most prompts first, with their share. */
+  function tmName(X) { return X.testimony && X.testimony.ai === "claude" ? "Claude" : "ChatGPT"; }
   function sources() {
     var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
       .filter(function (x) { return x.n > 0; }).sort(function (a, c) { return c.n - a.n; });
@@ -494,8 +500,9 @@ window.VWReport = function (DATA) {
       '<div class="rc-row"><span>' + K.client + "</span><b>" + (D.shared ? K.them : K.you) + "</b></div>" +
       '<div class="rc-row"><span>' + K.period + "</span><b>" + K.periodV + "</b></div>" +
       '<div class="rc-row"><span>' + K.vendor + "</span><b>" + (sources().map(function (x) { return x.name; }).join(" × ") || "Claude Code × Codex") + "</b></div>" +
+      (D.testimony ? '<div class="rc-row"><span>' + K.evidence + "</span><b>" + K.evidenceV(tmName(D)) + "</b></div>" : "") +
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
-      '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>") +
+      '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
     if (R) {
@@ -549,6 +556,7 @@ window.VWReport = function (DATA) {
     if (R) {
       var stars = creditRating(R) === "A" ? "★★★★★" : creditRating(R) === "B" ? "★★★☆☆" : "★☆☆☆☆";
       add('<div class="pop"><div class="kicker">' + K.reviewK + "</div>" + receipt(K.reviewH, '<div class="rc-stars">' + stars + "</div>" +
+        (D.testimony && D.testimony.line ? '<p class="rc-quote rc-witness"><small>' + K.witness(tmName(D)) + "</small>" + esc(D.testimony.line) + "</p>" : "") +
         L.roast(R).map(function (l) { return '<p class="rc-quote">' + esc(l) + "</p>"; }).join("")) + "</div>", 11, '<div class="deco spot"></div>');
     }
 
@@ -577,7 +585,8 @@ window.VWReport = function (DATA) {
         [q(meR.catchphrases[0]), q(fR.catchphrases[0])],
         [mePer.e + " " + esc(mePer.name), fPer.e + " " + esc(fPer.name)],
       ];
-      var grid = '<div class="cmp"><span></span><b>' + L.cmpYou + "</b><b>" + L.cmpThem + "</b>" +
+      var est = function (X) { return X.testimony ? '<small class="est">' + K.tmShort + "</small>" : ""; };
+      var grid = '<div class="cmp"><span></span><b>' + L.cmpYou + est(ME) + "</b><b>" + L.cmpThem + est(F) + "</b>" +
         rowsC.map(function (r, i) { return '<span class="lbl">' + L.cmpRows[i] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[0] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[1] + "</span>"; }).join("") + "</div>";
       var dOwe = CM.total - CF.total;
       if (Math.abs(dOwe) < (lang === "zh" ? 0.5 : 0.005)) dOwe = 0; // same bill, up to rounding in the link
@@ -784,7 +793,7 @@ window.VWReport = function (DATA) {
     x.font = "700 32px " + F; x.fillStyle = "#666"; x.fillText(K.due, cx, y + 26);
     x.textAlign = "right"; x.fillStyle = "#111"; x.font = "900 104px " + F; x.fillText(money(C.total), right, y); x.textAlign = "left";
     y += 130;
-    x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
+    x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, y);
 
     // stamp
     x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);

@@ -250,6 +250,37 @@ test("a friend's link, once you've made your own bill: compared in one tap, but 
   await fp.close(); await pg.close();
 });
 
+test("on a phone: make AI testify, paste its reply, get a bill stamped as testimony", async () => {
+  for (const [w, h] of [[360, 740], [390, 844]]) {
+    const pg = await browser.newPage();
+    await pg.setUserAgent(IPHONE);
+    await pg.setViewport({ width: w, height: h, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    const errors = []; pg.on("pageerror", (e) => errors.push(e.message));
+    await pg.goto(`${PAGE}?lang=zh&still`); await sleep(300);
+    await pg.click("#tf-open"); await sleep(200);
+    const sheet = await pg.$eval(".tf-card", (e) => ({ w: e.getBoundingClientRect().width, sw: document.documentElement.scrollWidth }));
+    assert.ok(sheet.w <= w && sheet.sw <= w, `sheet fits ${w}px: ${JSON.stringify(sheet)}`);
+    assert.match(await pg.$eval(".tf-row a", (a) => a.href), /^https:\/\/chatgpt\.com\/\?q=/);
+    // pasting the subpoena itself gets a pointer, not a bill
+    await pg.evaluate(() => { document.getElementById("tf-in").value = window.VWTestimony.PROMPT.zh; }); await pg.click("#tf-go");
+    assert.match(await text(pg, "#tf-err"), /传唤书本身/);
+    await pg.evaluate(() => { document.getElementById("tf-in").value = '好的，这是我的证词：```{"yoa":1,"ai":"claude","prompts":800,"active_days":90,"deny":60,"thanks":12,"ai_sorry":40,"swear":5,"why":30,"night_share":0.4,"peak_hour":23,"catchphrases":[{"text":"不对再改","count":30}],"roast":"一个把我当许愿池的老板"}```'; });
+    await pg.click("#tf-go"); await sleep(1500);
+    assert.equal(await exists(pg, "#tf"), false, "sheet closes");
+    const all = await pg.$$eval(".slide", (s) => s.map((e) => e.innerText.replace(/\s+/g, " ")).join(" | "));
+    assert.match(all, /AI 口供/, "cover stamp");
+    assert.match(all, /Claude 的口供/);
+    assert.match(all, /证人 Claude 当庭陈述：.*许愿池/);
+    assert.match(all, /「不对再改」/);
+    assert.doesNotMatch(all, /undefined|NaN/);
+    assert.equal(await pg.evaluate(() => document.documentElement.scrollWidth), w);
+    await sleep(6500);
+    assert.equal(await exists(pg, ".call-bar"), false, "no incoming call asking for exports on a testimony bill");
+    assert.deepEqual(errors, []);
+    await pg.close();
+  }
+});
+
 test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {
   const pg = await browser.newPage(); await pg.setViewport({ width: 1280, height: 900 });
   const errors = []; pg.on("pageerror", (e) => errors.push(e.message));

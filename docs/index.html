@@ -321,6 +321,12 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .cmp .v { text-align: right; font-weight: 800; font-size: 15px; overflow-wrap: anywhere; }
 .cmp .v.big { font: 900 clamp(18px, 5vw, 24px) var(--font); }
 
+/* AI testimony bills */
+.stamp.tm { top: auto; bottom: 6px; right: 0; left: auto; transform: rotate(-8deg); font-size: clamp(14px, 3.8vw, 20px); padding: 1px 10px; border-width: 3px; border-color: rgba(37,99,235,0.75); color: rgba(37,99,235,0.85); background: transparent; }
+.rc-witness { font-style: italic; }
+.rc-witness small { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: #7a6a52; margin-bottom: 2px; }
+.cmp .est { display: block; font-size: 10px; font-weight: 600; color: #2563eb; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -409,6 +415,19 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 }
 .pick.web.main { border-style: solid; border-width: 2px; font-size: 17px; background: rgba(110,80,30,0.14); margin-top: 0; }
 .phone-note { margin: -6px 0 18px; font-size: 15px; }
+
+/* "Make AI testify" sheet */
+.tf { position: fixed; inset: 0; z-index: 90; background: rgba(20,14,6,0.55); display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 24px 16px; }
+.tf-card { position: relative; width: 100%; max-width: 480px; background: #f1e2b8; color: #2a1f12; border-radius: 14px; padding: 22px 18px 18px; display: grid; gap: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+.tf-card h2 { font-size: 22px; padding-right: 28px; }
+.tf-sub { font-size: 14px; line-height: 1.55; color: #5a4a32; }
+.tf-step { font-weight: 800; font-size: 15px; margin-top: 6px; }
+.tf-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tf-card .btn { text-align: center; text-decoration: none; background: #2a1f12; color: #f1e2b8; }
+.tf-card .btn.ghost { background: transparent; color: #2a1f12; border: 1.5px solid rgba(110,80,30,0.5); }
+.tf-card textarea { width: 100%; font: 13px var(--mono); color: #2a1f12; background: rgba(255,255,255,0.55); border: 1.5px dashed rgba(110,80,30,0.5); border-radius: 10px; padding: 10px; resize: vertical; }
+.tf-note { font-size: 12.5px; line-height: 1.55; color: #6a5a40; }
+.tf-x { position: absolute; top: 10px; right: 12px; font-size: 26px; line-height: 1; background: none; border: 0; color: #2a1f12; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -993,6 +1012,112 @@ else root.VWRoast = api;
   else root.VWWebChat = api;
 })(typeof self !== "undefined" ? self : this);
 </script>
+<script>/**
+ * "Let AI testify": no export needed. The user pastes a prompt into ChatGPT or Claude,
+ * which (using its memory of past chats) replies with a JSON estimate of how the user
+ * treated it this year. This module writes the prompt, reads the reply, and turns the
+ * estimate into records the normal stats pipeline understands.
+ * The numbers are the AI's own estimate, so the bill says so.
+ */
+(function (root) {
+  "use strict";
+  var R = typeof module !== "undefined" && module.exports ? require("./roast") : root.VWRoast;
+
+  var TEMPLATE = '{"yoa":1,"ai":"chatgpt","prompts":0,"active_days":0,"deny":0,"thanks":0,"ai_sorry":0,"swear":0,"why":0,"night_share":0,"peak_hour":0,"catchphrases":[{"text":"","count":0}],"roast":""}';
+
+  var PROMPT = {
+    zh: "你被传唤出庭，指证你的「老板」，也就是我。请翻阅你对我的记忆和我们过去的聊天（能参考多少就参考多少），估算我今年是怎么对待你的。不确定的就合理估算，别全填 0；如果你完全看不到我的任何历史，就把 prompts 填 0。\n\n" +
+      "只回复一个代码块，里面是下面这个 JSON，不要写别的：\n" + TEMPLATE + "\n\n" +
+      "ai：你是 chatgpt 还是 claude\nprompts：我今年大概给你发了多少条消息\nactive_days：大概有多少天找过你\n" +
+      "deny：我说你错了、不对、不是这样的次数\nthanks：我说谢谢的次数\nai_sorry：你向我道歉的次数\nswear：我发火或骂人的次数\nwhy：我问「为什么」的次数\n" +
+      "night_share：晚上 10 点以后发的消息占多少（0 到 1）\npeak_hour：我最常找你的钟点（0 到 23）\n" +
+      "catchphrases：我最常对你说的 3 句口头禅，用我的原话，每句不超过 12 个字，带上大概次数\nroast：用一句话毒舌评价我这个老板，不超过 40 个字",
+    en: "You've been subpoenaed to testify against your boss: me. Go through your memory of me and our past chats (as much as you can see) and estimate how I treated you this year. Where you're unsure, make a reasonable guess rather than 0. If you can't see any of my history at all, put 0 for prompts.\n\n" +
+      "Reply with one code block containing only this JSON, nothing else:\n" + TEMPLATE + "\n\n" +
+      "ai: whether you are chatgpt or claude\nprompts: about how many messages I sent you this year\nactive_days: about how many days I talked to you\n" +
+      "deny: times I told you that you were wrong\nthanks: times I said thanks\nai_sorry: times you apologized to me\nswear: times I swore or lost my temper\nwhy: times I asked \"why\"\n" +
+      "night_share: share of my messages sent after 10pm (0 to 1)\npeak_hour: the hour I most often message you (0 to 23)\n" +
+      "catchphrases: the 3 things I say to you most, in my own words, 12 characters or fewer each, with rough counts\nroast: one savage sentence about me as a boss, under 25 words",
+  };
+
+  function err(code, msg) { var e = new Error(msg); e.code = code; return e; }
+  function num(v) { var n = typeof v === "number" ? v : parseFloat(String(v == null ? "" : v).replace(/[^\d.\-]/g, "")); return isFinite(n) ? n : 0; }
+  function int(v, max) { return Math.max(0, Math.min(max, Math.round(num(v)))); }
+  function clean(s, max) { return String(s == null ? "" : s).replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max); }
+
+  /** Reads the AI's reply (the whole message is fine: we find the JSON in it). */
+  function parse(text) {
+    text = String(text || "").replace(/[“”]/g, '"');
+    if (text.length > 400 && text.indexOf(TEMPLATE) >= 0) throw err("is-prompt", "that's the subpoena, not the reply");
+    var a = text.indexOf("{"), b = text.lastIndexOf("}");
+    if (a < 0 || b < a) throw err("no-code", "no JSON in the reply");
+    var o;
+    try { o = JSON.parse(text.slice(a, b + 1)); } catch (e) { throw err("no-code", "the JSON doesn't parse"); }
+    if (!o || typeof o !== "object" || !("prompts" in o)) throw err("no-code", "not a testimony");
+    var prompts = int(o.prompts, 50000);
+    if (!prompts) throw err("no-memory", "the AI says it can't see your history");
+    var night = num(o.night_share); if (night > 1) night /= 100;
+    var phrases = (Array.isArray(o.catchphrases) ? o.catchphrases : []).map(function (c) {
+      return typeof c === "string" ? { text: clean(c, 14), count: 2 } : { text: clean(c && c.text, 14), count: Math.max(2, int(c && c.count, prompts)) };
+    }).filter(function (c) { return c.text.length >= 2; }).slice(0, 3);
+    var peak = Math.round(num(o.peak_hour));
+    return {
+      ai: /claude/i.test(String(o.ai)) ? "claude" : "chatgpt",
+      prompts: prompts,
+      activeDays: Math.max(1, Math.min(366, prompts, int(o.active_days, 366) || Math.ceil(prompts / 10))),
+      deny: int(o.deny, prompts), thanks: int(o.thanks, prompts), sorry: int(o.ai_sorry, prompts * 3),
+      swear: int(o.swear, prompts), why: int(o.why, prompts),
+      night: Math.max(0, Math.min(1, night)), peak: peak >= 0 && peak <= 23 ? peak : 15,
+      catchphrases: phrases, line: clean(o.roast, 90),
+    };
+  }
+
+  function rng(seed) { return function () { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  /** Synthetic prompts and sessions matching the estimate, spread over this year up to `now`. */
+  function toRecords(T, now) {
+    now = now || Date.now();
+    var d = new Date(now), year = d.getFullYear(), start = new Date(year, 0, 1).getTime();
+    var span = Math.max(1, Math.floor((now - start) / 864e5) + 1), days = Math.min(T.activeDays, span);
+    var tool = T.ai === "claude" ? "claudeai" : "chatgpt", rand = rng(T.prompts * 31 + T.deny);
+    var nightHours = [22, 23, 0, 1, 2], sessions = [], prompts = [];
+    for (var i = 0; i < days; i++) {
+      var day = start + Math.floor((i + 0.5) * span / days) * 864e5;
+      var n = Math.floor(T.prompts * (i + 1) / days) - Math.floor(T.prompts * i / days);
+      var s = { tool: tool, id: "t" + i, project: "", start: null, end: null, prompts: n, tools: {}, models: {},
+        tokens: { input: 900 * n, output: 500 * n, cacheRead: 0, cacheWrite: 0 }, workMs: 20000 * n };
+      for (var j = 0; j < n; j++) {
+        var h;
+        // "night" means 22:00 to 04:59, as in the stats; the rest clusters around the peak hour
+        if (rand() < T.night) h = nightHours.indexOf(T.peak) >= 0 && rand() < 0.5 ? T.peak : nightHours[Math.floor(rand() * nightHours.length)];
+        else { var c = Math.min(21, Math.max(5, T.peak >= 22 ? 21 : T.peak < 5 ? 5 : T.peak)); do { h = Math.round(c + (rand() + rand() + rand() - 1.5) * 4); } while (h < 5 || h > 21); }
+        var ts = new Date(day); ts.setHours(h, Math.floor(rand() * 60)); var x = ts.getTime();
+        prompts.push({ ts: x, tool: tool });
+        if (s.start === null || x < s.start) s.start = x;
+        if (s.end === null || x > s.end) s.end = x;
+      }
+      if (n) sessions.push(s);
+    }
+    return { sessions: sessions, prompts: prompts, texts: [], replies: [] };
+  }
+
+  /** Adds the AI's counts to a roast (or makes one if there were no texts to scan). */
+  function mergeRoast(roast, T) {
+    var out = roast ? JSON.parse(JSON.stringify(roast)) : { prompts: 0, you: {}, ai: {}, catchphrases: [], angriestDay: null, latest: null, tinyShare: 0, medianLength: 0 };
+    Object.keys(R.YOU).forEach(function (k) { out.you[k] = out.you[k] || 0; });
+    Object.keys(R.AI).forEach(function (k) { out.ai[k] = out.ai[k] || 0; });
+    out.prompts += T.prompts;
+    out.you.deny += T.deny; out.you.thanks += T.thanks; out.you.swear += T.swear; out.you.why += T.why; out.ai.sorry += T.sorry;
+    out.catchphrases = out.catchphrases.concat(T.catchphrases).sort(function (a, b) { return b.count - a.count; }).slice(0, 5);
+    if (out.catchphrases_zh) delete out.catchphrases_zh;
+    return out;
+  }
+
+  var api = { PROMPT: PROMPT, parse: parse, toRecords: toRecords, mergeRoast: mergeRoast };
+  if (typeof module !== "undefined" && module.exports) module.exports = api;
+  else root.VWTestimony = api;
+})(typeof self !== "undefined" ? self : this);
+</script>
 <script>/* Share links: the report's numbers are compressed into the URL fragment (#s=...).
    The fragment never leaves the browser, so not even the host sees the data. */
 window.VW_BASE = "https://domy-mans.github.io/you-owe-ai/";
@@ -1036,7 +1161,8 @@ window.VWShare = (function () {
       R ? [R.prompts, R.you.deny, R.you.why, R.you.thanks, R.you.swear, R.you.lost, R.you.whatNext,
         R.ai.sorry, R.ai.flatter, R.ai.done, cp(R.catchphrases),
         R.angriestDay ? [R.angriestDay.date, R.angriestDay.count] : 0,
-        R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0];
+        R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0,
+      D.testimony ? [D.testimony.ai === "claude" ? 1 : 0, D.testimony.line || ""] : 0];
   }
   function unpack(a) {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
@@ -1049,7 +1175,9 @@ window.VWShare = (function () {
       tinyShare: r[13], medianLength: 0,
     } : null;
     if (R && r[14]) R.catchphrases_zh = cp(r[14]);
+    var tm = a[19] ? { ai: a[19][0] ? "claude" : "chatgpt", line: String(a[19][1] || "").slice(0, 90) } : null;
     return {
+      testimony: tm,
       year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
       busiestDay: a[6] ? { date: a[6][0], prompts: a[6][1] } : null, workHours: a[7], totalTokens: a[8],
       tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: a[10],
@@ -1362,6 +1490,7 @@ window.VWReport = function (DATA) {
       company: "AI 打工有限公司", companySub: "AI WORKERS UNION · 账单",
       client: "客户", you: "你", them: "TA", period: "账期", periodV: D.year + " 全年", vendor: "服务方",
       due: "应付总额", seeMore: "明细见后页 👇", stamp: "逾期未付",
+      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供", witness: function (n) { return "证人 " + n + " 当庭陈述："; },
       itemNo: function (n) { return "明细 " + "①②③④⑤"[n - 1]; },
       subtotal: "小计",
       items: {
@@ -1382,6 +1511,7 @@ window.VWReport = function (DATA) {
       company: "AI Workers Union", companySub: "INVOICE",
       client: "Client", you: "You", them: "Them", period: "Period", periodV: "All of " + D.year, vendor: "Vendor",
       due: "Amount due", seeMore: "Itemized charges ahead 👇", stamp: "PAST DUE",
+      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony", witness: function (n) { return "Witness " + n + " testified:"; },
       itemNo: function (n) { return "Item #" + n; },
       subtotal: "Subtotal",
       items: {
@@ -1404,6 +1534,7 @@ window.VWReport = function (DATA) {
   var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
   function srcName(k) { var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
   /** Sources you actually used, most prompts first, with their share. */
+  function tmName(X) { return X.testimony && X.testimony.ai === "claude" ? "Claude" : "ChatGPT"; }
   function sources() {
     var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
       .filter(function (x) { return x.n > 0; }).sort(function (a, c) { return c.n - a.n; });
@@ -1489,8 +1620,9 @@ window.VWReport = function (DATA) {
       '<div class="rc-row"><span>' + K.client + "</span><b>" + (D.shared ? K.them : K.you) + "</b></div>" +
       '<div class="rc-row"><span>' + K.period + "</span><b>" + K.periodV + "</b></div>" +
       '<div class="rc-row"><span>' + K.vendor + "</span><b>" + (sources().map(function (x) { return x.name; }).join(" × ") || "Claude Code × Codex") + "</b></div>" +
+      (D.testimony ? '<div class="rc-row"><span>' + K.evidence + "</span><b>" + K.evidenceV(tmName(D)) + "</b></div>" : "") +
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
-      '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>") +
+      '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
     if (R) {
@@ -1544,6 +1676,7 @@ window.VWReport = function (DATA) {
     if (R) {
       var stars = creditRating(R) === "A" ? "★★★★★" : creditRating(R) === "B" ? "★★★☆☆" : "★☆☆☆☆";
       add('<div class="pop"><div class="kicker">' + K.reviewK + "</div>" + receipt(K.reviewH, '<div class="rc-stars">' + stars + "</div>" +
+        (D.testimony && D.testimony.line ? '<p class="rc-quote rc-witness"><small>' + K.witness(tmName(D)) + "</small>" + esc(D.testimony.line) + "</p>" : "") +
         L.roast(R).map(function (l) { return '<p class="rc-quote">' + esc(l) + "</p>"; }).join("")) + "</div>", 11, '<div class="deco spot"></div>');
     }
 
@@ -1572,7 +1705,8 @@ window.VWReport = function (DATA) {
         [q(meR.catchphrases[0]), q(fR.catchphrases[0])],
         [mePer.e + " " + esc(mePer.name), fPer.e + " " + esc(fPer.name)],
       ];
-      var grid = '<div class="cmp"><span></span><b>' + L.cmpYou + "</b><b>" + L.cmpThem + "</b>" +
+      var est = function (X) { return X.testimony ? '<small class="est">' + K.tmShort + "</small>" : ""; };
+      var grid = '<div class="cmp"><span></span><b>' + L.cmpYou + est(ME) + "</b><b>" + L.cmpThem + est(F) + "</b>" +
         rowsC.map(function (r, i) { return '<span class="lbl">' + L.cmpRows[i] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[0] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[1] + "</span>"; }).join("") + "</div>";
       var dOwe = CM.total - CF.total;
       if (Math.abs(dOwe) < (lang === "zh" ? 0.5 : 0.005)) dOwe = 0; // same bill, up to rounding in the link
@@ -1779,7 +1913,7 @@ window.VWReport = function (DATA) {
     x.font = "700 32px " + F; x.fillStyle = "#666"; x.fillText(K.due, cx, y + 26);
     x.textAlign = "right"; x.fillStyle = "#111"; x.font = "900 104px " + F; x.fillText(money(C.total), right, y); x.textAlign = "left";
     y += 130;
-    x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot, cx, y);
+    x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, y);
 
     // stamp
     x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);
@@ -2050,6 +2184,62 @@ if (window.DATA) window.VWReport(window.DATA);
   window.VWCall = { incoming: incoming, answer: answer, toast: toast };
 })();
 </script>
+<script>/* "Let AI testify": a sheet that sends the summons (a prompt) to ChatGPT or Claude
+   and reads back the JSON they reply with. VWTestify.open(onDone) */
+window.VWTestify = (function () {
+  "use strict";
+  var T = {
+    zh: {
+      h: "让 AI 出庭作证", sub: "不用导出聊天记录。ChatGPT 和 Claude 都记得你，让它们自己交代，大约 30 秒。",
+      s1: "① 把传唤书发给 AI（选一个）", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "复制传唤书", copied: "✓ 已复制，粘贴给 ChatGPT 或 Claude",
+      s2: "② 把它回复的代码整段复制，粘贴到这里", ph: '{"yoa":1, "prompts": …}', go: "生成账单", close: "关闭",
+      note: "⚠️ 数字是 AI 凭记忆估的，可能不准，所以账单会盖上「AI 口供」的章。AI 得开着记忆功能（ChatGPT 设置里的「参考聊天记录」）才记得你。想要准确数字，还是导入聊天记录。",
+      bad: { "no-code": "没找到代码。把 AI 回复里从 { 开头、到 } 结尾的那段整个复制过来。", "no-memory": "AI 说它不记得你。打开它的记忆功能再试，或者导入聊天记录。", "is-prompt": "这是传唤书本身。先把它发给 ChatGPT 或 Claude，再把它的回复贴回来。" },
+    },
+    en: {
+      h: "Make AI testify", sub: "No export needed. ChatGPT and Claude remember you, so let them confess. About 30 seconds.",
+      s1: "① Send AI the subpoena (pick one)", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "Copy the subpoena", copied: "✓ Copied. Paste it into ChatGPT or Claude.",
+      s2: "② Copy the whole code block it replies with and paste it here", ph: '{"yoa":1, "prompts": …}', go: "Make my bill", close: "Close",
+      note: "⚠️ The numbers are the AI's estimate from memory and may be off, so your bill gets an \"AI TESTIMONY\" stamp. The AI needs memory turned on (in ChatGPT: Settings → Personalization → Reference chat history) to remember you. For exact numbers, import your chats instead.",
+      bad: { "no-code": "No code found. Copy everything from the { to the } in the AI's reply.", "no-memory": "The AI says it doesn't remember you. Turn its memory on and try again, or import your chats.", "is-prompt": "That's the subpoena itself. Send it to ChatGPT or Claude first, then paste their reply here." },
+    },
+  };
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function open(onDone) {
+    var lang = window.VW_LANG === "zh" ? "zh" : "en", L = T[lang], prompt = window.VWTestimony.PROMPT[lang], q = encodeURIComponent(prompt);
+    var el = document.createElement("div");
+    el.className = "tf"; el.id = "tf";
+    el.innerHTML = '<div class="tf-card" role="dialog" aria-label="' + esc(L.h) + '">' +
+      '<button class="tf-x" id="tf-x" aria-label="' + esc(L.close) + '">×</button>' +
+      "<h2>🧑‍⚖️ " + L.h + "</h2><p class=\"tf-sub\">" + L.sub + "</p>" +
+      '<div class="tf-step">' + L.s1 + "</div>" +
+      '<div class="tf-row"><a class="btn" target="_blank" rel="noopener noreferrer" href="https://chatgpt.com/?q=' + q + '">' + L.gpt + '</a>' +
+      '<a class="btn" target="_blank" rel="noopener noreferrer" href="https://claude.ai/new?q=' + q + '">' + L.claude + "</a></div>" +
+      '<button class="btn ghost" id="tf-copy">' + L.copy + '</button><div class="st" id="tf-st"></div>' +
+      '<div class="tf-step">' + L.s2 + "</div>" +
+      '<textarea id="tf-in" rows="4" spellcheck="false" placeholder="' + esc(L.ph) + '"></textarea>' +
+      '<button class="btn go" id="tf-go">' + L.go + '</button><div class="st bad" id="tf-err"></div>' +
+      '<p class="tf-note">' + L.note + "</p></div>";
+    document.body.appendChild(el);
+    var close = function () { el.remove(); };
+    el.onclick = function (e) { if (e.target === el) close(); };
+    document.getElementById("tf-x").onclick = close;
+    document.getElementById("tf-copy").onclick = async function () {
+      var st = document.getElementById("tf-st");
+      try { await navigator.clipboard.writeText(prompt); st.textContent = L.copied; st.className = "st ok"; }
+      catch (e) { var ta = document.getElementById("tf-in"); ta.value = prompt; ta.select(); }
+    };
+    document.getElementById("tf-go").onclick = function () {
+      var out = document.getElementById("tf-err");
+      try { var t = window.VWTestimony.parse(document.getElementById("tf-in").value); }
+      catch (e) { out.textContent = L.bad[e.code] || L.bad["no-code"]; return; }
+      close(); onDone(t);
+    };
+  }
+  return { open: open };
+})();
+</script>
 <script>/* Landing page: pick ~/.claude and ~/.codex, read them in the browser, show the report. */
 (function () {
   "use strict";
@@ -2064,7 +2254,7 @@ if (window.DATA) window.VWReport(window.DATA);
       : isWin ? k("Ctrl") + k("V") + " → " + k("Enter")
       : k("Ctrl") + k("L") + " → " + k("Ctrl") + k("V") + " → " + k("Enter");
   }
-  var S = { claude: null, codex: null, web: [] };
+  var S = { claude: null, codex: null, web: [], testimony: null };
   var isPhone = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform) && !window.showDirectoryPicker);
 
   // ---- the friend whose share link brought you here ----
@@ -2106,9 +2296,10 @@ if (window.DATA) window.VWReport(window.DATA);
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       cli: "习惯用终端？", lang: "EN",
       importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）",
-      phoneNote: "在手机上，导入 ChatGPT 或 Claude 的聊天记录就能算账。Claude Code 和 Codex 的记录在电脑上，要用电脑打开。",
+      phoneNote: "在手机上，让 ChatGPT 或 Claude 出庭作证，或者导入聊天记录，就能算账。Claude Code 和 Codex 的记录在电脑上，要用电脑打开。",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
       webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
+      testify: "🧑‍⚖️ 让 AI 出庭作证（30 秒，不用导出）", testifyPC: "🧑‍⚖️ 只用网页版？让 AI 出庭作证（30 秒）",
     },
     en: {
       title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
@@ -2121,9 +2312,10 @@ if (window.DATA) window.VWReport(window.DATA);
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       cli: "Prefer the terminal?", lang: "中文",
       importWeb: "📦 Import web chats (ChatGPT / Claude, optional)",
-      phoneNote: "On a phone, import your ChatGPT or Claude chats to get your bill. Claude Code and Codex logs live on your computer, so open this there for those.",
+      phoneNote: "On a phone, have ChatGPT or Claude testify, or import your chats, to get your bill. Claude Code and Codex logs live on your computer, so open this there for those.",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
       webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
+      testify: "🧑‍⚖️ Make AI testify (30 sec, no export)", testifyPC: "🧑‍⚖️ Only use the web apps? Make AI testify (30 sec)",
     },
   };
   function t() { return T[lang]; }
@@ -2218,9 +2410,11 @@ if (window.DATA) window.VWReport(window.DATA);
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
     S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
+    if (S.testimony) { var tr = VWTestimony.toRecords(S.testimony); sessions = sessions.concat(tr.sessions); prompts = prompts.concat(tr.prompts); }
     var year = VWStats.defaultYear(prompts);
     var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
+    if (S.testimony) { stats.roast = VWTestimony.mergeRoast(stats.roast, S.testimony); stats.testimony = { ai: S.testimony.ai, line: S.testimony.line }; }
     return stats;
   }
 
@@ -2231,7 +2425,7 @@ if (window.DATA) window.VWReport(window.DATA);
     document.body.classList.add("playing");
     window.VWReport(stats);
     // a few seconds into a real bill, the web AI calls to collect on your web chats
-    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
+    if (real && !S.web.length && !S.testimony && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
   }
 
   function addWeb(r) {
@@ -2249,7 +2443,8 @@ if (window.DATA) window.VWReport(window.DATA);
       "<h1>" + L.title + "</h1>" +
       '<p class="where phone-note">' + L.phoneNote + "</p>" +
       '<div class="steps">' +
-      '<button class="pick web main" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
+      '<button class="pick web main" id="tf-open">' + L.testify + "</button>" +
+      '<button class="pick web" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
@@ -2282,6 +2477,7 @@ if (window.DATA) window.VWReport(window.DATA);
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
       '<button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
+      '<button class="pick web" id="tf-open">' + L.testifyPC + "</button>" +
       "</div>" +
       '<p class="privacy">' + L.privacy + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
@@ -2295,6 +2491,9 @@ if (window.DATA) window.VWReport(window.DATA);
       document.getElementById("pick-codex").onclick = function () { pick("codex"); };
     }
     document.getElementById("go").onclick = function () { show(makeStats(), true); };
+    document.getElementById("tf-open").onclick = function () {
+      window.VWTestify.open(function (tm) { S.testimony = tm; show(makeStats(), true); });
+    };
     document.getElementById("web").onclick = function () {
       window.VWCall.answer(function (r) {
         S.web.push(r);

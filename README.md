@@ -17,7 +17,7 @@ A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to
 
 ## How it works
 
-1. **On a computer**, open the page and choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**. **On a phone**, import your ChatGPT or Claude.ai chat export instead.
+1. **On a computer**, open the page and choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**. **Only use ChatGPT or Claude.ai**, or on a phone? Have the AI testify (below), or import your chat export.
 2. Your browser reads everything, counts it, and prints the invoice line by line.
 3. Tap through the pages. On the last one, download the IOU as an image or copy a share link.
 
@@ -47,6 +47,10 @@ Rates are in US dollars at the federal minimum wage. The Chinese version bills i
 ![The incoming call, the call screen where the web AI asks for your chat export, and the missed-call button left after you hang up](docs/img/call-en.png)
 
 A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. Hang up and a phone button stays in the corner, so you can finish reading and call back later. You can also import an export from the home page. Claude's export arrives as several files: the one you need is `conversations-000.zip`. On a phone, this is the way in: phones can't open the `.claude` and `.codex` folders, but they can import a chat export.
+
+## No export? Make AI testify
+
+Exporting your ChatGPT history can take hours to arrive by email. Instead, tap **Make AI testify**: the page opens ChatGPT or Claude with a subpoena asking it to estimate, from its memory of your past chats, how you treated it this year. It replies with a short code block; paste it back and your bill is ready in about 30 seconds. The numbers are the AI's own estimate, so the bill gets an **AI TESTIMONY** stamp, the comparison page marks it, and the client review quotes the witness. It needs the AI's memory turned on (in ChatGPT: Settings → Personalization → Reference chat history). The page still makes no network requests: you carry the text over yourself.
 
 ## Compare with a friend
 
@@ -94,9 +98,9 @@ This reads both folders directly, writes the invoice to an HTML file and opens i
 ## Repository layout
 
 ```text
-src/core/    Log parsing, stats, the roast and export import (shared by the web page and the CLI)
+src/core/    Log parsing, stats, the roast, export import and AI testimony (shared by the web page and the CLI)
 src/page/    The invoice: slides, share card, share links
-web/         The home page, folder picker and incoming call
+web/         The home page, folder picker, incoming call and the testimony sheet
 bin/         The command line
 docs/        The built web page (GitHub Pages) and README images
 test/        Unit tests: node --test test/
