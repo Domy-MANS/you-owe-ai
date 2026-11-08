@@ -346,6 +346,13 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .slide.tall { justify-content: flex-start; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
 .receipt.has-tm .rc-note { padding-right: 38%; } /* the AI TESTIMONY stamp sits there */
 
+/* reduced motion: pages appear at once, no drifting, counting or printing animations */
+@media (prefers-reduced-motion: reduce) {
+  .slide { transition: none; }
+  .slide.on .pop > *, .pop > * { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .split div, .meter b { transition: none; }
+}
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -2636,7 +2643,9 @@ window.VWTestify = (function () {
       '<button class="btn go" id="tf-go">' + L.go + '</button><div class="st bad" id="tf-err"></div>' +
       '<p class="tf-note">' + L.note + "</p></div>";
     document.body.appendChild(el);
-    var close = function () { el.remove(); };
+    var onKey = function (e) { if (e.key === "Escape") close(); };
+    var close = function () { el.remove(); document.removeEventListener("keydown", onKey); };
+    document.addEventListener("keydown", onKey);
     el.onclick = function (e) { if (e.target === el) close(); };
     document.getElementById("tf-x").onclick = close;
     document.getElementById("tf-copy").onclick = async function () {

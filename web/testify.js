@@ -36,7 +36,9 @@ window.VWTestify = (function () {
       '<button class="btn go" id="tf-go">' + L.go + '</button><div class="st bad" id="tf-err"></div>' +
       '<p class="tf-note">' + L.note + "</p></div>";
     document.body.appendChild(el);
-    var close = function () { el.remove(); };
+    var onKey = function (e) { if (e.key === "Escape") close(); };
+    var close = function () { el.remove(); document.removeEventListener("keydown", onKey); };
+    document.addEventListener("keydown", onKey);
     el.onclick = function (e) { if (e.target === el) close(); };
     document.getElementById("tf-x").onclick = close;
     document.getElementById("tf-copy").onclick = async function () {
