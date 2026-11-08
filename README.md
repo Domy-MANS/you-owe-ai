@@ -41,7 +41,7 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 | Client review | Your AI employee rates you, one to five stars |
 | Client file | Your persona (Cyber Overlord, The Client From Hell, Human Broken Record and more), credit rating and hidden traits |
 | You vs them | When a friend's link is involved: your bill next to theirs, and a verdict |
-| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. The court waits for your answer, then tells you how many people chose the same |
+| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. The court waits for your answer, then tells you how many people chose the same. Changed your mind? Appeal and choose again |
 | IOU | A 1080 × 1350 receipt with every charge, your plea stamped across it (GUILTY or DEADBEAT), where you rank among everyone, and a QR code back to the site, ready to post |
 
 Rates are in US dollars at the federal minimum wage. The Chinese version bills in yuan at McDonald's hourly pay.

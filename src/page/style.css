@@ -316,4 +316,5 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .plea-btn { padding: 15px; font-size: 17px; }
 .plea-btns .plea-btn:not(.ghost) { background: var(--ink, #2a1f12); color: #f1e2b8; }
 .plea-btns .plea-btn.ghost { background: transparent; color: var(--ink, #2a1f12); border: 2px solid currentColor; }
+.plea-appeal { margin-top: 14px; padding: 9px 14px; font-size: 14px; }
 .plea-pick { font: 900 clamp(24px, 7vw, 34px) var(--font); margin: 4px 0 8px; }

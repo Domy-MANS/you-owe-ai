@@ -415,12 +415,21 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   const sent = await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").map((c) => c[1].plea));
   assert.deepEqual(sent, [null, "refuse"], "first report without a plea, then the plea");
   assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "refuse");
+  // appeal: the court reopens, the new plea replaces the old one everywhere
+  await pg.click("#appeal"); await sleep(300);
+  assert.match(await text(pg, "#plea"), /上诉受理/);
+  await pg.click('.plea-btn[data-p="guilty"]'); await sleep(400);
+  assert.match(await text(pg, "#plea"), /选择了认罪.*已认罪/);
+  assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "guilty");
+  assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").pop()[1].plea), "guilty");
+  assert.equal(await pg.$$eval(".slide", (s) => s.findIndex((e) => e.querySelector("#plea"))), await pg.$$eval(".slide", (s) => s.findIndex((e) => e.classList.contains("on"))), "still on the court page");
   // a share link carries the plea; the friend sees it, without buttons
   const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse" })));
   const fr = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1000);
   const theirs = await fr.$$eval(".slide", (s) => { const x = s.find((e) => e.querySelector("#plea")); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
   assert.match(theirs, /TA 的选择/); assert.match(theirs, /TA选择了赖账/);
   assert.equal(await fr.$$eval(".plea-btn", (b) => b.length), 0);
+  assert.equal(await fr.$$eval("#appeal", (b) => b.length), 0, "only you can appeal your own case");
   assert.deepEqual(pg.errors, []); assert.deepEqual(fr.errors, []);
   await fr.close(); await pg.close();
 });
