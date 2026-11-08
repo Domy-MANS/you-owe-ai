@@ -109,7 +109,9 @@ window.VWReport = function (DATA) {
     var q = /[?&]lang=(zh|en)/.exec(location.search);
     if (q) return q[1];
     try { var s = localStorage.getItem("vw-lang"); if (s) return s; } catch (e) {}
-    return "en";
+    // first visit: the browser's own language (a Chinese phone gets the Chinese bill)
+    var langs = (navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""]);
+    return /^zh\b/i.test(langs[0] || "") ? "zh" : "en";
   })();
 
   var T = {

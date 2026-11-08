@@ -2,7 +2,12 @@
 (function () {
   "use strict";
   var lang = /[?&]lang=(zh|en)/.exec(location.search);
-  lang = lang ? lang[1] : (function () { try { return localStorage.getItem("vw-lang") || "en"; } catch (e) { return "en"; } })();
+  lang = lang ? lang[1] : (function () {
+    try { var s = localStorage.getItem("vw-lang"); if (s) return s; } catch (e) {}
+    // first visit: the browser's own language
+    var langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ""];
+    return /^zh\b/i.test(langs[0] || "") ? "zh" : "en";
+  })();
   var isMac = /Mac/i.test(navigator.platform || navigator.userAgent);
   var isWin = /Win/i.test(navigator.platform || navigator.userAgent);
   function pathFor(kind) { return isWin ? "%USERPROFILE%\\." + kind : "~/." + kind; }
