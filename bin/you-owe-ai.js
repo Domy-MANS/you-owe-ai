@@ -12,8 +12,9 @@ const { demoData, demoRoast } = require("../src/demo");
 const { collectPrompts, collectReplies, computeRoast } = require("../src/roast");
 const { readExport, merge } = require("../src/core/webchat");
 
-const HELP = `you-owe-ai — your year of AI coding, Spotify-Wrapped style.
-Reads Claude Code (~/.claude/projects) and Codex (~/.codex/sessions) logs locally.
+const HELP = `you-owe-ai — your AI just sent you an invoice for this year.
+Reads Claude Code (~/.claude/projects) and Codex (~/.codex/sessions) logs locally,
+plus any ChatGPT or Claude.ai exports you --import.
 Everything stays on your machine. The report can't make network requests.
 
 Usage: npx github:Domy-MANS/you-owe-ai [options]
