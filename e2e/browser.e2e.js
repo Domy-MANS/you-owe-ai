@@ -481,7 +481,7 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse" })));
   const fr = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1000);
   const theirs = await fr.$$eval(".slide", (s) => { const x = s.find((e) => e.querySelector("#plea")); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
-  assert.match(theirs, /TA 的选择/); assert.match(theirs, /TA选择了赖账/);
+  assert.match(theirs, /TA 的选择/); assert.match(theirs, /TA 选择了赖账/);
   assert.equal(await fr.$$eval(".plea-btn", (b) => b.length), 0);
   assert.equal(await fr.$$eval("#appeal", (b) => b.length), 0, "only you can appeal your own case");
   assert.deepEqual(pg.errors, []); assert.deepEqual(fr.errors, []);
