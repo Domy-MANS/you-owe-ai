@@ -37,7 +37,7 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 | Page | What's on it |
 |---|---|
 | Invoice | The amount due, with a PAST DUE stamp |
-| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. Autoplay stops here until you answer, then the court tells you how many people chose the same. Changed your mind? **Appeal** and choose again |
+| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. Autoplay stops here until you answer, then the court tells you how many people chose the same. Skip it and you're **in contempt**, which gets stamped too. Changed your mind? **Appeal** and choose again |
 | Item 1: Emotional damages | Times you told AI it was wrong, AI apologies, and a discount for every "thanks" |
 | Item 2: Noise pollution | Your most repeated prompts, billed per repeat |
 | Item 3: Night shifts and injuries | Prompts after 10pm, your angriest day, and your latest prompt |
@@ -46,7 +46,7 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 | Client review | Your AI employee rates you, one to five stars |
 | Client file | Your persona (Cyber Overlord, The Client From Hell, Human Broken Record and more), credit rating and hidden traits |
 | You vs them | When a friend's link is involved: your bill next to theirs, and a verdict |
-| IOU | A 1080 × 1350 receipt with every charge, your plea stamped across it (GUILTY or DEADBEAT), where you rank among everyone, and a QR code back to the site, ready to post |
+| IOU | A 1080 × 1350 receipt with every charge, your plea stamped across it (GUILTY, DEADBEAT or IN CONTEMPT), where you rank among everyone, and a QR code back to the site, ready to post |
 
 Rates are in US dollars at the federal minimum wage. The Chinese version bills in yuan at McDonald's hourly pay.
 
@@ -86,7 +86,7 @@ Already made yours? Then send your link back. Your browser remembers your own bi
 The chart at the top is the debt clock. It's live, and updated within minutes: every real bill adds to it. The home page shows how many people got their AI bill, how much humanity owes AI in total, and how many refuse to pay. Your last page tells you which bill you are and how many people you owe more than (or that you owe the least, or the most, of anyone), and your IOU prints it.
 
 - **One person per browser.** Making your bill again, with more chats or a new plea, updates your entry instead of adding a person, and you keep your place in line. A different browser or phone counts as someone new.
-- **The bar is everyone:** blue pleaded guilty, red isn't paying, and gray hasn't chosen yet. The percentages count only those who chose.
+- **The bar is everyone:** blue pleaded guilty, red isn't paying, and gray skipped court (in contempt). The percentages count only those who chose.
 - **One scale for both languages:** ¥4 to the bill dollar, the ratio between the two price lists. No single bill counts for more than $20,000.
 
 ## Privacy

@@ -416,12 +416,19 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   const onIdx = () => pg.$$eval(".slide", (s) => s.findIndex((e) => e.classList.contains("on")));
   await sleep(7000); assert.equal(await onIdx(), pi, "autoplay reached the court");
   await sleep(8000); assert.equal(await onIdx(), pi, "and waits there for the plea");
+  // skip court: the IOU page says you're in contempt and takes you back
+  await pg.keyboard.press("ArrowRight"); await sleep(300);
+  assert.equal(await pg.$eval("#contempt", (e) => e.hidden), false, "skipped court: in contempt");
+  assert.match(await pg.$eval("#contempt", (e) => e.textContent), /拒不到庭/);
+  await pg.$eval("#contempt", (e) => e.click()); await sleep(400);
+  assert.equal(await onIdx(), pi, "back to court");
   await pg.$eval(".plea-btn", () => {}); 
   await pg.click('.plea-btn[data-p="refuse"]'); await sleep(400);
   const box = await text(pg, "#plea");
   assert.match(box, /就是不还.*选择了赖账/);
   assert.match(box, /有 73% 的人和你一样，就是不还/, "8 of 11 who chose");
   assert.match(box, /老赖/);
+  assert.equal(await pg.$eval("#contempt", (e) => e.hidden), true, "pleaded: no longer in contempt");
   const sent = await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").map((c) => c[1].plea));
   assert.deepEqual(sent, [null, "refuse"], "first report without a plea, then the plea");
   assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "refuse");

@@ -12,12 +12,12 @@ const n0 = (x) => Math.round(x).toLocaleString("en-US");
 const T = {
   en: {
     head: "AI DEBT CLOCK · LIVE", people: "people got their AI bill", owed: "owed to AI in total", refuse: "refuse to pay",
-    guilty: "🙇 Guilty, I'll pay", not: "Not paying 😤", none: "No pleas yet", undecided: (n) => n0(n) + " undecided", noneBig: "No bills yet. Be the first.",
+    guilty: "🙇 Guilty, I'll pay", not: "Not paying 😤", none: "No pleas yet", undecided: (n) => n0(n) + " in contempt of court", noneBig: "No bills yet. Be the first.",
     money: (usd) => "$" + n0(usd), foot: (d) => "Updated " + d + " UTC · domy-mans.github.io/you-owe-ai",
   },
   zh: {
     head: "AI 债务钟 · 实时", people: "人收到了 AI 的账单", owed: "全人类共欠 AI", refuse: "表示就是不还",
-    guilty: "🙇 认罪，我还", not: "就是不还 😤", none: "还没有人表态", undecided: (n) => n0(n) + " 人还没表态", noneBig: "还没有人收到账单。来当第一个。",
+    guilty: "🙇 认罪，我还", not: "就是不还 😤", none: "还没有人表态", undecided: (n) => n0(n) + " 人拒不到庭", noneBig: "还没有人收到账单。来当第一个。",
     money: (usd) => "¥" + n0(usd * CNY_PER_USD), foot: (d) => "更新于 " + d + " UTC · domy-mans.github.io/you-owe-ai",
   },
 };

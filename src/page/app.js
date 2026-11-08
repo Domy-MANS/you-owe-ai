@@ -118,7 +118,8 @@ window.VWReport = function (DATA) {
       pleaPay: "🙇 认罪，我还", pleaRefuse: "😤 就是不还", pleaWait: "选一个。法庭在等你。", appeal: "⚖️ 不服，上诉", appealOpen: "上诉受理。法庭重新开庭，这次想好了再选。",
       pleaDone: function (p, them) { var w = them ? "TA" : "你"; return p === "refuse" ? w + "选择了赖账。AI 已将" + w + "列入失信名单，以后回答一律慢 0.5 秒。" : w + "选择了认罪。AI 接受分 999 期还款，首付：一句谢谢。"; },
       pleaSame: function (p, pct) { return p === "refuse" ? "全人类有 <b>" + pct + "%</b> 的人和你一样，就是不还。" : "全人类有 <b>" + pct + "%</b> 的人和你一样认罪了。"; },
-      pleaStamp: function (p) { return p === "refuse" ? "老赖" : "已认罪"; },
+      pleaStamp: function (p) { return p === "refuse" ? "老赖" : p ? "已认罪" : "拒不到庭"; },
+      contempt: "⚖️ 拒不到庭，欠条已盖章。<u>回法庭补选</u>",
       clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
       cardClock: function (c) { return c.pct === null ? "🧾 第一个收到 AI 账单的人" : c.pct === 0 ? "🧾 全人类欠 AI 最少的人" : c.pct === 100 ? "🧾 全人类欠 AI 最多的人" : "🧾 比 " + c.pct + "% 的人欠得多"; },
       cardClockAll: function (n, m) { return "全人类 " + n.toLocaleString("en-US") + " 人共欠 AI " + m; },
@@ -206,7 +207,8 @@ window.VWReport = function (DATA) {
       pleaPay: "🙇 Guilty, I'll pay", pleaRefuse: "😤 Not paying", pleaWait: "Pick one. The court is waiting.", appeal: "⚖️ Appeal", appealOpen: "Appeal granted. The court is back in session. Choose wisely this time.",
       pleaDone: function (p, them) { return p === "refuse" ? (them ? "They refused to pay. AI blacklisted them: their answers now load 0.5s slower." : "You refused to pay. AI has blacklisted you: your answers now load 0.5s slower.") : (them ? "They pleaded guilty. AI accepted 999 monthly installments. Down payment: one thank-you." : "You pleaded guilty. AI accepts 999 monthly installments. Down payment: one thank-you."); },
       pleaSame: function (p, pct) { return p === "refuse" ? "<b>" + pct + "%</b> of humanity isn't paying either." : "<b>" + pct + "%</b> of humanity pleaded guilty too."; },
-      pleaStamp: function (p) { return p === "refuse" ? "DEADBEAT" : "GUILTY"; },
+      pleaStamp: function (p) { return p === "refuse" ? "DEADBEAT" : p ? "GUILTY" : "IN CONTEMPT"; },
+      contempt: "⚖️ Skipped court: stamped IN CONTEMPT. <u>Go back and plead</u>",
       clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
       cardClock: function (c) { return c.pct === null ? "🧾 The first person to get a bill from AI" : c.pct === 0 ? "🧾 Owes AI the least of anyone" : c.pct === 100 ? "🧾 Owes AI the most of anyone" : "🧾 Owes more than " + c.pct + "% of people"; },
       cardClockAll: function (n, m) { return n.toLocaleString("en-US") + " people owe AI " + m + " in total"; },
@@ -481,6 +483,7 @@ window.VWReport = function (DATA) {
     var box = document.getElementById("plea");
     if (box) { box.innerHTML = pleaBody(); wirePlea(); }
     var cv = document.getElementById("card"); if (cv) drawCard(cv);
+    var ct = document.getElementById("contempt"); if (ct) ct.hidden = !!myPlea();
   }
   function reportClock() {
     return window.VWClock.report({ year: D.year, amount: charges().total, cur: lang === "zh" ? "cny" : "usd", via: D.via || "mixed", plea: myPlea() }).then(function (c) {
@@ -704,7 +707,7 @@ window.VWReport = function (DATA) {
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
       : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
-    var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
+    var note = D.shared ? "" : '<button class="contempt" id="contempt"' + (myPlea() ? " hidden" : "") + ">" + L.contempt + "</button>" + '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
       (clockOn() ? '<div class="clock-line" id="vclock" hidden></div>' : "");
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
       (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") +
@@ -741,6 +744,12 @@ window.VWReport = function (DATA) {
     var dl = document.getElementById("dl"), again = document.getElementById("again");
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
     if (again) again.onclick = function (e) { e.stopPropagation(); manual = false; go(0); }; // replay: autoplay again
+    var ct = document.getElementById("contempt");
+    if (ct) ct.onclick = function (e) { // back to court
+      e.stopPropagation(); manual = true;
+      var secs = stage.children;
+      for (var k = 0; k < secs.length; k++) if (secs[k].querySelector("#plea")) { go(k); break; }
+    };
     var share = document.getElementById("share"), own = document.getElementById("own");
     if (own) own.onclick = function (e) {
       e.stopPropagation();
@@ -918,9 +927,9 @@ window.VWReport = function (DATA) {
     x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(K.stamp, 0, 2); x.restore();
     x.textAlign = "left"; x.textBaseline = "top";
     var PL = D.shared ? D.plea : myPlea();
-    if (PL) { // the plea, stamped across the charges
+    if (!D.empty) { // the plea, stamped across the charges; no plea = contempt of court
       x.save(); x.translate(W / 2 + 120, py + 520); x.rotate(-0.18); x.globalAlpha = 0.82;
-      x.strokeStyle = x.fillStyle = PL === "refuse" ? "rgba(185,28,28,0.9)" : "rgba(29,78,216,0.85)"; x.lineWidth = 9;
+      x.strokeStyle = x.fillStyle = PL === "refuse" ? "rgba(185,28,28,0.9)" : PL ? "rgba(29,78,216,0.85)" : "rgba(80,70,60,0.8)"; x.lineWidth = 9;
       x.font = "900 84px " + F; var pst = t().pleaStamp(PL), ps = x.measureText(pst).width + 70;
       round(x, -ps / 2, -66, ps, 132, 16); x.stroke();
       x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(pst, 0, 4); x.restore();

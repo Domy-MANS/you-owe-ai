@@ -94,8 +94,8 @@ test("the README chart: headline numbers, a bar split by plea, and an empty stat
   for (const s of ["12,346", "¥3,458,000", "73%", "认罪，我还", "就是不还", "3,100", "8,200", "2026-11-08 12:00"]) assert.ok(svg.includes(s), s);
   assert.ok(chartSvg({ n: 3, sum: 10, guilty: 0, refuse: 0 }).includes("No pleas yet"));
   const mixed = chartSvg({ n: 4, sum: 630, guilty: 2, refuse: 1 }, "zh");
-  assert.ok(mixed.includes("1 人还没表态"), "the bar adds up to everyone: the ones who haven't chosen are shown too");
-  assert.ok(!chartSvg({ n: 3, sum: 630, guilty: 2, refuse: 1 }).includes("undecided"));
+  assert.ok(mixed.includes("1 人拒不到庭"), "the bar adds up to everyone: the ones who haven't chosen are shown too");
+  assert.ok(!chartSvg({ n: 3, sum: 630, guilty: 2, refuse: 1 }).includes("contempt"));
   assert.ok(chartSvg({ n: 0, sum: 0, guilty: 0, refuse: 0 }).includes("Be the first"));
   assert.ok(!/undefined|NaN/.test(svg));
 });
