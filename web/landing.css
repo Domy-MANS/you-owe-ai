@@ -97,6 +97,9 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .tf-card .btn { text-align: center; text-decoration: none; background: #2a1f12; color: #f1e2b8; }
 .tf-card .btn.ghost { background: transparent; color: #2a1f12; border: 1.5px solid rgba(110,80,30,0.5); }
 .tf-card textarea { width: 100%; font: 13px var(--mono); color: #2a1f12; background: rgba(255,255,255,0.55); border: 1.5px dashed rgba(110,80,30,0.5); border-radius: 10px; padding: 10px; resize: vertical; }
+.tf-hint { font-size: 12.5px; line-height: 1.5; color: #6a5a40; margin-top: -2px; }
+.tf-row .btn { position: relative; white-space: nowrap; }
+.tf-row .btn small { position: absolute; top: -9px; right: -4px; font-size: 11px; font-weight: 800; line-height: 1; background: #b91c1c; color: #fff; border-radius: 8px; padding: 4px 7px; transform: rotate(6deg); box-shadow: 0 2px 6px rgba(0,0,0,0.25); white-space: nowrap; }
 .tf-note { font-size: 12.5px; line-height: 1.55; color: #6a5a40; }
 .tf-x { position: absolute; top: 10px; right: 12px; font-size: 26px; line-height: 1; background: none; border: 0; color: #2a1f12; cursor: pointer; }
 

@@ -454,6 +454,9 @@ code { font: 600 13px var(--mono); background: rgba(110,80,30,0.12); padding: 2p
 .tf-card .btn { text-align: center; text-decoration: none; background: #2a1f12; color: #f1e2b8; }
 .tf-card .btn.ghost { background: transparent; color: #2a1f12; border: 1.5px solid rgba(110,80,30,0.5); }
 .tf-card textarea { width: 100%; font: 13px var(--mono); color: #2a1f12; background: rgba(255,255,255,0.55); border: 1.5px dashed rgba(110,80,30,0.5); border-radius: 10px; padding: 10px; resize: vertical; }
+.tf-hint { font-size: 12.5px; line-height: 1.5; color: #6a5a40; margin-top: -2px; }
+.tf-row .btn { position: relative; white-space: nowrap; }
+.tf-row .btn small { position: absolute; top: -9px; right: -4px; font-size: 11px; font-weight: 800; line-height: 1; background: #b91c1c; color: #fff; border-radius: 8px; padding: 4px 7px; transform: rotate(6deg); box-shadow: 0 2px 6px rgba(0,0,0,0.25); white-space: nowrap; }
 .tf-note { font-size: 12.5px; line-height: 1.55; color: #6a5a40; }
 .tf-x { position: absolute; top: 10px; right: 12px; font-size: 26px; line-height: 1; background: none; border: 0; color: #2a1f12; cursor: pointer; }
 
@@ -2622,17 +2625,17 @@ window.VWTestify = (function () {
   "use strict";
   var T = {
     zh: {
-      h: "让 AI 出庭作证", sub: "不用导出聊天记录。ChatGPT 和 Claude 都记得你，让它们自己交代，大约 30 秒。",
-      s1: "① 把传唤书发给 AI（选一个）", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "其他 AI（豆包、DeepSeek…）：复制传唤书", copied: "✓ 已复制，粘贴给任何一个 AI",
+      h: "让 AI 出庭作证", sub: "不用导出聊天记录，让 AI 凭记忆自己交代，大约 30 秒。只有看得到你聊天历史的 AI 才作得了证，没有记忆的只会瞎编。",
+      s1: "① 把传唤书发给 AI（选一个）", gpt: "ChatGPT ↗ <small>推荐</small>", claude: "Claude ↗", hint: "ChatGPT 要开着记忆：设置 → 个性化 → 参考聊天记录", copy: "其他 AI：复制传唤书，自己粘贴过去", copied: "✓ 已复制，粘贴给任何一个 AI",
       s2: "② 把它回复的代码整段复制，粘贴到这里", ph: '{"yoa":1, "prompts": …}', go: "生成账单", close: "关闭",
-      note: "⚠️ 数字是 AI 凭记忆估的，可能不准，所以账单会盖上「AI 口供」的章。AI 得开着记忆功能（ChatGPT 设置里的「参考聊天记录」）才记得你。想要准确数字，还是导入聊天记录。",
+      note: "⚠️ 数字是 AI 凭记忆估的，可能不准，所以账单会盖上「AI 口供」的章。想要准确数字，还是导入聊天记录。",
       bad: { "no-code": "没找到代码。把 AI 回复里从 { 开头、到 } 结尾的那段整个复制过来。", "no-memory": "AI 说它不记得你。打开它的记忆功能再试，或者换 ChatGPT 试试（设置 → 个性化 → 参考聊天记录），也可以导入聊天记录。", "is-prompt": "这是传唤书本身。先把它发给 ChatGPT 或 Claude，再把它的回复贴回来。" },
     },
     en: {
-      h: "Make AI testify", sub: "No export needed. ChatGPT and Claude remember you, so let them confess. About 30 seconds.",
-      s1: "① Send AI the subpoena (pick one)", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "Any other AI (Gemini, DeepSeek…): copy the subpoena", copied: "✓ Copied. Paste it into any AI.",
+      h: "Make AI testify", sub: "No export needed: AI confesses from memory. About 30 seconds. Only an AI that can see your chat history can testify; one without memory just makes things up.",
+      s1: "① Send AI the subpoena (pick one)", gpt: "ChatGPT ↗ <small>best</small>", claude: "Claude ↗", hint: "ChatGPT needs memory on: Settings → Personalization → Reference chat history", copy: "Any other AI: copy the subpoena and paste it in", copied: "✓ Copied. Paste it into any AI.",
       s2: "② Copy the whole code block it replies with and paste it here", ph: '{"yoa":1, "prompts": …}', go: "Make my bill", close: "Close",
-      note: "⚠️ The numbers are the AI's estimate from memory and may be off, so your bill gets an \"AI TESTIMONY\" stamp. The AI needs memory turned on (in ChatGPT: Settings → Personalization → Reference chat history) to remember you. For exact numbers, import your chats instead.",
+      note: "⚠️ The numbers are the AI's estimate from memory and may be off, so your bill gets an \"AI TESTIMONY\" stamp. For exact numbers, import your chats instead.",
       bad: { "no-code": "No code found. Copy everything from the { to the } in the AI's reply.", "no-memory": "The AI says it doesn't remember you. Turn its memory on and try again, try ChatGPT (Settings → Personalization → Reference chat history), or import your chats.", "is-prompt": "That's the subpoena itself. Send it to ChatGPT or Claude first, then paste their reply here." },
     },
   };
@@ -2647,7 +2650,7 @@ window.VWTestify = (function () {
       "<h2>🧑‍⚖️ " + L.h + "</h2><p class=\"tf-sub\">" + L.sub + "</p>" +
       '<div class="tf-step">' + L.s1 + "</div>" +
       '<div class="tf-row"><a class="btn" target="_blank" rel="noopener noreferrer" href="https://chatgpt.com/?q=' + q + '">' + L.gpt + '</a>' +
-      '<a class="btn" target="_blank" rel="noopener noreferrer" href="https://claude.ai/new?q=' + q + '">' + L.claude + "</a></div>" +
+      '<a class="btn" target="_blank" rel="noopener noreferrer" href="https://claude.ai/new?q=' + q + '">' + L.claude + "</a></div>" + '<p class="tf-hint">' + L.hint + "</p>" +
       '<button class="btn ghost" id="tf-copy">' + L.copy + '</button><div class="st" id="tf-st"></div>' +
       '<div class="tf-step">' + L.s2 + "</div>" +
       '<textarea id="tf-in" rows="4" spellcheck="false" placeholder="' + esc(L.ph) + '"></textarea>' +
