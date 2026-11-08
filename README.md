@@ -37,7 +37,7 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 | Attendance record | When you clock in, and what you mostly make AI do |
 | Client review | Your AI employee rates you, one to five stars |
 | Client file | Your persona (Cyber Overlord, The Client From Hell, Human Broken Record and more), credit rating and hidden traits |
-| You vs them | Only if a friend's link brought you here: your bill next to theirs, and a verdict |
+| You vs them | When a friend's link is involved: your bill next to theirs, and a verdict |
 | IOU | A 1080 × 1350 receipt with every charge and a QR code back to the site, ready to post |
 
 Rates are in US dollars at the federal minimum wage. The Chinese version bills in yuan at McDonald's hourly pay.
@@ -54,13 +54,15 @@ A few seconds into your invoice, the AI you chat with on the web calls to collec
 
 Open a friend's share link, tap **Make my own**, and your bill ends with a page that puts the two side by side: the amount due, how often each of you told AI it was wrong or said thanks, your top catchphrases and personas, and who's the worse boss. On a phone, **Send to my computer** carries your friend along, so the comparison still shows up when you make your bill on your computer.
 
+Already made yours? Then send your link back. Your browser remembers your own bill, so when you open their link the comparison page is already there, with no folders to pick again.
+
 ## Privacy
 
 - **Nothing leaves your computer.** The page ships with a Content-Security-Policy that blocks every network request, and the browser enforces it. Open the Network tab in DevTools to check.
 - **Only counts are kept.** To find catchphrases and moods, prompt text is scanned in your browser. The report keeps counts and short repeated phrases, never your conversations.
 - **The IOU shows numbers only.** No project names, no conversation titles.
 - **Share links leave out** project names and day-by-day history. They hold the numbers and catchphrases the pages show.
-- **A friend's bill** you came from is kept in your browser for two weeks, only to show the comparison.
+- **For comparisons**, your browser keeps the bill of the friend you came from for two weeks, and your own bill's numbers for a month. Both stay in your browser and hold the same numbers as a share link.
 
 ## Where are the folders?
 

@@ -561,15 +561,16 @@ window.VWReport = function (DATA) {
       (me.traits.length ? '<div class="rc-row stack"><span>' + K.traitsL + '</span><div class="rc-traits">' + me.traits.map(function (x) { return '<span class="nw">' + esc(x) + "</span>"; }).join("") + "</div></div>" : "")) + "</div>",
       7, tile(me.e, 70, "46px"));
 
-    // 8b. you vs the friend whose link brought you here
-    var F = D.friend;
-    if (F && !D.shared) {
-      var CF = charges(F), meR = roastL() || { you: {}, ai: {}, catchphrases: [] }, fR = roastOf(F) || { you: {}, ai: {}, catchphrases: [] };
-      var mePer = personality(), fPer = personality(F);
+    // 8b. you vs them: your bill with the friend whose link brought you here,
+    // or, on a friend's shared bill, your own bill (remembered from when you made it) with theirs
+    var ME = D.shared ? D.me : D, F = D.shared ? D : D.friend;
+    if (ME && F) {
+      var CM = charges(ME), CF = charges(F), meR = roastOf(ME) || { you: {}, ai: {}, catchphrases: [] }, fR = roastOf(F) || { you: {}, ai: {}, catchphrases: [] };
+      var mePer = personality(ME), fPer = personality(F);
       var q = function (c) { return c ? (lang === "zh" ? "「" + esc(c.text) + "」" : "“" + esc(c.text) + "”") : "—"; };
       var n = function (v) { return v === undefined || v === null ? "—" : fmt(v); };
       var rowsC = [
-        [money(C.total), money(CF.total)],
+        [money(CM.total), money(CF.total)],
         [n(meR.you.deny), n(fR.you.deny)],
         [n(meR.you.thanks), n(fR.you.thanks)],
         [n(meR.ai.sorry), n(fR.ai.sorry)],
@@ -578,7 +579,7 @@ window.VWReport = function (DATA) {
       ];
       var grid = '<div class="cmp"><span></span><b>' + L.cmpYou + "</b><b>" + L.cmpThem + "</b>" +
         rowsC.map(function (r, i) { return '<span class="lbl">' + L.cmpRows[i] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[0] + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + r[1] + "</span>"; }).join("") + "</div>";
-      var dOwe = C.total - CF.total;
+      var dOwe = CM.total - CF.total;
       if (Math.abs(dOwe) < (lang === "zh" ? 0.5 : 0.005)) dOwe = 0; // same bill, up to rounding in the link
       var verdict = [L.cmpOwe(dOwe), L.cmpDeny((meR.you.deny || 0) - (fR.you.deny || 0)), L.cmpThanks((meR.you.thanks || 0) - (fR.you.thanks || 0))]
         .filter(Boolean).map(function (x) { return '<div class="rc-meme">' + x + "</div>"; }).join("");
@@ -849,6 +850,10 @@ window.VWReport = function (DATA) {
     a.download = "you-owe-ai-" + D.year + ".png"; a.href = cv.toDataURL("image/png"); a.click();
   }
 
+  // remember your own bill (the same numbers a share link holds), so a friend's link can be compared with it in one tap
+  if (!D.shared && !D.demo && !D.empty && window.VWShare) window.VWShare.encode(D).then(function (code) {
+    try { localStorage.setItem("vw-me", JSON.stringify({ s: code, t: Date.now() })); } catch (e) {}
+  }, function () {});
   build();
   go(parseInt(location.hash.slice(1), 10) || 0);
 };

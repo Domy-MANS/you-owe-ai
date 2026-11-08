@@ -230,6 +230,26 @@ test("you vs your friend: their total matches their own bill, labels in the curr
   await pg.close();
 });
 
+test("a friend's link, once you've made your own bill: compared in one tap, but not with your own link", async () => {
+  const pg = await open(`${PAGE}?lang=en&still`);
+  await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; me.workHours = 3; me.roast.you.deny = 7; window.__vw.show(me, true); });
+  await sleep(1200);
+  const myTotal = await pg.evaluate(() => window.VW_TOTAL);
+  const mine = await pg.evaluate(async () => { const s = JSON.parse(localStorage.getItem("vw-me")); return window.VWShare.decode(s.s).then(() => s.s); });
+  assert.ok(mine, "your bill is remembered");
+  const friendLink = await pg.evaluate(() => window.VWShare.link(window.VW_DEMO));
+  const fp = await open(`${PAGE}?lang=en&still${friendLink.slice(friendLink.indexOf("#"))}`); await sleep(1200);
+  const cmp = await fp.$$eval(".slide", (s) => { const x = s.find((e) => /You vs them/.test(e.textContent)); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
+  assert.ok(cmp, "comparison page on the friend's shared bill");
+  assert.ok(cmp.includes(myTotal), `your total ${myTotal} in: ${cmp.slice(0, 120)}`);
+  assert.match(cmp, /They told AI it was wrong/);
+  // your own share link doesn't compare you with yourself
+  await fp.goto("about:blank"); await fp.goto(`${PAGE}?lang=en&still#s=${mine}`); await sleep(1200);
+  assert.equal(await fp.$$eval(".slide", (s) => s.some((e) => /You vs them/.test(e.textContent))), false);
+  assert.deepEqual(fp.errors, []); assert.deepEqual(pg.errors, []);
+  await fp.close(); await pg.close();
+});
+
 test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {
   const pg = await browser.newPage(); await pg.setViewport({ width: 1280, height: 900 });
   const errors = []; pg.on("pageerror", (e) => errors.push(e.message));

@@ -28,6 +28,14 @@
       return f && Date.now() - f.t < 14 * 864e5 ? f.s : null; // forget after two weeks
     } catch (e) { return null; }
   }
+  /** Your own bill, saved when you last made it, for comparing with a friend's shared bill. */
+  async function loadMine() {
+    try {
+      var m = JSON.parse(localStorage.getItem("vw-me") || "null");
+      if (!m || Date.now() - m.t > 30 * 864e5) return null; // forget after a month
+      return await window.VWShare.decode(m.s);
+    } catch (e) { return null; }
+  }
   async function loadFriend() {
     var code = friendCode();
     if (!code) return null;
@@ -254,7 +262,11 @@
   window.__vw = { S: S, show: show, makeStats: makeStats }; // used by the browser tests
 
   var shared = window.VWShare.fromHash();
-  if (shared) shared.then(show, function () { history.replaceState(null, "", location.pathname); render(); });
+  if (shared) shared.then(async function (them) {
+    var me = await loadMine();
+    if (me && JSON.stringify(window.VWShare.pack(me)) !== JSON.stringify(window.VWShare.pack(them))) them.me = me; // not your own link
+    show(them);
+  }, function () { history.replaceState(null, "", location.pathname); render(); });
   else if (/[?&]demo\b/.test(location.search)) show(window.VW_DEMO);
   else render();
 })();
