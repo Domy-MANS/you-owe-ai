@@ -457,6 +457,7 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   await pg.keyboard.press("ArrowRight"); await sleep(300);
   assert.equal(await pg.$eval("#contempt", (e) => e.hidden), false, "skipped court: in contempt");
   assert.match(await pg.$eval("#contempt", (e) => e.textContent), /拒不到庭/);
+  const cameFrom = await onIdx();
   await pg.$eval("#contempt", (e) => e.click()); await sleep(400);
   assert.equal(await onIdx(), pi, "back to court");
   await pg.$eval(".plea-btn", () => {}); 
@@ -466,13 +467,26 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   assert.match(box, /有 73% 的人和你一样，就是不还/, "8 of 11 who chose");
   assert.match(box, /老赖/);
   assert.equal(await pg.$eval("#contempt", (e) => e.hidden), true, "pleaded: no longer in contempt");
+  await sleep(1800); assert.equal(await onIdx(), cameFrom, "pleaded from the 'go back' link: returned to where you were");
+  const last = cameFrom;
   const sent = await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").map((c) => c[1].plea));
   assert.deepEqual(sent, [null, "refuse"], "first report without a plea, then the plea");
   assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "refuse");
-  // appeal: the court reopens, the new plea replaces the old one everywhere
+  // appeal: the court reopens, showing the original verdict; walking away keeps it
+  for (let i = last; i > pi; i--) { await pg.keyboard.press("ArrowLeft"); await sleep(60); }
+  await sleep(300); assert.equal(await onIdx(), pi);
   await pg.click("#appeal"); await sleep(300);
-  assert.match(await text(pg, "#plea"), /上诉受理/);
+  assert.match(await text(pg, "#plea"), /原判：😤 就是不还。上诉受理/);
+  await pg.keyboard.press("ArrowRight"); await sleep(200); await pg.keyboard.press("ArrowLeft"); await sleep(300);
+  assert.equal(await pg.$$eval("#plea .plea-btn", (b) => b.length), 0, "left mid-appeal: the verdict stands");
+  assert.match(await text(pg, "#plea"), /选择了赖账/);
+  // "keep the verdict" also closes the appeal
+  await pg.click("#appeal"); await sleep(200); await pg.click("#keep"); await sleep(200);
+  assert.match(await text(pg, "#plea"), /选择了赖账/);
+  // appeal and change it: the new plea replaces the old one everywhere
+  await pg.click("#appeal"); await sleep(300);
   await pg.click('.plea-btn[data-p="guilty"]'); await sleep(400);
+  assert.match(await text(pg, "#plea"), /改判：老赖 → 已认罪/);
   assert.match(await text(pg, "#plea"), /选择了认罪.*已认罪/);
   assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "guilty");
   assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").pop()[1].plea), "guilty");
