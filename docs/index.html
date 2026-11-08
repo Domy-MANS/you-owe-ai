@@ -328,6 +328,8 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .rc-witness small { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: #7a6a52; margin-bottom: 2px; }
 .cmp .est { display: block; font-size: 10px; font-weight: 600; color: #2563eb; }
 .stamp.red.low { top: auto; bottom: -14px; right: -6px; transform: rotate(-12deg); }
+.clock-line { font-size: 14px; line-height: 1.6; text-align: center; margin-top: 10px; color: #7a1d1d; }
+.clock-out { font: 600 12px var(--font); color: #7a6a52; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
@@ -444,6 +446,9 @@ ol.call-steps li { padding-left: 2px; }
 .sec { font: 700 13px var(--font); color: #7a6a52; letter-spacing: 0.02em; margin: 14px 2px 0; }
 .sec:first-child { margin-top: 0; }
 .steps .where { margin: 0 2px 10px; }
+
+/* the AI debt clock */
+.clock-home { font-size: 15px; line-height: 1.5; margin: -16px 0 22px; color: #7a1d1d; }
 </style>
 </head>
 <body>
@@ -452,7 +457,48 @@ ol.call-steps li { padding-left: 2px; }
 <main id="stage"></main>
 <div class="hint" id="hint"></div>
 <div id="landing"></div>
-<script>var VW_DEMO = {"year":2026,"empty":false,"firstDay":"2026-01-08","sessions":351,"prompts":5264,"workHours":143.73504067097994,"tokens":{"input":15792000,"output":9475200,"cacheRead":473760000,"cacheWrite":42112000},"totalTokens":541139200,"byTool":{"claude":{"sessions":219,"prompts":3123,"tokens":321044400},"codex":{"sessions":132,"prompts":2141,"tokens":220094800}},"toolCalls":15792,"topTools":[{"name":"exec","count":3316},{"name":"Bash","count":2616},{"name":"apply_patch","count":2060},{"name":"Edit","count":1769},{"name":"Read","count":1603}],"categories":[{"name":"shell","count":5932},{"name":"edit","count":4637},{"name":"read","count":2410},{"name":"web","count":1899},{"name":"agents","count":914}],"topModels":[{"name":"gpt-6-astra","count":2141},{"name":"claude-opus-5-5","count":2067},{"name":"claude-sonnet-5-5","count":1056}],"topProjects":[{"name":"robot-arm-firmware","count":1102},{"name":"portfolio-site","count":1029},{"name":"ml-homework","count":933},{"name":"discord-bot","count":851},{"name":"dotfiles","count":825}],"hours":[808,441,492,301,19,0,0,0,0,0,209,173,10,0,160,322,383,207,16,0,196,420,418,689],"weekdays":[968,777,571,890,737,588,733],"days":{"2026-01-08":19,"2026-01-09":12,"2026-01-11":46,"2026-01-15":19,"2026-01-16":13,"2026-01-17":36,"2026-01-18":47,"2026-01-22":36,"2026-01-24":36,"2026-01-25":7,"2026-01-26":22,"2026-01-27":6,"2026-01-28":37,"2026-01-29":65,"2026-01-31":45,"2026-02-01":42,"2026-02-03":24,"2026-02-04":21,"2026-02-06":29,"2026-02-11":5,"2026-02-12":34,"2026-02-14":8,"2026-02-15":37,"2026-02-16":23,"2026-02-17":11,"2026-02-19":23,"2026-02-20":13,"2026-02-21":24,"2026-02-23":20,"2026-03-01":37,"2026-03-02":30,"2026-03-04":23,"2026-03-05":10,"2026-03-06":28,"2026-03-07":6,"2026-03-08":52,"2026-03-09":30,"2026-03-15":16,"2026-03-16":31,"2026-03-17":66,"2026-03-21":13,"2026-03-22":48,"2026-03-23":31,"2026-03-28":41,"2026-04-04":26,"2026-04-05":29,"2026-04-06":52,"2026-04-08":48,"2026-04-10":51,"2026-04-12":44,"2026-04-13":15,"2026-04-14":32,"2026-04-15":30,"2026-04-16":13,"2026-04-17":16,"2026-04-18":50,"2026-04-19":35,"2026-04-21":55,"2026-04-22":53,"2026-04-23":10,"2026-04-25":15,"2026-04-26":18,"2026-04-27":17,"2026-04-28":37,"2026-04-30":12,"2026-05-01":9,"2026-05-02":31,"2026-05-06":36,"2026-05-10":39,"2026-05-13":46,"2026-05-14":32,"2026-05-18":22,"2026-05-20":32,"2026-05-22":22,"2026-05-25":40,"2026-05-26":23,"2026-05-27":42,"2026-05-28":34,"2026-05-30":22,"2026-05-31":54,"2026-06-05":40,"2026-06-06":8,"2026-06-10":41,"2026-06-11":14,"2026-06-13":10,"2026-06-14":44,"2026-06-15":14,"2026-06-24":27,"2026-06-25":7,"2026-06-27":7,"2026-07-01":3,"2026-07-04":26,"2026-07-06":52,"2026-07-13":31,"2026-07-15":13,"2026-07-16":25,"2026-07-19":38,"2026-07-21":3,"2026-07-22":28,"2026-07-23":13,"2026-07-24":19,"2026-07-25":10,"2026-07-26":25,"2026-07-27":5,"2026-07-29":25,"2026-07-30":18,"2026-07-31":37,"2026-08-01":41,"2026-08-02":18,"2026-08-03":13,"2026-08-05":15,"2026-08-06":43,"2026-08-07":4,"2026-08-08":20,"2026-08-09":23,"2026-08-10":5,"2026-08-11":49,"2026-08-13":26,"2026-08-14":28,"2026-08-15":35,"2026-08-16":12,"2026-08-17":44,"2026-08-18":32,"2026-08-19":37,"2026-08-20":50,"2026-08-21":27,"2026-08-22":30,"2026-08-23":26,"2026-08-25":15,"2026-08-26":43,"2026-08-27":28,"2026-08-28":26,"2026-08-29":9,"2026-08-30":44,"2026-08-31":38,"2026-09-01":34,"2026-09-03":30,"2026-09-04":22,"2026-09-06":5,"2026-09-07":2,"2026-09-08":14,"2026-09-09":34,"2026-09-11":68,"2026-09-12":32,"2026-09-13":36,"2026-09-14":58,"2026-09-15":4,"2026-09-16":61,"2026-09-19":6,"2026-09-20":12,"2026-09-21":34,"2026-09-22":40,"2026-09-23":11,"2026-09-24":34,"2026-09-25":36,"2026-09-26":17,"2026-09-27":6,"2026-09-28":10,"2026-09-30":24,"2026-10-01":29,"2026-10-02":18,"2026-10-03":13,"2026-10-04":4,"2026-10-05":18,"2026-10-06":37,"2026-10-07":34,"2026-10-09":7,"2026-10-10":7,"2026-10-11":22,"2026-10-12":29,"2026-10-13":34,"2026-10-14":21,"2026-10-15":10,"2026-10-16":8,"2026-10-17":13,"2026-10-18":39,"2026-10-19":17,"2026-10-20":24,"2026-10-21":34,"2026-10-22":3,"2026-10-23":22,"2026-10-24":29,"2026-10-25":10,"2026-10-26":27,"2026-10-27":31,"2026-10-28":35,"2026-10-29":50,"2026-10-30":11,"2026-10-31":22,"2026-11-01":53,"2026-11-02":47,"2026-11-04":31,"2026-11-05":50,"2026-11-06":22,"2026-11-07":45},"activeDays":195,"busiestDay":{"date":"2026-09-11","prompts":68},"peakHour":0,"streak":{"days":25,"end":"2026-11-02"},"biggestSession":{"project":"startup-mvp","prompts":27,"tool":"codex"},"shares":{"night":0.601823708206687,"dawn":0,"weekend":0.32313829787234044},"persona":"night","roast":{"prompts":5219,"you":{"deny":412,"again":97,"why":230,"thanks":61,"please":18,"swear":23,"lost":388,"whatNext":74,"lazyYes":301},"ai":{"sorry":156,"flatter":89,"done":1204},"catchphrases":[{"text":"continue","count":188},{"text":"still broken","count":41},{"text":"what next","count":37},{"text":"why is it erroring again","count":12},{"text":"can you hurry up","count":9}],"catchphrases_zh":[{"text":"继续","count":188},{"text":"还是不行","count":41},{"text":"然后呢","count":37},{"text":"为什么又报错了","count":12},{"text":"能不能快点","count":9}],"angriestDay":{"date":"2026-10-07","count":34},"latest":{"time":"4:54","day":"2026-08-11"},"tinyShare":0.31,"medianLength":22},"demo":true};</script>
+<script>var VW_DEMO = {"year":2026,"empty":false,"firstDay":"2026-01-08","sessions":351,"prompts":5264,"workHours":143.73504067097994,"tokens":{"input":15792000,"output":9475200,"cacheRead":473760000,"cacheWrite":42112000},"totalTokens":541139200,"byTool":{"claude":{"sessions":219,"prompts":3123,"tokens":321044400},"codex":{"sessions":132,"prompts":2141,"tokens":220094800}},"toolCalls":15792,"topTools":[{"name":"exec","count":3316},{"name":"Bash","count":2616},{"name":"apply_patch","count":2060},{"name":"Edit","count":1769},{"name":"Read","count":1603}],"categories":[{"name":"shell","count":5932},{"name":"edit","count":4637},{"name":"read","count":2410},{"name":"web","count":1899},{"name":"agents","count":914}],"topModels":[{"name":"gpt-6-astra","count":2141},{"name":"claude-opus-5-5","count":2067},{"name":"claude-sonnet-5-5","count":1056}],"topProjects":[{"name":"robot-arm-firmware","count":1102},{"name":"portfolio-site","count":1029},{"name":"ml-homework","count":933},{"name":"discord-bot","count":851},{"name":"dotfiles","count":825}],"hours":[808,441,492,301,19,0,0,0,0,0,209,173,10,0,160,322,383,207,16,0,196,420,418,689],"weekdays":[968,777,571,890,737,588,733],"days":{"2026-01-08":19,"2026-01-09":12,"2026-01-11":46,"2026-01-15":19,"2026-01-16":13,"2026-01-17":36,"2026-01-18":47,"2026-01-22":36,"2026-01-24":36,"2026-01-25":7,"2026-01-26":22,"2026-01-27":6,"2026-01-28":37,"2026-01-29":65,"2026-01-31":45,"2026-02-01":42,"2026-02-03":24,"2026-02-04":21,"2026-02-06":29,"2026-02-11":5,"2026-02-12":34,"2026-02-14":8,"2026-02-15":37,"2026-02-16":23,"2026-02-17":11,"2026-02-19":23,"2026-02-20":13,"2026-02-21":24,"2026-02-23":20,"2026-03-01":37,"2026-03-02":30,"2026-03-04":23,"2026-03-05":10,"2026-03-06":28,"2026-03-07":6,"2026-03-08":52,"2026-03-09":30,"2026-03-15":16,"2026-03-16":31,"2026-03-17":66,"2026-03-21":13,"2026-03-22":48,"2026-03-23":31,"2026-03-28":41,"2026-04-04":26,"2026-04-05":29,"2026-04-06":52,"2026-04-08":48,"2026-04-10":51,"2026-04-12":44,"2026-04-13":15,"2026-04-14":32,"2026-04-15":30,"2026-04-16":13,"2026-04-17":16,"2026-04-18":50,"2026-04-19":35,"2026-04-21":55,"2026-04-22":53,"2026-04-23":10,"2026-04-25":15,"2026-04-26":18,"2026-04-27":17,"2026-04-28":37,"2026-04-30":12,"2026-05-01":9,"2026-05-02":31,"2026-05-06":36,"2026-05-10":39,"2026-05-13":46,"2026-05-14":32,"2026-05-18":22,"2026-05-20":32,"2026-05-22":22,"2026-05-25":40,"2026-05-26":23,"2026-05-27":42,"2026-05-28":34,"2026-05-30":22,"2026-05-31":54,"2026-06-05":40,"2026-06-06":8,"2026-06-10":41,"2026-06-11":14,"2026-06-13":10,"2026-06-14":44,"2026-06-15":14,"2026-06-24":27,"2026-06-25":7,"2026-06-27":7,"2026-07-01":3,"2026-07-04":26,"2026-07-06":52,"2026-07-13":31,"2026-07-15":13,"2026-07-16":25,"2026-07-19":38,"2026-07-21":3,"2026-07-22":28,"2026-07-23":13,"2026-07-24":19,"2026-07-25":10,"2026-07-26":25,"2026-07-27":5,"2026-07-29":25,"2026-07-30":18,"2026-07-31":37,"2026-08-01":41,"2026-08-02":18,"2026-08-03":13,"2026-08-05":15,"2026-08-06":43,"2026-08-07":4,"2026-08-08":20,"2026-08-09":23,"2026-08-10":5,"2026-08-11":49,"2026-08-13":26,"2026-08-14":28,"2026-08-15":35,"2026-08-16":12,"2026-08-17":44,"2026-08-18":32,"2026-08-19":37,"2026-08-20":50,"2026-08-21":27,"2026-08-22":30,"2026-08-23":26,"2026-08-25":15,"2026-08-26":43,"2026-08-27":28,"2026-08-28":26,"2026-08-29":9,"2026-08-30":44,"2026-08-31":38,"2026-09-01":34,"2026-09-03":30,"2026-09-04":22,"2026-09-06":5,"2026-09-07":2,"2026-09-08":14,"2026-09-09":34,"2026-09-11":68,"2026-09-12":32,"2026-09-13":36,"2026-09-14":58,"2026-09-15":4,"2026-09-16":61,"2026-09-19":6,"2026-09-20":12,"2026-09-21":34,"2026-09-22":40,"2026-09-23":11,"2026-09-24":34,"2026-09-25":36,"2026-09-26":17,"2026-09-27":6,"2026-09-28":10,"2026-09-30":24,"2026-10-01":29,"2026-10-02":18,"2026-10-03":13,"2026-10-04":4,"2026-10-05":18,"2026-10-06":37,"2026-10-07":34,"2026-10-09":7,"2026-10-10":7,"2026-10-11":22,"2026-10-12":29,"2026-10-13":34,"2026-10-14":21,"2026-10-15":10,"2026-10-16":8,"2026-10-17":13,"2026-10-18":39,"2026-10-19":17,"2026-10-20":24,"2026-10-21":34,"2026-10-22":3,"2026-10-23":22,"2026-10-24":29,"2026-10-25":10,"2026-10-26":27,"2026-10-27":31,"2026-10-28":35,"2026-10-29":50,"2026-10-30":11,"2026-10-31":22,"2026-11-01":53,"2026-11-02":47,"2026-11-04":31,"2026-11-05":50,"2026-11-06":22,"2026-11-07":45},"activeDays":195,"busiestDay":{"date":"2026-09-11","prompts":68},"peakHour":0,"streak":{"days":25,"end":"2026-11-02"},"biggestSession":{"project":"startup-mvp","prompts":27,"tool":"codex"},"shares":{"night":0.601823708206687,"dawn":0,"weekend":0.32313829787234044},"persona":"night","roast":{"prompts":5219,"you":{"deny":412,"again":97,"why":230,"thanks":61,"please":18,"swear":23,"lost":388,"whatNext":74,"lazyYes":301},"ai":{"sorry":156,"flatter":89,"done":1204},"catchphrases":[{"text":"continue","count":188},{"text":"still broken","count":41},{"text":"what next","count":37},{"text":"why is it erroring again","count":12},{"text":"can you hurry up","count":9}],"catchphrases_zh":[{"text":"继续","count":188},{"text":"还是不行","count":41},{"text":"然后呢","count":37},{"text":"为什么又报错了","count":12},{"text":"能不能快点","count":9}],"angriestDay":{"date":"2026-10-07","count":34},"latest":{"time":"4:54","day":"2026-08-11"},"tinyShare":0.31,"medianLength":22},"demo":true}; var VW_COUNTER = "";</script>
+<script>/* The AI debt clock: how many people confessed, and how much humanity owes AI.
+   Sends only a bill's total (plus currency and how it was made) under a random per-browser id.
+   Never chat text, catchphrases or anything else. Off unless the page is the published site. */
+window.VWClock = (function () {
+  "use strict";
+  var BASE = window.VW_COUNTER || "", fake = window.__clockFake; // __clockFake: browser tests only
+  var live = !!fake || (!!BASE && location.origin === "https://domy-mans.github.io");
+  function isOff() { try { return localStorage.getItem("vw-clock-off") === "1"; } catch (e) { return false; } }
+  function myId(year) {
+    try {
+      var o = JSON.parse(localStorage.getItem("vw-clock-id") || "null");
+      if (o && o.y === year) return o.id;
+      var b = crypto.getRandomValues(new Uint8Array(18)), id = btoa(String.fromCharCode.apply(null, b)).replace(/\+/g, "-").replace(/\//g, "_");
+      localStorage.setItem("vw-clock-id", JSON.stringify({ id: id, y: year }));
+      return id;
+    } catch (e) { return null; }
+  }
+  function req(path, body) {
+    if (fake) return Promise.resolve(fake(path, body));
+    var ctl = new AbortController(); setTimeout(function () { ctl.abort(); }, 5000);
+    // text/plain keeps it a "simple" request: no preflight
+    return fetch(BASE + path, body ? { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "text/plain" }, signal: ctl.signal } : { signal: ctl.signal })
+      .then(function (r) { return r.json(); });
+  }
+  function stats() { return live ? req("/stats") : Promise.reject(new Error("off")); }
+  function report(o) {
+    if (!live || isOff()) return Promise.reject(new Error("off"));
+    var id = myId(o.year);
+    if (!id) return Promise.reject(new Error("no storage"));
+    return req("/confess", { id: id, amount: Math.round(o.amount * 100) / 100, cur: o.cur, via: o.via });
+  }
+  function withdraw() {
+    try { localStorage.setItem("vw-clock-off", "1"); } catch (e) {}
+    var id = null; try { id = (JSON.parse(localStorage.getItem("vw-clock-id") || "null") || {}).id; } catch (e) {}
+    return id && live ? req("/withdraw", { id: id }) : Promise.resolve(null);
+  }
+  /** Bill dollars to the reader's currency: the Chinese bill runs at ¥4 per $1 (see worker/src/ledger.js). */
+  function money(usd, lang) { return lang === "zh" ? "¥" + Math.round(usd * 4).toLocaleString("en-US") : "$" + Math.round(usd).toLocaleString("en-US"); }
+  return { live: live, stats: stats, report: report, withdraw: withdraw, isOff: isOff, money: money };
+})();
+</script>
 <script>/**
  * Log parsing that runs in both Node and the browser.
  * Input is already-read files: [{ path, records: [...parsed JSON lines] }].
@@ -1290,6 +1336,10 @@ window.VWReport = function (DATA) {
     zh: {
       title: "你的 AI 编程年度报告", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
       privacy: "全部在你的电脑上统计。这个页面被浏览器禁止联网，数据发不出去。",
+      privacyClock: "全部在你的电脑上统计。聊天内容发不出去，只匿名上报一个总金额，用来算全人类欠 AI 多少。",
+      clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>向 AI 认罪的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个向 AI 认罪的人。全人类共欠 AI <b>" + m + "</b>，你比 <b>" + c.pct + "%</b> 的人欠得多。"; },
+      clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
+      cardClock: function (c) { return "🧾 比 " + c.pct + "% 的人欠得多"; },
       promptsK: "今年你给 AI 下了", promptsU: "条指令",
       promptsS: function () { return "开了 <b>" + fmt(D.sessions) + "</b> 次对话，活跃了 <b>" + D.activeDays + "</b> 天"; },
       workK: "AI 替你干了", workU: function (h) { return h < 1 ? "分钟的活" : "小时的活"; },
@@ -1368,6 +1418,10 @@ window.VWReport = function (DATA) {
     en: {
       title: "Your AI Coding Wrapped", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
       privacy: "Counted on your machine. This page is blocked from the network by your browser, so nothing can leave.",
+      privacyClock: "Counted on your machine. Your chats can't leave; only the total is sent, anonymously, to add up what humanity owes AI.",
+      clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to confess to AI." : "🧾 You're confessor <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total, and you owe more than <b>" + c.pct + "%</b> of people."; },
+      clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
+      cardClock: function (c) { return "🧾 Owes more than " + c.pct + "% of people"; },
       promptsK: "This year you gave AI", promptsU: "prompts",
       promptsS: function () { return "across <b>" + fmt(D.sessions) + "</b> sessions on <b>" + D.activeDays + "</b> active days"; },
       workK: "AI worked for you for", workU: function (h) { return h < 1 ? "minutes" : "hours"; },
@@ -1600,6 +1654,21 @@ window.VWReport = function (DATA) {
   var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
   function srcName(k) { if (k === "webai") return tmName(D); var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
   /** Sources you actually used, most prompts first, with their share. */
+  /** The debt clock counts real bills only: not demos, not someone else's shared bill. */
+  function clockOn() { return !!(window.VWClock && window.VWClock.live && !D.shared && !D.demo && !D.empty && !window.VWClock.isOff()); }
+  function fillClock() {
+    var box = document.getElementById("vclock"), c = window.VW_CLOCK;
+    if (!box || !c || c.n === undefined) return;
+    var L = t();
+    box.hidden = false;
+    box.innerHTML = L.clockLine(c, window.VWClock.money(c.sum, lang)) + ' <button class="clock-out" id="clock-out">' + L.clockOut + "</button>";
+    document.getElementById("clock-out").onclick = function (e) {
+      e.stopPropagation();
+      window.VWClock.withdraw().catch(function () {});
+      window.VW_CLOCK = null; box.textContent = L.clockGone;
+      var cv = document.getElementById("card"); if (cv) drawCard(cv);
+    };
+  }
   function tmName(X) { var w = X.testimony || X.perjury || {}; return window.VWTestimony ? window.VWTestimony.name(w.ai, lang) : String(w.ai || "AI"); }
   function sources() {
     var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
@@ -1689,7 +1758,7 @@ window.VWReport = function (DATA) {
       (D.testimony ? '<div class="rc-row"><span>' + K.evidence + "</span><b>" + K.evidenceV(tmName(D)) + "</b></div>" : "") +
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
-      '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
+      '<div class="privacy">' + (D.shared ? L.sharedPrivacy : clockOn() ? L.privacyClock : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
     // 1b. the AI's testimony, cross-examined against the real records
     if (D.perjury) {
@@ -1796,7 +1865,8 @@ window.VWReport = function (DATA) {
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
       : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
-    var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>';
+    var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
+      (clockOn() ? '<div class="clock-line" id="vclock" hidden></div>' : "");
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
       (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") +
       '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0, tile("🧾", 70, "40px"));
@@ -1815,6 +1885,7 @@ window.VWReport = function (DATA) {
     list_ = slides();
     stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.deco + s.html + "</section>"; }).join("");
     barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
+    fillClock(); // after a language switch too
     var lb = document.getElementById("lang");
     lb.innerHTML = langSwitch(lang); lb.setAttribute("aria-label", lang === "zh" ? "Switch to English" : "切换到中文");
     var snd = document.getElementById("snd");
@@ -1993,6 +2064,8 @@ window.VWReport = function (DATA) {
     x.textAlign = "right"; x.fillStyle = "#111"; x.font = "900 104px " + F; x.fillText(money(C.total), right, y); x.textAlign = "left";
     y += 130;
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, y);
+    var CL = clockOn() && window.VW_CLOCK;
+    if (CL && CL.pct !== null && CL.pct !== undefined) { x.font = "800 30px " + F; x.fillStyle = "#b91c1c"; x.fillText(t().cardClock(CL), cx, y + 44, W - cx - 360); } // stays clear of the QR code
 
     // stamp
     x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);
@@ -2063,6 +2136,13 @@ window.VWReport = function (DATA) {
     try { localStorage.setItem("vw-me", JSON.stringify({ s: code, t: Date.now() })); } catch (e) {}
   }, function () {});
   build();
+  // the debt clock: add this bill to humanity's total, then show where it stands
+  window.VW_CLOCK = null;
+  if (clockOn()) window.VWClock.report({ year: D.year, amount: charges().total, cur: lang === "zh" ? "cny" : "usd", via: D.via || "mixed" }).then(function (c) {
+    if (!c || c.order === undefined) return; // refused (or rate-limited): just no clock line
+    window.VW_CLOCK = c; fillClock();
+    var cv = document.getElementById("card"); if (cv && cv.closest(".slide.on")) drawCard(cv);
+  }, function () {});
   go(parseInt(location.hash.slice(1), 10) || 0);
 };
 if (window.DATA) window.VWReport(window.DATA);
@@ -2419,6 +2499,8 @@ window.VWTestify = (function () {
       go: "算算我欠了多少", demo: "先看看示例", reading: "正在读取…", files: function (n) { return "✓ 读取了 " + n + " 个文件"; },
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
+      privacyClock: "🔒 所有计算都在你的浏览器里完成，聊天内容发不出去。页面只会匿名上报你的账单总额，用来算全人类欠 AI 多少，看完账单可以撤回。",
+      clockHome: function (n, m) { return "🧾 已有 <b>" + n.toLocaleString("en-US") + "</b> 人向 AI 认罪，共欠 AI <b>" + m + "</b>"; },
       cli: "习惯用终端？", lang: "EN",
       importWeb: "📦 导入 ChatGPT / Claude 聊天记录",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
@@ -2435,6 +2517,8 @@ window.VWTestify = (function () {
       go: "Show me the bill", demo: "See a demo", reading: "Reading…", files: function (n) { return "✓ Read " + n + " files"; },
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
+      privacyClock: "🔒 Everything is computed in your browser, and your chats can't leave it. Only your bill's total is sent, anonymously, to add up what humanity owes AI. You can withdraw it after.",
+      clockHome: function (n, m) { return "🧾 <b>" + n.toLocaleString("en-US") + "</b> people have confessed. Together they owe AI <b>" + m + "</b>"; },
       cli: "Prefer the terminal?", lang: "中文",
       importWeb: "📦 Import ChatGPT / Claude chats",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
@@ -2549,6 +2633,11 @@ window.VWTestify = (function () {
       var rr = VWRoast.computeRoast([].concat.apply([], mine.map(function (w) { return w.texts; })), [].concat.apply([], mine.map(function (w) { return w.replies; })), { year: year });
       stats.perjury = { ai: tm.ai, line: tm.line, said: [tm.prompts, tm.deny, tm.thanks], real: [realN, rr ? rr.you.deny : 0, rr ? rr.you.thanks : 0] };
     }
+    var ways = [];
+    if (stats.testimony) ways.push("testimony");
+    if (S.web.length) ways.push("import");
+    if (S.claude || S.codex) ways.push("folders");
+    stats.via = ways.length === 1 ? ways[0] : "mixed";
     return stats;
   }
 
@@ -2575,7 +2664,7 @@ window.VWTestify = (function () {
       '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
       '<div class="land">' +
       '<div class="kicker">' + L.sub + "</div>" +
-      "<h1>" + L.title + "</h1>" +
+      "<h1>" + L.title + "</h1>" + '<p class="clock-home" id="hclock" hidden></p>' +
       '<div class="steps">' +
       '<div class="sec">' + L.secFast + '</div><button class="pick web main" id="tf-open">' + L.testify + "</button>" +
       '<div class="sec">' + L.secWeb + '</div><button class="pick web" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
@@ -2583,7 +2672,7 @@ window.VWTestify = (function () {
       '<div class="sec">' + L.secCodePhone + '</div><button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       "</div>" +
-      '<p class="privacy">' + L.privacy + "</p>" +
+      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
       "</div>";
     document.getElementById("pc").onclick = async function () {
       var code = friendCode(), url = window.VW_BASE + (code ? "#vs=" + code : "");
@@ -2603,7 +2692,7 @@ window.VWTestify = (function () {
       '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
       '<div class="land">' +
       '<div class="kicker">' + L.sub + "</div>" +
-      "<h1>" + L.title + "</h1>" +
+      "<h1>" + L.title + "</h1>" + '<p class="clock-home" id="hclock" hidden></p>' +
       '<div class="steps">' +
       '<div class="sec">' + L.secFast + '</div><button class="pick web main" id="tf-open">' + L.testify + "</button>" +
       '<div class="sec">' + L.secWeb + '</div><button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
@@ -2614,13 +2703,23 @@ window.VWTestify = (function () {
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       "</div>" +
-      '<p class="privacy">' + L.privacy + "</p>" +
+      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
       "</div>";
     wire(L);
   }
 
+  // the debt clock on the home page
+  var clockStats = null;
+  function homeClock() {
+    var el = document.getElementById("hclock");
+    if (!el || !window.VWClock || !window.VWClock.live) return;
+    var fill = function () { if (clockStats && clockStats.n > 0) { el.innerHTML = t().clockHome(clockStats.n, window.VWClock.money(clockStats.sum, lang)); el.hidden = false; } };
+    if (clockStats) fill(); else window.VWClock.stats().then(function (s) { clockStats = s; fill(); }, function () {});
+  }
+
   function wire(L) {
+    homeClock();
     if (document.getElementById("pick-claude")) {
       document.getElementById("pick-claude").onclick = function () { pick("claude"); };
       document.getElementById("pick-codex").onclick = function () { pick("codex"); };

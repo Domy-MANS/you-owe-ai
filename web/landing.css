@@ -113,3 +113,6 @@ ol.call-steps li { padding-left: 2px; }
 .sec { font: 700 13px var(--font); color: #7a6a52; letter-spacing: 0.02em; margin: 14px 2px 0; }
 .sec:first-child { margin-top: 0; }
 .steps .where { margin: 0 2px 10px; }
+
+/* the AI debt clock */
+.clock-home { font-size: 15px; line-height: 1.5; margin: -16px 0 22px; color: #7a1d1d; }

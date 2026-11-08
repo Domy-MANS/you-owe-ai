@@ -352,6 +352,44 @@ test("autoplay until the reader turns a page; then it stays there until they tap
   await pg.close();
 });
 
+test("debt clock: off by default (no requests at all); with a counter, only the total goes out", async () => {
+  // the built page in tests is a file:// page: the clock must stay off and never call out
+  const off = await open(`${PAGE}?lang=en&still`, { setup: () => { window.__fetches = 0; const f = window.fetch; window.fetch = function () { window.__fetches++; return f.apply(this, arguments); }; } });
+  await off.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(800);
+  assert.equal(await off.evaluate(() => window.__fetches), 0);
+  assert.equal(await exists(off, "#vclock"), false);
+  await off.close();
+
+  const fake = () => {
+    window.__calls = [];
+    window.__clockFake = (path, body) => { window.__calls.push([path, body]); return path === "/stats" ? { n: 41, sum: 1000 } : path === "/confess" ? { n: 42, sum: 1100, order: 42, pct: 87 } : { n: 41, sum: 1000 }; };
+  };
+  const pg = await open(`${PAGE}?lang=zh&still`, { setup: fake }); await sleep(400);
+  assert.match(await text(pg, "#hclock"), /已有 41 人向 AI 认罪，共欠 AI ¥4,000/);
+  assert.match(await text(pg, ".land .privacy"), /匿名上报你的账单总额/);
+  // the demo isn't counted
+  await pg.click("#demo"); await sleep(600);
+  assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").length), 0, "demo not counted");
+  await pg.goto(`${PAGE}?lang=zh&still`); await sleep(300);
+  await pg.click("#tf-open"); await sleep(200);
+  await pg.evaluate(() => { document.getElementById("tf-in").value = '{"ai":"doubao","prompts":58,"active_days":12,"deny":2,"thanks":1,"catchphrases":[{"text":"秘密口头禅","count":9}],"roast":"秘密吐槽"}'; });
+  await pg.click("#tf-go"); await sleep(1200);
+  const sent = await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").map((c) => c[1]));
+  assert.equal(sent.length, 1);
+  assert.deepEqual(Object.keys(sent[0]).sort(), ["amount", "cur", "id", "via"], "only the total, its currency, how it was made, and a random id");
+  assert.equal(sent[0].cur, "cny"); assert.equal(sent[0].via, "testimony");
+  assert.doesNotMatch(JSON.stringify(sent), /秘密|doubao|豆包/);
+  assert.match(await text(pg, "#vclock"), /你是第 42 个向 AI 认罪的人。全人类共欠 AI ¥4,400，你比 87% 的人欠得多/);
+  // withdraw: tells the server, and this browser stops reporting
+  await pg.$eval("#clock-out", (b) => b.click()); await sleep(200); // it sits on the last page
+  assert.match(await text(pg, "#vclock"), /已撤回/);
+  assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/withdraw").length), 1);
+  await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(600);
+  assert.equal(await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").length), 1, "no more reports after withdrawing");
+  assert.deepEqual(pg.errors, []);
+  await pg.close();
+});
+
 test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {
   const pg = await browser.newPage(); await pg.setViewport({ width: 1280, height: 900 });
   const errors = []; pg.on("pageerror", (e) => errors.push(e.message));

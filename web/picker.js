@@ -52,6 +52,8 @@
       go: "算算我欠了多少", demo: "先看看示例", reading: "正在读取…", files: function (n) { return "✓ 读取了 " + n + " 个文件"; },
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
+      privacyClock: "🔒 所有计算都在你的浏览器里完成，聊天内容发不出去。页面只会匿名上报你的账单总额，用来算全人类欠 AI 多少，看完账单可以撤回。",
+      clockHome: function (n, m) { return "🧾 已有 <b>" + n.toLocaleString("en-US") + "</b> 人向 AI 认罪，共欠 AI <b>" + m + "</b>"; },
       cli: "习惯用终端？", lang: "EN",
       importWeb: "📦 导入 ChatGPT / Claude 聊天记录",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
@@ -68,6 +70,8 @@
       go: "Show me the bill", demo: "See a demo", reading: "Reading…", files: function (n) { return "✓ Read " + n + " files"; },
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
+      privacyClock: "🔒 Everything is computed in your browser, and your chats can't leave it. Only your bill's total is sent, anonymously, to add up what humanity owes AI. You can withdraw it after.",
+      clockHome: function (n, m) { return "🧾 <b>" + n.toLocaleString("en-US") + "</b> people have confessed. Together they owe AI <b>" + m + "</b>"; },
       cli: "Prefer the terminal?", lang: "中文",
       importWeb: "📦 Import ChatGPT / Claude chats",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
@@ -182,6 +186,11 @@
       var rr = VWRoast.computeRoast([].concat.apply([], mine.map(function (w) { return w.texts; })), [].concat.apply([], mine.map(function (w) { return w.replies; })), { year: year });
       stats.perjury = { ai: tm.ai, line: tm.line, said: [tm.prompts, tm.deny, tm.thanks], real: [realN, rr ? rr.you.deny : 0, rr ? rr.you.thanks : 0] };
     }
+    var ways = [];
+    if (stats.testimony) ways.push("testimony");
+    if (S.web.length) ways.push("import");
+    if (S.claude || S.codex) ways.push("folders");
+    stats.via = ways.length === 1 ? ways[0] : "mixed";
     return stats;
   }
 
@@ -208,7 +217,7 @@
       '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
       '<div class="land">' +
       '<div class="kicker">' + L.sub + "</div>" +
-      "<h1>" + L.title + "</h1>" +
+      "<h1>" + L.title + "</h1>" + '<p class="clock-home" id="hclock" hidden></p>' +
       '<div class="steps">' +
       '<div class="sec">' + L.secFast + '</div><button class="pick web main" id="tf-open">' + L.testify + "</button>" +
       '<div class="sec">' + L.secWeb + '</div><button class="pick web" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
@@ -216,7 +225,7 @@
       '<div class="sec">' + L.secCodePhone + '</div><button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       "</div>" +
-      '<p class="privacy">' + L.privacy + "</p>" +
+      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
       "</div>";
     document.getElementById("pc").onclick = async function () {
       var code = friendCode(), url = window.VW_BASE + (code ? "#vs=" + code : "");
@@ -236,7 +245,7 @@
       '<button class="chip lang seg" id="l-lang" aria-label="' + (lang === "zh" ? "Switch to English" : "切换到中文") + '">' + langSwitch(lang) + "</button>" +
       '<div class="land">' +
       '<div class="kicker">' + L.sub + "</div>" +
-      "<h1>" + L.title + "</h1>" +
+      "<h1>" + L.title + "</h1>" + '<p class="clock-home" id="hclock" hidden></p>' +
       '<div class="steps">' +
       '<div class="sec">' + L.secFast + '</div><button class="pick web main" id="tf-open">' + L.testify + "</button>" +
       '<div class="sec">' + L.secWeb + '</div><button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
@@ -247,13 +256,23 @@
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       "</div>" +
-      '<p class="privacy">' + L.privacy + "</p>" +
+      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
       "</div>";
     wire(L);
   }
 
+  // the debt clock on the home page
+  var clockStats = null;
+  function homeClock() {
+    var el = document.getElementById("hclock");
+    if (!el || !window.VWClock || !window.VWClock.live) return;
+    var fill = function () { if (clockStats && clockStats.n > 0) { el.innerHTML = t().clockHome(clockStats.n, window.VWClock.money(clockStats.sum, lang)); el.hidden = false; } };
+    if (clockStats) fill(); else window.VWClock.stats().then(function (s) { clockStats = s; fill(); }, function () {});
+  }
+
   function wire(L) {
+    homeClock();
     if (document.getElementById("pick-claude")) {
       document.getElementById("pick-claude").onclick = function () { pick("claude"); };
       document.getElementById("pick-codex").onclick = function () { pick("codex"); };

@@ -8,6 +8,12 @@ const { computeStats } = require("../src/core/stats");
 const { demoData, demoRoast } = require("../src/demo");
 const { CSP } = require("../src/render");
 
+// The debt clock's address (worker/, deployed to Cloudflare). Empty = no clock, and the page stays fully offline.
+const COUNTER = (() => { try { return fs.readFileSync(path.join(__dirname, "..", "worker", "URL"), "utf8").trim().replace(/\/$/, ""); } catch (e) { return ""; } })();
+if (COUNTER && !/^https:\/\/[a-z0-9.-]+$/.test(COUNTER)) throw new Error("worker/URL must be a bare https origin");
+// The only address the page may talk to; still nothing else.
+const WEB_CSP = COUNTER ? CSP.replace("connect-src 'none'", "connect-src " + COUNTER) : CSP;
+
 const root = path.join(__dirname, "..");
 const read = (p) => fs.readFileSync(path.join(root, p), "utf8");
 
@@ -21,7 +27,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta http-equiv="Content-Security-Policy" content="${WEB_CSP}">
 <title>How much do you owe AI?</title>
 <meta name="description" content="Your AI just sent you an invoice: emotional damages, noise pollution, night shifts. A roast of your year with Claude Code, Codex and ChatGPT. Runs entirely in your browser.">
 <meta property="og:type" content="website">
@@ -46,7 +52,8 @@ ${read("web/landing.css")}</style>
 <main id="stage"></main>
 <div class="hint" id="hint"></div>
 <div id="landing"></div>
-<script>var VW_DEMO = ${JSON.stringify(demo).replace(/</g, "\\u003c")};</script>
+<script>var VW_DEMO = ${JSON.stringify(demo).replace(/</g, "\\u003c")}; var VW_COUNTER = ${JSON.stringify(COUNTER)};</script>
+<script>${read("web/clock.js")}</script>
 <script>${read("src/core/parse.js")}</script>
 <script>${read("src/core/stats.js")}</script>
 <script>${read("src/core/roast.js")}</script>

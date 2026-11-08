@@ -111,6 +111,10 @@ window.VWReport = function (DATA) {
     zh: {
       title: "你的 AI 编程年度报告", next: "点击右侧继续 · ← → 翻页", lang: "EN", replay: "再看一遍", download: "下载分享图",
       privacy: "全部在你的电脑上统计。这个页面被浏览器禁止联网，数据发不出去。",
+      privacyClock: "全部在你的电脑上统计。聊天内容发不出去，只匿名上报一个总金额，用来算全人类欠 AI 多少。",
+      clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>向 AI 认罪的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个向 AI 认罪的人。全人类共欠 AI <b>" + m + "</b>，你比 <b>" + c.pct + "%</b> 的人欠得多。"; },
+      clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
+      cardClock: function (c) { return "🧾 比 " + c.pct + "% 的人欠得多"; },
       promptsK: "今年你给 AI 下了", promptsU: "条指令",
       promptsS: function () { return "开了 <b>" + fmt(D.sessions) + "</b> 次对话，活跃了 <b>" + D.activeDays + "</b> 天"; },
       workK: "AI 替你干了", workU: function (h) { return h < 1 ? "分钟的活" : "小时的活"; },
@@ -189,6 +193,10 @@ window.VWReport = function (DATA) {
     en: {
       title: "Your AI Coding Wrapped", next: "Tap right to continue · ← → to navigate", lang: "中文", replay: "Replay", download: "Download card",
       privacy: "Counted on your machine. This page is blocked from the network by your browser, so nothing can leave.",
+      privacyClock: "Counted on your machine. Your chats can't leave; only the total is sent, anonymously, to add up what humanity owes AI.",
+      clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to confess to AI." : "🧾 You're confessor <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total, and you owe more than <b>" + c.pct + "%</b> of people."; },
+      clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
+      cardClock: function (c) { return "🧾 Owes more than " + c.pct + "% of people"; },
       promptsK: "This year you gave AI", promptsU: "prompts",
       promptsS: function () { return "across <b>" + fmt(D.sessions) + "</b> sessions on <b>" + D.activeDays + "</b> active days"; },
       workK: "AI worked for you for", workU: function (h) { return h < 1 ? "minutes" : "hours"; },
@@ -421,6 +429,21 @@ window.VWReport = function (DATA) {
   var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
   function srcName(k) { if (k === "webai") return tmName(D); var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
   /** Sources you actually used, most prompts first, with their share. */
+  /** The debt clock counts real bills only: not demos, not someone else's shared bill. */
+  function clockOn() { return !!(window.VWClock && window.VWClock.live && !D.shared && !D.demo && !D.empty && !window.VWClock.isOff()); }
+  function fillClock() {
+    var box = document.getElementById("vclock"), c = window.VW_CLOCK;
+    if (!box || !c || c.n === undefined) return;
+    var L = t();
+    box.hidden = false;
+    box.innerHTML = L.clockLine(c, window.VWClock.money(c.sum, lang)) + ' <button class="clock-out" id="clock-out">' + L.clockOut + "</button>";
+    document.getElementById("clock-out").onclick = function (e) {
+      e.stopPropagation();
+      window.VWClock.withdraw().catch(function () {});
+      window.VW_CLOCK = null; box.textContent = L.clockGone;
+      var cv = document.getElementById("card"); if (cv) drawCard(cv);
+    };
+  }
   function tmName(X) { var w = X.testimony || X.perjury || {}; return window.VWTestimony ? window.VWTestimony.name(w.ai, lang) : String(w.ai || "AI"); }
   function sources() {
     var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
@@ -510,7 +533,7 @@ window.VWReport = function (DATA) {
       (D.testimony ? '<div class="rc-row"><span>' + K.evidence + "</span><b>" + K.evidenceV(tmName(D)) + "</b></div>" : "") +
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
-      '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
+      '<div class="privacy">' + (D.shared ? L.sharedPrivacy : clockOn() ? L.privacyClock : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
     // 1b. the AI's testimony, cross-examined against the real records
     if (D.perjury) {
@@ -617,7 +640,8 @@ window.VWReport = function (DATA) {
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + L.download + "</button>"
       : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + L.download + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
-    var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>';
+    var note = D.shared ? "" : '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
+      (clockOn() ? '<div class="clock-line" id="vclock" hidden></div>' : "");
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
       (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") +
       '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0, tile("🧾", 70, "40px"));
@@ -636,6 +660,7 @@ window.VWReport = function (DATA) {
     list_ = slides();
     stage.innerHTML = list_.map(function (s, i) { return '<section class="slide" style="--bg:' + GRADS[i % GRADS.length] + '">' + s.deco + s.html + "</section>"; }).join("");
     barsEl.innerHTML = list_.map(function () { return "<i><b></b></i>"; }).join("");
+    fillClock(); // after a language switch too
     var lb = document.getElementById("lang");
     lb.innerHTML = langSwitch(lang); lb.setAttribute("aria-label", lang === "zh" ? "Switch to English" : "切换到中文");
     var snd = document.getElementById("snd");
@@ -814,6 +839,8 @@ window.VWReport = function (DATA) {
     x.textAlign = "right"; x.fillStyle = "#111"; x.font = "900 104px " + F; x.fillText(money(C.total), right, y); x.textAlign = "left";
     y += 130;
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, y);
+    var CL = clockOn() && window.VW_CLOCK;
+    if (CL && CL.pct !== null && CL.pct !== undefined) { x.font = "800 30px " + F; x.fillStyle = "#b91c1c"; x.fillText(t().cardClock(CL), cx, y + 44, W - cx - 360); } // stays clear of the QR code
 
     // stamp
     x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);
@@ -884,6 +911,13 @@ window.VWReport = function (DATA) {
     try { localStorage.setItem("vw-me", JSON.stringify({ s: code, t: Date.now() })); } catch (e) {}
   }, function () {});
   build();
+  // the debt clock: add this bill to humanity's total, then show where it stands
+  window.VW_CLOCK = null;
+  if (clockOn()) window.VWClock.report({ year: D.year, amount: charges().total, cur: lang === "zh" ? "cny" : "usd", via: D.via || "mixed" }).then(function (c) {
+    if (!c || c.order === undefined) return; // refused (or rate-limited): just no clock line
+    window.VW_CLOCK = c; fillClock();
+    var cv = document.getElementById("card"); if (cv && cv.closest(".slide.on")) drawCard(cv);
+  }, function () {});
   go(parseInt(location.hash.slice(1), 10) || 0);
 };
 if (window.DATA) window.VWReport(window.DATA);

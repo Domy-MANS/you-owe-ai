@@ -1,0 +1,13 @@
+# The AI debt clock: how many people confessed, and how much humanity owes AI.
+# Deploy: cd worker && npx wrangler deploy
+name = "you-owe-ai"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+[[durable_objects.bindings]]
+name = "LEDGER"
+class_name = "Ledger"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Ledger"]
