@@ -13,7 +13,9 @@ A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to
 
 Then the court asks: will you pay, or not? The bill comes with a client review, your client file and an IOU you can share. The live debt clock below adds up what all of humanity owes AI. It runs in your browser, and your chats never leave it.
 
-[![The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay](https://you-owe-ai.domy-mans.workers.dev/chart.svg)](https://domy-mans.github.io/you-owe-ai/)
+<p align="center">
+  <a href="https://domy-mans.github.io/you-owe-ai/"><img src="https://you-owe-ai.domy-mans.workers.dev/chart.svg" width="760" alt="The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay" /></a>
+</p>
 
 [![The cover of the invoice, the noise pollution charge for your catchphrases, and your client file](docs/img/hero-en.png)](https://domy-mans.github.io/you-owe-ai/)
 

@@ -13,7 +13,9 @@
 
 法庭会问你：还，还是不还？账单最后附上 AI 员工对你的评价、你的客户档案，以及一张可以分享的欠条。下面这张「AI 债务钟」实时统计全人类一共欠 AI 多少钱。全部在你的浏览器里运行，聊天记录不会离开你的电脑。
 
-[![AI 债务钟实时数据：多少人收到了账单、全人类共欠 AI 多少、多少人表示就是不还](https://you-owe-ai.domy-mans.workers.dev/chart.svg?lang=zh)](https://domy-mans.github.io/you-owe-ai/?lang=zh)
+<p align="center">
+  <a href="https://domy-mans.github.io/you-owe-ai/?lang=zh"><img src="https://you-owe-ai.domy-mans.workers.dev/chart.svg?lang=zh" width="760" alt="AI 债务钟实时数据：多少人收到了账单、全人类共欠 AI 多少、多少人表示就是不还" /></a>
+</p>
 
 [![账单封面、口头禅的噪音污染费，以及你的客户档案](docs/img/hero-zh.png)](https://domy-mans.github.io/you-owe-ai/?lang=zh)
 
