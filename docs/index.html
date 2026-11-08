@@ -1339,7 +1339,8 @@ window.VWReport = function (DATA) {
       privacyClock: "全部在你的电脑上统计。聊天内容发不出去，只匿名上报一个总金额，用来算全人类欠 AI 多少。",
       clockLine: function (c, m) { return c.pct === null ? "🧾 你是<b>第一个</b>向 AI 认罪的人。" : "🧾 你是第 <b>" + c.order.toLocaleString("en-US") + "</b> 个向 AI 认罪的人。全人类共欠 AI <b>" + m + "</b>，你比 <b>" + c.pct + "%</b> 的人欠得多。"; },
       clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
-      cardClock: function (c) { return "🧾 比 " + c.pct + "% 的人欠得多"; },
+      cardClock: function (c) { return c.pct === null ? "🧾 第一个向 AI 认罪的人" : "🧾 比 " + c.pct + "% 的人欠得多"; },
+      cardClockAll: function (n, m) { return "全人类 " + n.toLocaleString("en-US") + " 人共欠 AI " + m; },
       promptsK: "今年你给 AI 下了", promptsU: "条指令",
       promptsS: function () { return "开了 <b>" + fmt(D.sessions) + "</b> 次对话，活跃了 <b>" + D.activeDays + "</b> 天"; },
       workK: "AI 替你干了", workU: function (h) { return h < 1 ? "分钟的活" : "小时的活"; },
@@ -1421,7 +1422,8 @@ window.VWReport = function (DATA) {
       privacyClock: "Counted on your machine. Your chats can't leave; only the total is sent, anonymously, to add up what humanity owes AI.",
       clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to confess to AI." : "🧾 You're confessor <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total, and you owe more than <b>" + c.pct + "%</b> of people."; },
       clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
-      cardClock: function (c) { return "🧾 Owes more than " + c.pct + "% of people"; },
+      cardClock: function (c) { return c.pct === null ? "🧾 The first person to confess to AI" : "🧾 Owes more than " + c.pct + "% of people"; },
+      cardClockAll: function (n, m) { return n.toLocaleString("en-US") + " people owe AI " + m + " in total"; },
       promptsK: "This year you gave AI", promptsU: "prompts",
       promptsS: function () { return "across <b>" + fmt(D.sessions) + "</b> sessions on <b>" + D.activeDays + "</b> active days"; },
       workK: "AI worked for you for", workU: function (h) { return h < 1 ? "minutes" : "hours"; },
@@ -2065,7 +2067,10 @@ window.VWReport = function (DATA) {
     y += 130;
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, y);
     var CL = clockOn() && window.VW_CLOCK;
-    if (CL && CL.pct !== null && CL.pct !== undefined) { x.font = "800 30px " + F; x.fillStyle = "#b91c1c"; x.fillText(t().cardClock(CL), cx, y + 44, W - cx - 360); } // stays clear of the QR code
+    if (CL && CL.order !== undefined) { // stays clear of the QR code
+      x.font = "800 30px " + F; x.fillStyle = "#b91c1c"; x.fillText(t().cardClock(CL), cx, y + 44, W - cx - 360);
+      if (CL.n > 1) { x.font = "600 24px " + F; x.fillStyle = "#7a1d1d"; x.fillText(t().cardClockAll(CL.n, window.VWClock.money(CL.sum, lang)), cx, y + 84, W - cx - 360); }
+    }
 
     // stamp
     x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);
