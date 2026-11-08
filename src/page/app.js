@@ -466,9 +466,12 @@ window.VWReport = function (DATA) {
         e.stopPropagation();
         var p = btn.getAttribute("data-p");
         D.plea = p; appealing = false;
-        try { localStorage.setItem("vw-plea", JSON.stringify({ y: D.year, p: p })); } catch (err) {}
+        if (!D.demo) try { localStorage.setItem("vw-plea", JSON.stringify({ y: D.year, p: p })); } catch (err) {} // a demo's plea isn't yours
         refreshPlea();
         if (clockOn()) reportClock();
+        // verdict read, the bill goes on (unless the reader is turning pages themselves)
+        clearTimeout(timer);
+        if (!manual) timer = setTimeout(function () { go(idx + 1); }, 5000);
       };
     });
     var ap = document.getElementById("appeal");
@@ -567,7 +570,7 @@ window.VWReport = function (DATA) {
 
   function slides() {
     var L = t(), K = b(), out = [];
-    var add = function (html, dur, deco) { out.push({ html: html, dur: dur || 7, deco: deco || "" }); };
+    var add = function (html, dur, deco) { out.push({ html: html, dur: dur === undefined ? 7 : dur, deco: deco || "" }); }; // dur 0: waits for the reader
 
     if (D.empty) {
       add('<div class="pop"><div class="kicker">' + D.year + '</div><h1>' + L.empty + '</h1><div class="privacy">' + L.privacy + "</div></div>", 7, tile("🦗", 60, "44px"));
@@ -588,6 +591,13 @@ window.VWReport = function (DATA) {
       '<hr class="rc"><div class="rc-label">' + K.due + '</div><div class="rc-total" data-amt="' + C.total + '">' + money(C.total) + "</div>" +
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : clockOn() ? L.privacyClock : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
+
+    // 2. the court ruling, right after the total: guilty (I'll pay) or not paying. Waits for your plea (no autoplay past it).
+    var plea = D.shared ? D.plea : myPlea();
+    if (!D.shared || plea) {
+      add('<div class="pop"><div class="kicker">' + L.pleaK + "</div>" + receipt(L.pleaH(money(C.total), D.shared), '<div class="plea" id="plea">' + pleaBody() + "</div>") + "</div>",
+        plea ? 7 : 0, giant(plea === "refuse" ? "😤" : plea ? "🙇" : "⚖️", "right:-12%;bottom:-6%"));
+    }
 
     // 1b. the AI's testimony, cross-examined against the real records
     if (D.perjury) {
@@ -688,13 +698,6 @@ window.VWReport = function (DATA) {
       var verdict = [L.cmpOwe(dOwe), L.cmpDeny((meR.you.deny || 0) - (fR.you.deny || 0)), L.cmpThanks((meR.you.thanks || 0) - (fR.you.thanks || 0))]
         .filter(Boolean).map(function (x) { return '<div class="rc-meme">' + x + "</div>"; }).join("");
       add('<div class="pop"><div class="kicker">' + L.cmpK + "</div>" + receipt(L.cmpH, grid + verdict) + "</div>", 9, '<div class="deco"><div class="giant vsbig">VS</div></div>');
-    }
-
-    // 8c. the court ruling: guilty (I'll pay) or not paying. Waits for your plea (no autoplay past it).
-    var plea = D.shared ? D.plea : myPlea();
-    if (!D.shared || plea) {
-      add('<div class="pop"><div class="kicker">' + L.pleaK + "</div>" + receipt(L.pleaH(money(C.total), D.shared), '<div class="plea" id="plea">' + pleaBody() + "</div>") + "</div>",
-        plea ? 7 : 0, giant(plea === "refuse" ? "😤" : plea ? "🙇" : "⚖️", "right:-12%;bottom:-6%"));
     }
 
     // 9. the IOU (share card)

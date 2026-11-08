@@ -349,10 +349,14 @@ test("autoplay until the reader turns a page; then it stays there until they tap
   await sleep(9500); // longer than any page's autoplay time
   assert.equal(await cur(), 1, "stays on the page the reader chose");
   assert.equal(await pg.$$eval(".bars i", (b) => b.filter((x) => x.className === "now").length), 0, "no running progress bar");
-  await pg.mouse.click(20, 400); await sleep(300); // left side: back
+  await pg.mouse.click(20, 120); await sleep(300); // left side: back (above the court's buttons)
   assert.equal(await cur(), 0);
   await pg.keyboard.press("ArrowRight"); await pg.keyboard.press("ArrowRight"); await sleep(300);
   assert.equal(await cur(), 2);
+  // pleading on the demo bill is only for the demo
+  await pg.keyboard.press("ArrowLeft"); await sleep(300);
+  await pg.click('.slide.on .plea-btn[data-p="refuse"]'); await sleep(300);
+  assert.equal(await pg.evaluate(() => localStorage.getItem("vw-plea")), null, "a demo's plea isn't saved as yours");
   assert.deepEqual(pg.errors, []);
   await pg.close();
 });
@@ -407,10 +411,11 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   const idxOf = () => pg.$$eval(".slide", (s) => s.findIndex((e) => e.querySelector("#plea")));
   const pi = await idxOf();
   assert.ok(pi > 0, "a court ruling page");
-  assert.equal(await pg.$$eval(".slide", (s) => s.findIndex((e) => e.querySelector("#card"))), pi + 1, "right before the IOU");
-  for (let i = 0; i < pi; i++) await pg.keyboard.press("ArrowRight");
-  await sleep(300);
-  // autoplay must not move on from here by itself
+  assert.equal(pi, 1, "right after the total");
+  // autoplay brings you here from the cover, then waits: no moving on by itself
+  const onIdx = () => pg.$$eval(".slide", (s) => s.findIndex((e) => e.classList.contains("on")));
+  await sleep(7000); assert.equal(await onIdx(), pi, "autoplay reached the court");
+  await sleep(8000); assert.equal(await onIdx(), pi, "and waits there for the plea");
   await pg.$eval(".plea-btn", () => {}); 
   await pg.click('.plea-btn[data-p="refuse"]'); await sleep(400);
   const box = await text(pg, "#plea");
