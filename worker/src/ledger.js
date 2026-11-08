@@ -21,6 +21,25 @@ export function schema(run) {
   try { run("ALTER TABLE bills ADD COLUMN plea TEXT"); } catch (e) { /* already there */ }
 }
 
+/**
+ * The key the per-IP spam brake counts under: a hash of the IP with a random salt made fresh each day
+ * and never sent anywhere. Yesterday's salt is deleted, so even with the database and this code an IP
+ * can't be worked back out of its key (a fixed, public salt would let anyone hash all 4 billion IPv4s).
+ */
+export async function ipKey(run, ip, now = Date.now()) {
+  run("CREATE TABLE IF NOT EXISTS salt (day TEXT PRIMARY KEY, v TEXT NOT NULL)");
+  const day = new Date(now).toISOString().slice(0, 10);
+  let row = run("SELECT v FROM salt WHERE day = ?", day)[0];
+  if (!row) {
+    const v = [...crypto.getRandomValues(new Uint8Array(16))].map((b) => b.toString(16).padStart(2, "0")).join("");
+    run("INSERT OR IGNORE INTO salt (day, v) VALUES (?, ?)", day, v);
+    run("DELETE FROM salt WHERE day <> ?", day);
+    row = run("SELECT v FROM salt WHERE day = ?", day)[0];
+  }
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(row.v + "|" + String(ip || "")));
+  return [...new Uint8Array(d).slice(0, 8)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function totals(run) {
   const r = run("SELECT COUNT(*) AS n, COALESCE(SUM(usd), 0) AS sum, SUM(plea = 'guilty') AS guilty, SUM(plea = 'refuse') AS refuse FROM bills")[0];
   return { n: Number(r.n), sum: Math.round(Number(r.sum)), guilty: Number(r.guilty || 0), refuse: Number(r.refuse || 0) };

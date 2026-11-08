@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
-import { schema, totals, confess, withdraw, CNY_PER_USD } from "../worker/src/ledger.js";
+import { schema, totals, confess, withdraw, ipKey, CNY_PER_USD } from "../worker/src/ledger.js";
 
 function ledger() {
   const db = new DatabaseSync(":memory:");
@@ -98,4 +98,14 @@ test("the README chart: headline numbers, a bar split by plea, and an empty stat
   assert.ok(!chartSvg({ n: 3, sum: 630, guilty: 2, refuse: 1 }).includes("contempt"));
   assert.ok(chartSvg({ n: 0, sum: 0, guilty: 0, refuse: 0 }).includes("Be the first"));
   assert.ok(!/undefined|NaN/.test(svg));
+});
+
+test("IP keys: stable within a day, unrelated across days, and the old salt is gone", async () => {
+  const run = ledger();
+  const d1 = Date.parse("2026-11-08T10:00:00Z"), d2 = Date.parse("2026-11-09T10:00:00Z");
+  const a = await ipKey(run, "1.2.3.4", d1), b = await ipKey(run, "1.2.3.4", d1 + 3600e3), c = await ipKey(run, "1.2.3.5", d1);
+  assert.equal(a, b); assert.notEqual(a, c); assert.match(a, /^[0-9a-f]{16}$/);
+  const next = await ipKey(run, "1.2.3.4", d2);
+  assert.notEqual(next, a, "a new day, a new salt");
+  assert.deepEqual(run("SELECT day FROM salt").map((r) => r.day), ["2026-11-09"], "yesterday's salt is deleted");
 });
