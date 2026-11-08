@@ -1,7 +1,7 @@
 {
   "name": "you-owe-ai",
   "version": "0.1.0",
-  "description": "Your year of AI coding, Spotify-Wrapped style. Claude Code + Codex. 100% local.",
+  "description": "Your AI just sent you an invoice: a roast of your year with Claude Code, Codex, ChatGPT and Claude. Chats never leave your computer.",
   "bin": {
     "you-owe-ai": "bin/you-owe-ai.js"
   },
