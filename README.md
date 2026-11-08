@@ -9,7 +9,9 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to you. Every time you told the AI it was wrong is an emotional damages charge, every repeated catchphrase is noise pollution, every prompt after 10pm is night-shift pay, and every "thanks" is a discount. No export? Any AI (ChatGPT, Claude, DeepSeek, Doubao…) can testify against you from memory. Then the court asks: will you pay, or not? The bill comes with a client review, your client file and credit rating, and an IOU you can share, and the live debt clock below adds up what all of humanity owes AI. It runs in your browser: your chats never leave it.
+A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to you. Every time you told the AI it was wrong is an emotional damages charge, every repeated catchphrase is noise pollution, every prompt after 10pm is night-shift pay, and every "thanks" is a discount.
+
+Then the court asks: will you pay, or not? The bill comes with a client review, your client file and an IOU you can share. The live debt clock below adds up what all of humanity owes AI. It runs in your browser, and your chats never leave it.
 
 [![The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay](https://you-owe-ai.domy-mans.workers.dev/chart.svg)](https://domy-mans.github.io/you-owe-ai/)
 
@@ -50,13 +52,26 @@ Rates are in US dollars at the federal minimum wage. The Chinese version bills i
 
 ## No export? Make AI testify
 
-Exporting your ChatGPT history can take hours to arrive by email. Instead, tap **Make AI testify**: the page opens ChatGPT or Claude with a subpoena (for any other AI, such as DeepSeek, Doubao, Kimi or Gemini, copy it and paste it in yourself) asking it to estimate, from its memory of your past chats, how you treated it this year. It replies with a short code block; paste it back and your bill is ready in about 30 seconds. The numbers are the AI's own estimate, so the bill gets an **AI TESTIMONY** stamp, the comparison page marks it, and the client review quotes the witness. Halfway through, the court calls asking for the real records. If you later import your real chats from the same AI (ChatGPT or Claude), they replace the estimate, and a **court record** page puts the testimony next to the facts (one ChatGPT said 850 messages; the export said 3,502: PERJURY). It needs the AI's memory turned on (in ChatGPT: Settings → Personalization → Reference chat history). The page never sends the subpoena or the reply anywhere: you carry the text over yourself.
+Exporting your ChatGPT history can take hours to arrive by email. Don't wait: make AI confess.
+
+1. Tap **Make AI testify**, then **ChatGPT ↗** or **Claude ↗**. It opens with a subpoena already typed in. For any other AI (DeepSeek, Doubao, Kimi, Gemini…), tap **copy the subpoena** and paste it in yourself.
+2. From its memory of your past chats, the AI estimates how you treated it this year and replies with a short code block.
+3. Paste that back. Your bill is ready in about 30 seconds.
+
+- **It's stamped AI TESTIMONY.** The numbers are the AI's own estimate, so the bill and the comparison page say so, and the client review quotes the witness.
+- **Perjury gets caught.** Halfway through, the court calls asking for the real records. Import your real chats from the same AI (ChatGPT or Claude) and they replace the estimate, with a **court record** page that puts the testimony next to the facts. One ChatGPT said 850 messages; the export said 3,502: PERJURY.
+- **The AI needs memory turned on** to remember you (in ChatGPT: Settings → Personalization → Reference chat history).
+- The subpoena and the reply never pass through any server: you carry the text over yourself.
 
 ## Import your chats (the web AI calls you)
 
 ![The incoming call, the call screen where the web AI asks for your chat export, and the missed-call button left after you hang up](docs/img/call-en.png)
 
-A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. Hang up and a phone button stays in the corner, so you can finish reading and call back later. You can also import an export from the home page. Claude's export arrives as several files: the one you need is `conversations-000.zip`. You can pick several files at once, and the ones that aren't chats are skipped. Importing the same chat twice, or two exports that overlap, counts each conversation once. On a phone, this is the way in: phones can't open the `.claude` and `.codex` folders, but they can import a chat export.
+A few seconds into your invoice, the AI you chat with on the web calls to collect on those chats too. Answer, and it walks you through exporting your data from ChatGPT or Claude.ai. Drop the zip in, and your web conversations are added to the bill. Hang up and a phone button stays in the corner, so you can finish reading and call back later. You can also import from the home page.
+
+- **Pick several files at once.** Claude's export arrives as several zips: drop them all in, and the ones that aren't chats are skipped.
+- **Repeats count once.** The same export twice, or two exports that overlap, count each conversation once.
+- **Works on a phone.** Phones can't open the `.claude` and `.codex` folders, but they can import a chat export.
 
 ## Compare with a friend
 
