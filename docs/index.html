@@ -439,6 +439,11 @@ ol.call-steps li { padding-left: 2px; }
 .call-steps a { color: #93c5fd; font-weight: 700; }
 .call-ov.quiet .call-later { font-size: 14px; color: rgba(255,255,255,0.75); }
 .call-tf { font: 700 14px var(--font); color: #fde68a; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; }
+
+/* home page sections, easiest first */
+.sec { font: 700 13px var(--font); color: #7a6a52; letter-spacing: 0.02em; margin: 14px 2px 0; }
+.sec:first-child { margin-top: 0; }
+.steps .where { margin: 0 2px 10px; }
 </style>
 </head>
 <body>
@@ -2404,7 +2409,7 @@ window.VWTestify = (function () {
 
   var T = {
     zh: {
-      title: "你欠 AI 多少钱？", sub: "AI 编程年度报告 · Claude Code × Codex · " + new Date().getFullYear(),
+      title: "你欠 AI 多少钱？", sub: "你和 AI 的年度账单 · " + new Date().getFullYear(),
       pickClaude: "选择 .claude 文件夹", pickCodex: "选择 .codex 文件夹",
       copied: function (kind) { return "📋 已复制 <code>" + pathFor(kind) + "</code>。<b>等选择窗口弹出来后</b>，在窗口里按 " + keysHtml() + "，然后点「" + (isMac ? "选择" : "选择文件夹") + "」"; },
       where: "两个文件夹都在你的用户文件夹里，是隐藏的。点上面的按钮，<b>等选择窗口弹出来之后</b>，按 " + keysHtml() + "，再点「选择」。",
@@ -2413,14 +2418,14 @@ window.VWTestify = (function () {
       wrong: function (k) { return "这个文件夹里没找到 " + k + " 的记录，确认选的是 ." + k + " 吗？"; },
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       cli: "习惯用终端？", lang: "EN",
-      importWeb: "📦 导入网页聊天（ChatGPT / Claude，可选）",
-      phoneNote: "在手机上，让 ChatGPT 或 Claude 出庭作证，或者导入聊天记录，就能算账。Claude Code 和 Codex 的记录在电脑上，要用电脑打开。",
+      importWeb: "📦 导入 ChatGPT / Claude 聊天记录",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
       webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
-      testify: "🧑‍⚖️ 让 AI 出庭作证（30 秒，不用导出）", testifyPC: "🧑‍⚖️ 只用网页版？让 AI 出庭作证（30 秒）",
+      testify: "🧑‍⚖️ 让 AI 出庭作证",
+      secFast: "⚡ 最快 · 30 秒，AI 凭记忆估算", secWeb: "📦 最准 · 导入网页聊天记录，要等一封邮件", secCode: "💻 写代码的 · Claude Code / Codex", secCodePhone: "💻 写代码的 · Claude Code / Codex 的记录在电脑上",
     },
     en: {
-      title: "How much do you owe AI?", sub: "Your AI coding year, roasted · Claude Code × Codex · " + new Date().getFullYear(),
+      title: "How much do you owe AI?", sub: "Your year with AI, itemized · " + new Date().getFullYear(),
       pickClaude: "Choose your .claude folder", pickCodex: "Choose your .codex folder",
       copied: function (kind) { return "📋 Copied <code>" + pathFor(kind) + "</code>. <b>Once the file window is open</b>, press " + keysHtml() + " inside it, then click Select."; },
       where: "Both are hidden in your home folder. Click a button above, <b>wait for the file window to open</b>, then press " + keysHtml() + " and click Select.",
@@ -2429,11 +2434,11 @@ window.VWTestify = (function () {
       wrong: function (k) { return "No " + k + " logs in that folder. Did you pick ." + k + "?"; },
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       cli: "Prefer the terminal?", lang: "中文",
-      importWeb: "📦 Import web chats (ChatGPT / Claude, optional)",
-      phoneNote: "On a phone, have ChatGPT or Claude testify, or import your chats, to get your bill. Claude Code and Codex logs live on your computer, so open this there for those.",
+      importWeb: "📦 Import ChatGPT / Claude chats",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
       webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
-      testify: "🧑‍⚖️ Make AI testify (30 sec, no export)", testifyPC: "🧑‍⚖️ Only use the web apps? Make AI testify (30 sec)",
+      testify: "🧑‍⚖️ Make AI testify",
+      secFast: "⚡ Fastest · 30 sec, AI estimates from memory", secWeb: "📦 Most accurate · import your web chats (needs one email)", secCode: "💻 For coders · Claude Code / Codex", secCodePhone: "💻 For coders · Claude Code / Codex logs live on your computer",
     },
   };
   function t() { return T[lang]; }
@@ -2569,12 +2574,11 @@ window.VWTestify = (function () {
       '<div class="land">' +
       '<div class="kicker">' + L.sub + "</div>" +
       "<h1>" + L.title + "</h1>" +
-      '<p class="where phone-note">' + L.phoneNote + "</p>" +
       '<div class="steps">' +
-      '<button class="pick web main" id="tf-open">' + L.testify + "</button>" +
-      '<button class="pick web" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
+      '<div class="sec">' + L.secFast + '</div><button class="pick web main" id="tf-open">' + L.testify + "</button>" +
+      '<div class="sec">' + L.secWeb + '</div><button class="pick web" id="web">' + L.phoneImport + '</button><div class="st" id="st-web"></div>' +
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
-      '<button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
+      '<div class="sec">' + L.secCodePhone + '</div><button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       "</div>" +
       '<p class="privacy">' + L.privacy + "</p>" +
@@ -2599,13 +2603,14 @@ window.VWTestify = (function () {
       '<div class="kicker">' + L.sub + "</div>" +
       "<h1>" + L.title + "</h1>" +
       '<div class="steps">' +
+      '<div class="sec">' + L.secFast + '</div><button class="pick web main" id="tf-open">' + L.testify + "</button>" +
+      '<div class="sec">' + L.secWeb + '</div><button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
+      '<div class="sec">' + L.secCode + "</div>" +
       '<button class="pick" id="pick-claude"><span class="ico">🧡</span>' + L.pickClaude + '</button><div class="st" id="st-claude"></div>' +
       '<button class="pick" id="pick-codex"><span class="ico">🖤</span>' + L.pickCodex + '</button><div class="st" id="st-codex"></div>' +
+      '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
       '<button class="btn go" id="go" disabled>' + L.go + "</button>" +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
-      '<p class="where">' + L.where + "<br>" + L.onlyOne + "</p>" +
-      '<button class="pick web" id="web">' + L.importWeb + '</button><div class="st" id="st-web"></div>' +
-      '<button class="pick web" id="tf-open">' + L.testifyPC + "</button>" +
       "</div>" +
       '<p class="privacy">' + L.privacy + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +

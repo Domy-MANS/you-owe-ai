@@ -17,7 +17,10 @@ A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to
 
 ## How it works
 
-1. **On a computer**, open the page and choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**. **Only use ChatGPT or Claude.ai**, or on a phone? Have the AI testify (below), or import your chat export.
+1. Open the page and pick the way in, easiest first:
+   - **Fastest (30 seconds):** have ChatGPT, Claude, Doubao or any AI testify from its memory of you (below).
+   - **Most accurate:** import your ChatGPT or Claude.ai chat export. It arrives by email.
+   - **For coders, on a computer:** choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**.
 2. Your browser reads everything, counts it, and prints the invoice line by line.
 3. Tap through the pages. On the last one, download the IOU as an image or copy a share link.
 
