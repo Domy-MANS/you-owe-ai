@@ -815,6 +815,14 @@ window.VWReport = function (DATA) {
     });
   }
 
+  // a page taller than a small phone's screen scrolls (top first) instead of being cut off at both ends
+  function fitSlide(el) {
+    var pop = el && el.querySelector(".pop");
+    if (!pop) return;
+    var cs = getComputedStyle(el), need = pop.offsetHeight + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    el.classList.toggle("tall", need > el.clientHeight + 2);
+  }
+  window.addEventListener("resize", function () { var on = stage.querySelector(".slide.on"); if (on) fitSlide(on); });
   function animateIn(el) {
     printReceipt(el);
     el.querySelectorAll("[data-count]").forEach(function (n) {
@@ -853,6 +861,7 @@ window.VWReport = function (DATA) {
     if (dur) { bars[idx].className = "now"; bars[idx].style.setProperty("--dur", dur + "s"); }
     else bars[idx].className = "done";
     animateIn(secs[idx]);
+    fitSlide(secs[idx]);
     clearTimeout(timer);
     if (dur && !still && idx < list_.length - 1) timer = setTimeout(function () { go(idx + 1); }, dur * 1000);
   }
@@ -930,8 +939,10 @@ window.VWReport = function (DATA) {
     if (!D.empty) { // the plea, stamped across the charges; no plea = contempt of court
       x.save(); x.translate(W / 2 + 120, py + 520); x.rotate(-0.18); x.globalAlpha = 0.82;
       x.strokeStyle = x.fillStyle = PL === "refuse" ? "rgba(185,28,28,0.9)" : PL ? "rgba(29,78,216,0.85)" : "rgba(80,70,60,0.8)"; x.lineWidth = 9;
-      x.font = "900 84px " + F; var pst = t().pleaStamp(PL), ps = x.measureText(pst).width + 70;
-      round(x, -ps / 2, -66, ps, 132, 16); x.stroke();
+      var pst = t().pleaStamp(PL), pfs = 84;
+      x.font = "900 84px " + F; while (pfs > 44 && x.measureText(pst).width > 380) { pfs -= 4; x.font = "900 " + pfs + "px " + F; } // long words (IN CONTEMPT) shrink
+      var ps = x.measureText(pst).width + 70;
+      round(x, -ps / 2, -pfs * 0.79, ps, pfs * 1.57, 16); x.stroke();
       x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(pst, 0, 4); x.restore();
       x.textAlign = "left"; x.textBaseline = "top";
     }

@@ -320,3 +320,6 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .contempt[hidden] { display: none; }
 .plea-appeal { margin-top: 14px; padding: 9px 14px; font-size: 14px; }
 .plea-pick { font: 900 clamp(24px, 7vw, 34px) var(--font); margin: 4px 0 8px; }
+
+/* pages taller than the screen (the IOU on a small phone): scroll, starting at the top */
+.slide.tall { justify-content: flex-start; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; }
