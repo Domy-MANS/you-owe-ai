@@ -29,6 +29,15 @@ test("percentile: share of everyone else who owes less", () => {
   assert.equal(r.pct, 60, "6 of the 10 others owe less");
 });
 
+test("percentile: 0 and 100 only at the very ends, even in a big crowd", () => {
+  const run = ledger();
+  for (let i = 0; i < 300; i++) confess(run, { id: id(i), amount: 100 + i, cur: "usd" }, "ip" + (i % 20), i);
+  assert.equal(confess(run, { id: id(900), amount: 1, cur: "usd" }, "z1", 1000).pct, 0, "least of all");
+  assert.equal(confess(run, { id: id(901), amount: 100.5, cur: "usd" }, "z2", 1001).pct, 1, "beats 2 of 301: not 'least'");
+  assert.equal(confess(run, { id: id(902), amount: 398.5, cur: "usd" }, "z3", 1002).pct, 99, "below the top one: not 'most'");
+  assert.equal(confess(run, { id: id(903), amount: 9999, cur: "usd" }, "z4", 1003).pct, 100, "most of all");
+});
+
 test("one bill can't break the clock, and junk is refused", () => {
   const run = ledger();
   assert.equal(confess(run, { id: id(1), amount: 1e12, cur: "usd" }, "a").sum, 20000);

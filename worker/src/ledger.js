@@ -53,7 +53,9 @@ export function confess(run, body, ipKey, now = Date.now()) {
   const below = Number(run("SELECT COUNT(*) AS c FROM bills WHERE usd < ?", usd)[0].c);
   const order = Number(run("SELECT COUNT(*) AS c FROM bills WHERE ts < ? OR (ts = ? AND id <= ?)", ts, ts, id)[0].c);
   // share of everyone else who owes less than you
-  const pct = t.n > 1 ? Math.floor((below / (t.n - 1)) * 100) : null;
+  // 0 and 100 mean exactly "owes the least" / "owes the most"; everyone in between stays 1-99
+  const others = t.n - 1;
+  const pct = others < 1 ? null : below === 0 ? 0 : below === others ? 100 : Math.min(99, Math.max(1, Math.floor((below / others) * 100)));
   return { ...t, order, pct };
 }
 
