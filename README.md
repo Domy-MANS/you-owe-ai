@@ -11,6 +11,8 @@
 
 A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to you. Every time you told the AI it was wrong is an emotional damages charge, every repeated catchphrase is noise pollution, every prompt after 10pm is night-shift pay, and every "thanks" is a discount. The bill comes with a client review, your client file and credit rating, and an IOU you can share. It runs entirely in your browser.
 
+[![The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay](https://you-owe-ai.domy-mans.workers.dev/chart.svg)](https://domy-mans.github.io/you-owe-ai/)
+
 [![The cover of the invoice, the noise pollution charge for your catchphrases, and your client file](docs/img/hero-en.png)](https://domy-mans.github.io/you-owe-ai/)
 
 ▶ [Get your invoice](https://domy-mans.github.io/you-owe-ai/)
@@ -66,9 +68,7 @@ Already made yours? Then send your link back. Your browser remembers your own bi
 
 ## The AI debt clock
 
-[![The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay](https://you-owe-ai.domy-mans.workers.dev/chart.svg)](https://domy-mans.github.io/you-owe-ai/)
-
-Live, and updated within minutes: every real bill adds to it. The home page shows how many people got their AI bill, how much humanity owes AI in total, and how many refuse to pay. Your last page tells you which bill you are and how many people you owe more than, and your IOU prints it. Chinese and English bills are on one scale (¥4 to the bill dollar, the ratio between the two price lists).
+The chart at the top is the debt clock. It's live, and updated within minutes: every real bill adds to it. The home page shows how many people got their AI bill, how much humanity owes AI in total, and how many refuse to pay. Your last page tells you which bill you are and how many people you owe more than, and your IOU prints it. Chinese and English bills are on one scale (¥4 to the bill dollar, the ratio between the two price lists).
 
 ## Privacy
 
