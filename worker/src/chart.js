@@ -12,12 +12,12 @@ const n0 = (x) => Math.round(x).toLocaleString("en-US");
 const T = {
   en: {
     head: "AI DEBT CLOCK · LIVE", people: "people got their AI bill", owed: "owed to AI in total", refuse: "refuse to pay",
-    guilty: "🙇 Guilty, I'll pay", not: "Not paying 😤", none: "No pleas yet", noneBig: "No bills yet. Be the first.",
+    guilty: "🙇 Guilty, I'll pay", not: "Not paying 😤", none: "No pleas yet", undecided: (n) => n0(n) + " undecided", noneBig: "No bills yet. Be the first.",
     money: (usd) => "$" + n0(usd), foot: (d) => "Updated " + d + " UTC · domy-mans.github.io/you-owe-ai",
   },
   zh: {
     head: "AI 债务钟 · 实时", people: "人收到了 AI 的账单", owed: "全人类共欠 AI", refuse: "表示就是不还",
-    guilty: "🙇 认罪，我还", not: "就是不还 😤", none: "还没有人表态", noneBig: "还没有人收到账单。来当第一个。",
+    guilty: "🙇 认罪，我还", not: "就是不还 😤", none: "还没有人表态", undecided: (n) => n0(n) + " 人还没表态", noneBig: "还没有人收到账单。来当第一个。",
     money: (usd) => "¥" + n0(usd * CNY_PER_USD), foot: (d) => "更新于 " + d + " UTC · domy-mans.github.io/you-owe-ai",
   },
 };
@@ -38,9 +38,17 @@ export function chartSvg(t, lang = "en", now = new Date()) {
     const y = 182, h = 26;
     if (!voted) body += `<rect x="${x0}" y="${y}" width="${bw}" height="${h}" rx="4" fill="${EMPTY}"/>` + text(x0, y + h + 26, L.none, 15, 600, DIM);
     else {
-      const gw = Math.round((bw - (t.guilty && t.refuse ? 2 : 0)) * (t.guilty / voted)), rw = bw - gw - (t.guilty && t.refuse ? 2 : 0);
-      if (t.guilty) body += `<rect x="${x0}" y="${y}" width="${gw}" height="${h}" rx="4" fill="${GUILTY}"><title>${L.guilty}: ${n0(t.guilty)}</title></rect>`;
-      if (t.refuse) body += `<rect x="${W - 32 - rw}" y="${y}" width="${rw}" height="${h}" rx="4" fill="${REFUSE}"><title>${L.not}: ${n0(t.refuse)}</title></rect>`;
+      // the whole bar is everyone: guilty | not chosen yet (neutral) | not paying, 2px gaps between
+      const und = Math.max(0, t.n - voted), parts = [[t.guilty, GUILTY, L.guilty], [und, EMPTY, L.undecided(und)], [t.refuse, REFUSE, L.not]].filter((p) => p[0] > 0);
+      const room = bw - 2 * (parts.length - 1), all = parts.reduce((a, p) => a + p[0], 0);
+      let x = x0, mid = W / 2;
+      parts.forEach((p, i) => {
+        const w = i === parts.length - 1 ? x0 + bw - x : Math.max(4, Math.round(room * (p[0] / all)));
+        if (p[1] === EMPTY) mid = x + w / 2;
+        body += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${p[1]}"><title>${p[1] === EMPTY ? p[2] : p[2] + ": " + n0(p[0])}</title></rect>`;
+        x += w + 2;
+      });
+      if (und) body += text(mid, y + h + 26, L.undecided(und), 13, 600, DIM, "middle");
       const gp = 100 - rp;
       body += text(x0, y + h + 26, `${L.guilty} · <tspan font-weight="900">${gp}%</tspan> · ${n0(t.guilty)}`, 15, 600, INK);
       body += text(W - 32, y + h + 26, `${n0(t.refuse)} · <tspan font-weight="900">${rp}%</tspan> · ${L.not}`, 15, 600, INK, "end");
