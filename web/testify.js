@@ -5,14 +5,14 @@ window.VWTestify = (function () {
   var T = {
     zh: {
       h: "让 AI 出庭作证", sub: "不用导出聊天记录。ChatGPT 和 Claude 都记得你，让它们自己交代，大约 30 秒。",
-      s1: "① 把传唤书发给 AI（选一个）", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "复制传唤书", copied: "✓ 已复制，粘贴给 ChatGPT 或 Claude",
+      s1: "① 把传唤书发给 AI（选一个）", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "其他 AI（豆包、DeepSeek…）：复制传唤书", copied: "✓ 已复制，粘贴给任何一个 AI",
       s2: "② 把它回复的代码整段复制，粘贴到这里", ph: '{"yoa":1, "prompts": …}', go: "生成账单", close: "关闭",
       note: "⚠️ 数字是 AI 凭记忆估的，可能不准，所以账单会盖上「AI 口供」的章。AI 得开着记忆功能（ChatGPT 设置里的「参考聊天记录」）才记得你。想要准确数字，还是导入聊天记录。",
       bad: { "no-code": "没找到代码。把 AI 回复里从 { 开头、到 } 结尾的那段整个复制过来。", "no-memory": "AI 说它不记得你。打开它的记忆功能再试，或者导入聊天记录。", "is-prompt": "这是传唤书本身。先把它发给 ChatGPT 或 Claude，再把它的回复贴回来。" },
     },
     en: {
       h: "Make AI testify", sub: "No export needed. ChatGPT and Claude remember you, so let them confess. About 30 seconds.",
-      s1: "① Send AI the subpoena (pick one)", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "Copy the subpoena", copied: "✓ Copied. Paste it into ChatGPT or Claude.",
+      s1: "① Send AI the subpoena (pick one)", gpt: "ChatGPT ↗", claude: "Claude ↗", copy: "Any other AI (Gemini, DeepSeek…): copy the subpoena", copied: "✓ Copied. Paste it into any AI.",
       s2: "② Copy the whole code block it replies with and paste it here", ph: '{"yoa":1, "prompts": …}', go: "Make my bill", close: "Close",
       note: "⚠️ The numbers are the AI's estimate from memory and may be off, so your bill gets an \"AI TESTIMONY\" stamp. The AI needs memory turned on (in ChatGPT: Settings → Personalization → Reference chat history) to remember you. For exact numbers, import your chats instead.",
       bad: { "no-code": "No code found. Copy everything from the { to the } in the AI's reply.", "no-memory": "The AI says it doesn't remember you. Turn its memory on and try again, or import your chats.", "is-prompt": "That's the subpoena itself. Send it to ChatGPT or Claude first, then paste their reply here." },

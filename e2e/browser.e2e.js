@@ -310,6 +310,26 @@ test("after AI testimony the court calls; real records cross-examine the witness
   await pg.close();
 });
 
+test("Doubao testifies: its own name on the bill, and the usual web-AI call (Doubao can't be exported)", async () => {
+  const pg = await browser.newPage();
+  await pg.setUserAgent(IPHONE);
+  await pg.setViewport({ width: 360, height: 740, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const errors = []; pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(`${PAGE}?lang=zh&still`); await sleep(300);
+  await pg.click("#tf-open"); await sleep(200);
+  await pg.evaluate(() => { document.getElementById("tf-in").value = '{"yoa":1,"ai":"doubao","prompts":58,"active_days":12,"deny":2,"thanks":1,"ai_sorry":0,"swear":0,"why":3,"night_share":0.7,"peak_hour":1,"catchphrases":[{"text":"","count":0}],"roast":"心思缜密爱盘算，一边调研一边规划接班路"}'; });
+  await pg.click("#tf-go"); await sleep(1500);
+  const all = await pg.$$eval(".slide", (s) => s.map((e) => e.innerText.replace(/\s+/g, " ")).join(" | "));
+  assert.match(all, /服务方 豆包/);
+  assert.match(all, /豆包 的口供/);
+  assert.match(all, /证人 豆包 当庭陈述： ?心思缜密/);
+  assert.doesNotMatch(all, /ChatGPT|undefined|NaN/);
+  await pg.waitForSelector(".call-bar", { timeout: 9000 });
+  assert.match(await text(pg, ".call-bar .call-who"), /网页版 AI/);
+  assert.deepEqual(errors, []);
+  await pg.close();
+});
+
 test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {
   const pg = await browser.newPage(); await pg.setViewport({ width: 1280, height: 900 });
   const errors = []; pg.on("pageerror", (e) => errors.push(e.message));

@@ -170,7 +170,7 @@
     S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
     // AI testimony: an estimate, used only when there are no real records from that AI.
     // With real records it's cross-examined instead (the "perjury" page), never counted twice.
-    var tm = S.testimony, tool = tm && (tm.ai === "claude" ? "claudeai" : "chatgpt");
+    var tm = S.testimony, tool = tm && VWTestimony.toolOf(tm.ai);
     var year = VWStats.defaultYear(prompts);
     var realN = tm ? prompts.filter(function (p) { return p.tool === tool && new Date(p.ts).getFullYear() === year; }).length : 0;
     if (tm && !realN) { var tr = VWTestimony.toRecords(tm); sessions = sessions.concat(tr.sessions); prompts = prompts.concat(tr.prompts); year = VWStats.defaultYear(prompts); }
@@ -193,7 +193,7 @@
     window.VWReport(stats);
     // a few seconds into a real bill, the web AI calls to collect on your web chats
     // on an AI-testimony bill, it's the court calling instead, to cross-examine the witness with the real records
-    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb, stats.testimony ? { ai: stats.testimony.ai === "claude" ? "Claude" : "ChatGPT" } : null); }, 6000);
+    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb, stats.testimony && VWTestimony.exportable(stats.testimony.ai) ? { ai: VWTestimony.name(stats.testimony.ai, lang) } : null); }, 6000);
   }
 
   function addWeb(r) {

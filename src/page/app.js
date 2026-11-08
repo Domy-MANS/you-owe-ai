@@ -23,7 +23,7 @@ window.VWShare = (function () {
   }
 
   // v2 links: just the numbers the pages show, as a positional array (about a third the length of v1)
-  var SRCS = ["claude", "codex", "chatgpt", "claudeai"];
+  var SRCS = ["claude", "codex", "chatgpt", "claudeai", "webai"]; // webai: another AI that testified (Doubao, DeepSeek, ...)
   var CATS = ["shell", "edit", "read", "web", "agents", "mcp", "other"];
   var r5 = function (x) { return Math.round(x * 1e5) / 1e5; };
   function pack(D) {
@@ -42,8 +42,8 @@ window.VWShare = (function () {
         R.ai.sorry, R.ai.flatter, R.ai.done, cp(R.catchphrases),
         R.angriestDay ? [R.angriestDay.date, R.angriestDay.count] : 0,
         R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0,
-      D.testimony ? [D.testimony.ai === "claude" ? 1 : 0, D.testimony.line || ""] : 0,
-      D.perjury ? [D.perjury.ai === "claude" ? 1 : 0, D.perjury.line || "", D.perjury.said, D.perjury.real] : 0];
+      D.testimony ? [D.testimony.ai, D.testimony.line || ""] : 0,
+      D.perjury ? [D.perjury.ai, D.perjury.line || "", D.perjury.said, D.perjury.real] : 0];
   }
   function unpack(a) {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
@@ -56,8 +56,9 @@ window.VWShare = (function () {
       tinyShare: r[13], medianLength: 0,
     } : null;
     if (R && r[14]) R.catchphrases_zh = cp(r[14]);
-    var tm = a[19] ? { ai: a[19][0] ? "claude" : "chatgpt", line: String(a[19][1] || "").slice(0, 90) } : null;
-    var pj = a[20] ? { ai: a[20][0] ? "claude" : "chatgpt", line: String(a[20][1] || "").slice(0, 90), said: a[20][2], real: a[20][3] } : null;
+    var aiOf = function (v) { return typeof v === "string" ? v.slice(0, 16) : v ? "claude" : "chatgpt"; }; // early links stored 0/1
+    var tm = a[19] ? { ai: aiOf(a[19][0]), line: String(a[19][1] || "").slice(0, 90) } : null;
+    var pj = a[20] ? { ai: aiOf(a[20][0]), line: String(a[20][1] || "").slice(0, 90), said: a[20][2], real: a[20][3] } : null;
     return {
       testimony: tm, perjury: pj,
       year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
@@ -418,9 +419,9 @@ window.VWReport = function (DATA) {
   function b() { return B[lang]; }
 
   var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
-  function srcName(k) { var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
+  function srcName(k) { if (k === "webai") return tmName(D); var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
   /** Sources you actually used, most prompts first, with their share. */
-  function tmName(X) { var w = X.testimony || X.perjury; return w && w.ai === "claude" ? "Claude" : "ChatGPT"; }
+  function tmName(X) { var w = X.testimony || X.perjury || {}; return window.VWTestimony ? window.VWTestimony.name(w.ai, lang) : String(w.ai || "AI"); }
   function sources() {
     var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
       .filter(function (x) { return x.n > 0; }).sort(function (a, c) { return c.n - a.n; });

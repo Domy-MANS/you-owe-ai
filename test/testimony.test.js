@@ -76,3 +76,37 @@ test("a testimony bill's share link keeps the testimony mark and the witness lin
   assert.deepEqual(back.testimony, D.testimony);
   assert.equal(back.roast.you.deny, 85);
 });
+
+test("any AI can testify, and gets its own name on the bill (only ChatGPT and Claude can be cross-examined)", () => {
+  const doubao = '{"yoa":1,"ai":"doubao","prompts":58,"active_days":12,"deny":2,"thanks":1,"ai_sorry":0,"swear":0,"why":3,"night_share":0.7,"peak_hour":1,"catchphrases":[{"text":"","count":0},{"text":"","count":0}],"roast":"心思缜密爱盘算，一边调研一边规划接班路"}';
+  const t = TM.parse(doubao);
+  assert.equal(t.ai, "doubao");
+  assert.deepEqual(t.catchphrases, [], "empty catchphrases dropped");
+  assert.equal(TM.name("doubao", "zh"), "豆包");
+  assert.equal(TM.name("doubao", "en"), "Doubao");
+  assert.equal(TM.toolOf("doubao"), "webai");
+  assert.equal(TM.exportable("doubao"), false);
+  assert.equal(TM.exportable("chatgpt"), true);
+  assert.equal(TM.parse('{"ai":"我是 DeepSeek","prompts":3}').ai, "deepseek");
+  assert.equal(TM.parse('{"ai":"通义千问","prompts":3}').ai, "qwen");
+  assert.equal(TM.parse('{"ai":"<b>Mystery</b>Bot","prompts":3}').ai, "bMystery/bBot", "unknown names kept, without markup");
+  assert.equal(TM.name(TM.parse('{"ai":"","prompts":3}').ai, "en"), "AI");
+  const st = computeStats(TM.toRecords(t, new Date(2026, 10, 7).getTime()), { year: 2026 });
+  assert.equal(st.byTool.webai.prompts, 58);
+});
+
+test("a Doubao bill's share link keeps the name", async () => {
+  const t = TM.parse('{"ai":"豆包","prompts":58,"active_days":12,"roast":"x"}');
+  const D = computeStats(TM.toRecords(t, new Date(2026, 10, 7).getTime()), { year: 2026 });
+  D.roast = TM.mergeRoast(null, t); D.testimony = { ai: t.ai, line: t.line };
+  const window = {};
+  const ctx = vm.createContext({ window, location: { hash: "" }, document: {}, TextEncoder, TextDecoder, Blob, Response, CompressionStream, DecompressionStream, btoa, atob, Uint8Array, JSON, String, Object, RegExp });
+  const src = fs.readFileSync(path.join(__dirname, "../src/page/app.js"), "utf8");
+  vm.runInContext(src.slice(0, src.indexOf("/* Report player.")), ctx);
+  const back = JSON.parse(JSON.stringify(await window.VWShare.decode((await window.VWShare.link(D)).split("#s=")[1])));
+  assert.equal(back.testimony.ai, "doubao");
+  assert.equal(back.byTool.webai.prompts, 58);
+  // links made before any AI could testify (0/1 for ChatGPT/Claude) still read
+  const a = window.VWShare.pack(D); a[19] = [1, "old"];
+  assert.equal(window.VWShare.unpack(a).testimony.ai, "claude");
+});
