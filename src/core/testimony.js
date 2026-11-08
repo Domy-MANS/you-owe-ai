@@ -97,7 +97,11 @@
     text = String(text || "").replace(/[“”]/g, '"');
     if (text.length > 400 && text.indexOf(TEMPLATE) >= 0) throw err("is-prompt", "that's the subpoena, not the reply");
     var o = findJson(text);
-    if (!o) throw err("no-code", "no testimony JSON in the reply");
+    if (!o) {
+      // no code at all, just the AI explaining it can't see your history
+      if (!/[{｛]/.test(text) && /记得|记忆|看不到|无法|没有.{0,6}(权限|访问|历史|记录)|不能访问|remember|memory|can.?t (see|access)|cannot|don.?t have access|no access/i.test(text)) throw err("no-memory", "the AI says it can't see your history");
+      throw err("no-code", "no testimony JSON in the reply");
+    }
     var prompts = int(o.prompts, 50000);
     if (!prompts) throw err("no-memory", "the AI says it can't see your history");
     var night = num(o.night_share); if (night > 1) night /= 100;

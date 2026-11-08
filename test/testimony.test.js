@@ -126,5 +126,7 @@ test("loose JSON from real AIs still reads: trailing commas, comments, full-widt
   }
   // text inside strings is left alone
   assert.equal(TM.parse('{"ai":"claude","prompts":9,"roast":"老板，辛苦了 // 真的 https://x.com"}').line, "老板，辛苦了 // 真的 https://x.com");
-  assert.throws(() => TM.parse("我看不到你的聊天记录。"), (e) => e.code === "no-code");
+  assert.throws(() => TM.parse("我看不到你的聊天记录。"), (e) => e.code === "no-memory", "an AI saying it can't see your history");
+  assert.throws(() => TM.parse("I don't have access to your past conversations."), (e) => e.code === "no-memory");
+  assert.throws(() => TM.parse("好的！"), (e) => e.code === "no-code");
 });
