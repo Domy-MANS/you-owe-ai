@@ -23,7 +23,7 @@ const T = {
 };
 
 export function chartSvg(t, lang = "en", now = new Date()) {
-  const L = T[lang] || T.en, W = 760, H = 300, x0 = 32, bw = W - 64;
+  const L = T[lang] || T.en, W = 760, H = 318, x0 = 32, bw = W - 64;
   const voted = (t.guilty || 0) + (t.refuse || 0), rp = voted ? Math.round((t.refuse / voted) * 100) : null;
   const when = now.toISOString().slice(0, 16).replace("T", " ");
   const text = (x, y, s, size, weight, fill, anchor = "start") =>
@@ -48,7 +48,13 @@ export function chartSvg(t, lang = "en", now = new Date()) {
         body += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${p[1]}"><title>${p[1] === EMPTY ? p[2] : p[2] + ": " + n0(p[0])}</title></rect>`;
         x += w + 2;
       });
-      if (und) body += text(mid, y + h + 26, L.undecided(und), 13, 600, DIM, "middle");
+      // the middle label only if it clears both end labels (estimated generously: fonts differ by viewer)
+      const est = (str, px) => [...str.replace(/<[^>]+>/g, "")].reduce((a, ch) => a + (ch.charCodeAt(0) > 0x2e80 ? px * 1.05 : px * 0.62), 0);
+      const leftEnd = x0 + est(`${L.guilty} · ${100 - rp}% · ${n0(t.guilty)}`, 15) + 16;
+      const rightStart = W - 32 - est(`${n0(t.refuse)} · ${rp}% · ${L.not}`, 15) - 16;
+      const uw = est(L.undecided(und), 13);
+      if (und && mid - uw / 2 > leftEnd && mid + uw / 2 < rightStart) body += text(mid, y + h + 26, L.undecided(und), 13, 600, DIM, "middle");
+      else if (und) body += text(W / 2, y + h + 50, L.undecided(und), 13, 600, DIM, "middle"); // no room: its own line
       const gp = 100 - rp;
       body += text(x0, y + h + 26, `${L.guilty} · <tspan font-weight="900">${gp}%</tspan> · ${n0(t.guilty)}`, 15, 600, INK);
       body += text(W - 32, y + h + 26, `${n0(t.refuse)} · <tspan font-weight="900">${rp}%</tspan> · ${L.not}`, 15, 600, INK, "end");

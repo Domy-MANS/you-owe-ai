@@ -920,11 +920,13 @@ window.VWReport = function (DATA) {
 
     // line items (top 7 by size, discount always shown)
     var items = C.list.slice().sort(function (a, c) { return Math.abs(c.amount) - Math.abs(a.amount); }).slice(0, 7), itemsY = y;
+    var namesEnd = cx, amountsStart = right; // the empty band between them is where the plea stamp goes
     items.forEach(function (it) {
       var I = K.items[it.k];
-      x.font = "700 32px " + F; x.fillStyle = "#111"; x.fillText(I[0], cx, y);
-      x.font = "500 22px " + M; x.fillStyle = "#888"; x.fillText(it.qty, cx, y + 40);
+      x.font = "700 32px " + F; x.fillStyle = "#111"; x.fillText(I[0], cx, y); namesEnd = Math.max(namesEnd, cx + x.measureText(I[0]).width);
+      x.font = "500 22px " + M; x.fillStyle = "#888"; x.fillText(it.qty, cx, y + 40); namesEnd = Math.max(namesEnd, cx + x.measureText(it.qty).width);
       x.textAlign = "right"; x.font = "800 34px " + M; x.fillStyle = it.amount < 0 ? "#16a34a" : "#111"; x.fillText(money(it.amount), right, y + 6); x.textAlign = "left";
+      x.font = "800 34px " + M; amountsStart = Math.min(amountsStart, right - x.measureText(money(it.amount)).width);
       y += 82;
     });
     var stampY = items.length ? (itemsY + y) / 2 : itemsY + 40; // the plea stamp sits on the charges, never on the total
@@ -950,10 +952,11 @@ window.VWReport = function (DATA) {
     x.textAlign = "left"; x.textBaseline = "top";
     var PL = D.shared ? D.plea : myPlea();
     if (!D.empty) { // the plea, stamped across the charges; no plea = contempt of court
-      x.save(); x.translate(W / 2 + 120, stampY); x.rotate(-0.18); x.globalAlpha = 0.82;
+      x.save(); var gap = Math.max(260, amountsStart - namesEnd - 24); // rotated a little, so leave some room
+      x.translate(Math.min(namesEnd + 12 + gap / 2, right - gap / 2), stampY); x.rotate(-0.12); x.globalAlpha = 0.82;
       x.strokeStyle = x.fillStyle = PL === "refuse" ? "rgba(185,28,28,0.9)" : PL ? "rgba(29,78,216,0.85)" : "rgba(80,70,60,0.8)"; x.lineWidth = 9;
       var pst = t().pleaStamp(PL), pfs = 84;
-      x.font = "900 84px " + F; while (pfs > 44 && x.measureText(pst).width > 380) { pfs -= 4; x.font = "900 " + pfs + "px " + F; } // long words (IN CONTEMPT) shrink
+      x.font = "900 84px " + F; while (pfs > 32 && x.measureText(pst).width + 70 > gap) { pfs -= 4; x.font = "900 " + pfs + "px " + F; } // fits the gap; long words (IN CONTEMPT) shrink
       var ps = x.measureText(pst).width + 70;
       round(x, -ps / 2, -pfs * 0.79, ps, pfs * 1.57, 16); x.stroke();
       x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(pst, 0, 4); x.restore();
