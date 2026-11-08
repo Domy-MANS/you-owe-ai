@@ -272,6 +272,8 @@ test("on a phone: make AI testify, paste its reply, get a bill stamped as testim
     assert.match(all, /Claude 的口供/);
     assert.match(all, /证人 Claude 当庭陈述：.*许愿池/);
     assert.match(all, /「不对再改」/);
+    assert.match(all, /凭记忆提供/);
+    assert.doesNotMatch(all, /最长连续|最拼的一天|个对话/, "no made-up streaks, busiest days or session counts");
     assert.doesNotMatch(all, /undefined|NaN/);
     assert.equal(await pg.evaluate(() => document.documentElement.scrollWidth), w);
     await sleep(6500);

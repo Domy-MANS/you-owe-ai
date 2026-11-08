@@ -161,6 +161,7 @@ hr.rc { border: 0; border-top: 2px dashed #ccc; margin: 12px 0; }
 .rc-meme { margin-top: 12px; font-size: 15px; line-height: 1.55; color: #333; }
 .rc-meme b { color: #000; }
 .rc-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 12px; }
+.rc-facts.two { grid-template-columns: repeat(2, 1fr); }
 .rc-fact { background: #f3efe6; border-radius: 8px; padding: 8px 6px; text-align: center; }
 .rc-fact b { display: block; font: 900 clamp(18px, 4.6vw, 24px) var(--font); }
 .rc-fact span { font-size: 11px; color: #777; }

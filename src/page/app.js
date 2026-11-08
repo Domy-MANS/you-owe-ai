@@ -370,7 +370,7 @@ window.VWReport = function (DATA) {
       company: "AI 打工有限公司", companySub: "AI WORKERS UNION · 账单",
       client: "客户", you: "你", them: "TA", period: "账期", periodV: D.year + " 全年", vendor: "服务方",
       due: "应付总额", seeMore: "明细见后页 👇", stamp: "逾期未付",
-      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供", witness: function (n) { return "证人 " + n + " 当庭陈述："; },
+      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供", tmFacts: function (n) { return "以上数字由证人 " + n + " 凭记忆提供。本公司不对其准确性负责，但照收不误。"; }, witness: function (n) { return "证人 " + n + " 当庭陈述："; },
       itemNo: function (n) { return "明细 " + "①②③④⑤"[n - 1]; },
       subtotal: "小计",
       items: {
@@ -391,7 +391,7 @@ window.VWReport = function (DATA) {
       company: "AI Workers Union", companySub: "INVOICE",
       client: "Client", you: "You", them: "Them", period: "Period", periodV: "All of " + D.year, vendor: "Vendor",
       due: "Amount due", seeMore: "Itemized charges ahead 👇", stamp: "PAST DUE",
-      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony", witness: function (n) { return "Witness " + n + " testified:"; },
+      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony", tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
       itemNo: function (n) { return "Item #" + n; },
       subtotal: "Subtotal",
       items: {
@@ -531,11 +531,12 @@ window.VWReport = function (DATA) {
 
     // 5. wages & supplies, with the year's numbers
     var p4 = [by.wage, by.gpu];
-    var facts = [[fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]], [String(D.streak.days), L.factL[5]]]
+    // a testimony only gives totals: no made-up sessions, streaks or busiest days
+    var facts = (D.testimony ? [[fmt(D.prompts), L.factL[0]], [String(D.activeDays), L.factL[2]]] : [[fmt(D.prompts), L.factL[0]], [fmt(D.sessions), L.factL[1]], [String(D.activeDays), L.factL[2]], [String(D.streak.days), L.factL[5]]])
       .map(function (f) { return '<div class="rc-fact"><b>' + f[0] + "</b><span>" + f[1] + "</span></div>"; }).join("");
     add('<div class="pop"><div class="kicker">' + (R ? K.itemNo(4) : K.itemNo(1)) + "</div>" + receipt(K.p4,
-      p4.filter(Boolean).map(line).join("") + subtotal(p4) + '<div class="rc-facts">' + facts + "</div>" +
-      '<div class="rc-meme"><b>' + loveLine(sources()) + "</b><br>" + L.factMeme() + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
+      p4.filter(Boolean).map(line).join("") + subtotal(p4) + '<div class="rc-facts' + (D.testimony ? " two" : "") + '">' + facts + "</div>" +
+      '<div class="rc-meme"><b>' + loveLine(sources()) + "</b><br>" + (D.testimony ? K.tmFacts(tmName(D)) : L.factMeme()) + "</div>") + "</div>", 8, giant("🔥", "right:-12%;bottom:-6%"));
 
     // 6. attendance record
     var att = "";
