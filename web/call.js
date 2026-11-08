@@ -177,7 +177,7 @@
     var input = ov.querySelector("input");
     async function take(file) {
       st.drop = "reading"; relabel();
-      try { st.result = await window.VWWebChat.readExport(await file.arrayBuffer()); st.drop = "got"; }
+      try { st.result = await window.VWWebChat.readExport(file); st.drop = "got"; }
       catch (err) { st.drop = "bad"; st.badCode = err && err.code; }
       relabel();
     }

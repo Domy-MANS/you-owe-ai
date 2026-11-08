@@ -83,3 +83,14 @@ test("the other files in Claude's split export get a pointer to the right one", 
   assert.equal(await code(W.readExport(Buffer.from(JSON.stringify({ version: "1.0", data_files: [{ category: "conversations" }] })))), "claude-manifest");
   assert.equal(await code(W.readExport(Buffer.from("not json"))), "not-json");
 });
+
+test("newer ChatGPT exports split the chats into conversations-000.json, -001.json, ... (read as a Blob, in slices)", async () => {
+  const half = (c, id) => [{ ...c, id }];
+  const zip = makeZip({ "conversations-000.json": JSON.stringify(half(chatgpt[0], "a")), "conversations-001.json": JSON.stringify(half(chatgpt[0], "b")), "file-xyz.dat": "img", "chat.html": "<html>" });
+  const r = await W.readExport(new Blob([zip]));
+  assert.equal(r.kind, "chatgpt");
+  assert.equal(r.sessions.length, 2);
+  assert.equal(r.prompts.length, 4);
+  const bytes = await W.readExport(zip);
+  assert.equal(bytes.prompts.length, 4, "same from bytes (the CLI)");
+});

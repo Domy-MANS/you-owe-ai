@@ -13,23 +13,37 @@
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
 
+  /** Random access to the input: a File/Blob is read in slices, so a 500 MB export full of images never sits in memory. */
+  function source(input) {
+    if (typeof Blob !== "undefined" && input instanceof Blob) return {
+      size: input.size,
+      read: async function (a, b) { return new Uint8Array(await input.slice(a, b).arrayBuffer()); },
+    };
+    var u8 = new Uint8Array(input.buffer ? input.buffer : input, input.byteOffset || 0, input.byteLength);
+    return { size: u8.length, read: async function (a, b) { return u8.subarray(a, b); } };
+  }
+  function view(u8) { return new DataView(u8.buffer, u8.byteOffset, u8.byteLength); }
+
   /** Returns [{ name, read: async () => Uint8Array }] for every file in the zip. */
-  function listZip(buf) {
-    var u8 = new Uint8Array(buf), dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  async function listZip(input) {
+    var src = input && typeof input.read === "function" && "size" in input ? input : source(input);
+    var tailStart = Math.max(0, src.size - 65557), tail = await src.read(tailStart, src.size), tv = view(tail);
     var eocd = -1;
-    for (var i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+    for (var i = tail.length - 22; i >= 0; i--) if (tv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
     if (eocd < 0) throw new Error("not a zip file");
-    var count = dv.getUint16(eocd + 10, true), off = dv.getUint32(eocd + 16, true), out = [];
+    var count = tv.getUint16(eocd + 10, true), cdSize = tv.getUint32(eocd + 12, true), cdOff = tv.getUint32(eocd + 16, true);
+    var cd = await src.read(cdOff, cdOff + cdSize), dv = view(cd), off = 0, out = [];
     var dec = new TextDecoder();
     for (var n = 0; n < count; n++) {
-      if (dv.getUint32(off, true) !== 0x02014b50) break;
+      if (off + 46 > cd.length || dv.getUint32(off, true) !== 0x02014b50) break;
       var method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true);
       var nlen = dv.getUint16(off + 28, true), xlen = dv.getUint16(off + 30, true), clen = dv.getUint16(off + 32, true);
-      var local = dv.getUint32(off + 42, true), name = dec.decode(u8.subarray(off + 46, off + 46 + nlen));
+      var local = dv.getUint32(off + 42, true), name = dec.decode(cd.subarray(off + 46, off + 46 + nlen));
       (function (method, csize, local, name) {
         out.push({ name: name, read: async function () {
-          var start = local + 30 + dv.getUint16(local + 26, true) + dv.getUint16(local + 28, true);
-          var data = u8.subarray(start, start + csize);
+          var h = view(await src.read(local, local + 30));
+          var start = local + 30 + h.getUint16(26, true) + h.getUint16(28, true);
+          var data = await src.read(start, start + csize);
           if (method === 0) return data;
           if (method === 8) return inflateRaw(data);
           throw new Error("unsupported zip compression " + method);
@@ -110,22 +124,29 @@
   /** Accepts the export .zip or its conversations.json (as bytes). */
   function fail(code, msg) { var e = new Error(msg); e.code = code; return e; }
 
-  async function readExport(bytes) {
-    var u8 = new Uint8Array(bytes), json;
-    if (u8[0] === 0x50 && u8[1] === 0x4b) {
-      var files = listZip(u8), names = files.map(function (e) { return e.name; }).join("\n");
-      var entry = files.find(function (e) { return /(^|\/)conversations\.json$/.test(e.name); });
-      if (!entry) {
+  /** A ChatGPT or Claude.ai export: the .zip, or the conversations JSON. Accepts a File/Blob or bytes. */
+  async function readExport(input) {
+    var src = source(input), head = await src.read(0, 2), convs;
+    var parse = function (bytes) { try { return JSON.parse(new TextDecoder().decode(bytes)); } catch (e) { throw fail("not-json", "not a JSON file"); } };
+    if (head[0] === 0x50 && head[1] === 0x4b) {
+      var files = await listZip(src), names = files.map(function (e) { return e.name; }).join("\n");
+      // conversations.json, or (newer ChatGPT exports) conversations-000.json, conversations-001.json, ...
+      var parts = files.filter(function (e) { return /(^|\/)conversations(-\d+)?\.json$/.test(e.name); })
+        .sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+      if (!parts.length) {
         // Claude's export comes as several zips; point people at the right one
         if (/(^|\/)(users|login_history)\.json$/m.test(names)) throw fail("claude-metadata", "this is Claude's account file (light_metadata)");
         if (/memor/i.test(names)) throw fail("claude-memories", "this is Claude's memories file");
         if (/frame/i.test(names)) throw fail("claude-frames", "this is Claude's frames file");
         throw fail("no-conversations", "no conversations.json in this zip");
       }
-      json = new TextDecoder().decode(await entry.read());
-    } else json = new TextDecoder().decode(u8);
-    var convs;
-    try { convs = JSON.parse(json); } catch (e) { throw fail("not-json", "not a JSON file"); }
+      convs = [];
+      for (var i = 0; i < parts.length; i++) {
+        var one = parse(await parts[i].read());
+        if (!Array.isArray(one)) { convs = one; break; }
+        convs = convs.concat(one);
+      }
+    } else convs = parse(await src.read(0, src.size));
     if (convs && !Array.isArray(convs) && Array.isArray(convs.data_files)) throw fail("claude-manifest", "this is Claude's export manifest, not the chats");
     var kind = detect(convs);
     if (kind === "chatgpt") return Object.assign({ kind: kind }, parseChatGPT(convs));
