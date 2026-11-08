@@ -334,6 +334,24 @@ test("Doubao testifies: its own name on the bill, and the usual web-AI call (Dou
   await pg.close();
 });
 
+test("autoplay until the reader turns a page; then it stays there until they tap again", async () => {
+  const pg = await open(`${PAGE}?lang=en&demo`);
+  const cur = () => pg.$$eval(".slide", (s) => s.findIndex((e) => e.classList.contains("on")));
+  await sleep(500);
+  assert.equal(await cur(), 0);
+  await pg.mouse.click(350, 400); await sleep(300); // tap the right side: next page
+  assert.equal(await cur(), 1);
+  await sleep(9500); // longer than any page's autoplay time
+  assert.equal(await cur(), 1, "stays on the page the reader chose");
+  assert.equal(await pg.$$eval(".bars i", (b) => b.filter((x) => x.className === "now").length), 0, "no running progress bar");
+  await pg.mouse.click(20, 400); await sleep(300); // left side: back
+  assert.equal(await cur(), 0);
+  await pg.keyboard.press("ArrowRight"); await pg.keyboard.press("ArrowRight"); await sleep(300);
+  assert.equal(await cur(), 2);
+  assert.deepEqual(pg.errors, []);
+  await pg.close();
+});
+
 test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {
   const pg = await browser.newPage(); await pg.setViewport({ width: 1280, height: 900 });
   const errors = []; pg.on("pageerror", (e) => errors.push(e.message));

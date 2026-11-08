@@ -627,6 +627,7 @@ window.VWReport = function (DATA) {
   // ---------- player ----------
   var stage = document.getElementById("stage"), barsEl = document.getElementById("bars");
   var list_ = [], idx = 0, timer = null;
+  var manual = false; // autoplay until the reader turns a page themselves; from then on, pages stay put (like Instagram stories, paused)
   if (window.__vwStop) window.__vwStop(); // a previous report on this page stops its autoplay
   window.__vwStop = function () { clearTimeout(timer); };
   var still = /[?&]still\b/.test(location.search); // for screenshots: no autoplay
@@ -649,7 +650,7 @@ window.VWReport = function (DATA) {
     document.getElementById("hint").textContent = t().next;
     var dl = document.getElementById("dl"), again = document.getElementById("again");
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
-    if (again) again.onclick = function (e) { e.stopPropagation(); go(0); };
+    if (again) again.onclick = function (e) { e.stopPropagation(); manual = false; go(0); }; // replay: autoplay again
     var share = document.getElementById("share"), own = document.getElementById("own");
     if (own) own.onclick = function (e) {
       e.stopPropagation();
@@ -749,7 +750,7 @@ window.VWReport = function (DATA) {
       void bars[j].offsetWidth;
       bars[j].firstChild.style.animation = "";
     }
-    var dur = list_[idx].dur;
+    var dur = manual ? 0 : list_[idx].dur;
     if (dur) { bars[idx].className = "now"; bars[idx].style.setProperty("--dur", dur + "s"); }
     else bars[idx].className = "done";
     animateIn(secs[idx]);
@@ -759,11 +760,12 @@ window.VWReport = function (DATA) {
 
   stage.onclick = (function (e) {
     if (e.target.closest("button")) return;
+    manual = true;
     go(e.clientX < window.innerWidth / 3 ? idx - 1 : idx + 1);
   });
   document.onkeydown = (function (e) {
-    if (e.key === "ArrowRight" || e.key === " ") go(idx + 1);
-    if (e.key === "ArrowLeft") go(idx - 1);
+    if (e.key === "ArrowRight" || e.key === " ") { manual = true; go(idx + 1); }
+    if (e.key === "ArrowLeft") { manual = true; go(idx - 1); }
   });
   function toggleLang() {
     lang = lang === "zh" ? "en" : "zh";
