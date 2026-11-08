@@ -20,8 +20,20 @@
       callerTm: "法院",
       declined: "你挂了 AI 的电话", missed: "未接来电", laterTag: "随时回拨", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
-      gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
-      claSteps: "claude.ai → 头像 → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>。邮件里会列出好几个文件，只要下载 <b>conversations-000.zip</b>。",
+      importH: "导入聊天记录", importSub: "分两步：先让 ChatGPT 或 Claude 把记录发到你的邮箱，再把收到的 zip 放进来。",
+      gptSteps: [
+        "打开 ChatGPT 的<b>设置 → 数据控制（Data controls）</b>：<a href=\"https://chatgpt.com/#settings/DataControls\" target=\"_blank\" rel=\"noopener noreferrer\">直接打开 ↗</a>",
+        "点<b>导出数据（Export data）</b>，再点<b>确认导出</b>",
+        "等邮件。一般几分钟，聊得多要等几个小时。点邮件里的下载按钮（链接 24 小时内有效）",
+        "把下载的 zip 放到下面。<b>不用解压</b>，几百 MB 也没关系",
+      ],
+      claSteps: [
+        "打开 Claude 的<b>设置 → 隐私（Privacy）</b>：<a href=\"https://claude.ai/settings/data-privacy-controls\" target=\"_blank\" rel=\"noopener noreferrer\">直接打开 ↗</a>",
+        "点<b>导出数据（Export data）</b>",
+        "等邮件，打开里面的链接。会列出好几个文件，<b>只下载 conversations-000.zip</b>",
+        "把它放到下面。<b>不用解压</b>",
+      ],
+      homeLater: "等邮件的时候，可以先", homeTestify: "🧑‍⚖️ 让 AI 出庭作证（30 秒）",
       drop: "把导出的 zip 拖到这里，或者点这里选择", reading: "正在对账…",
       got: function (n, k) { return "✓ 读到 " + n + " 段 " + (k === "chatgpt" ? "ChatGPT" : "Claude 网页版") + " 对话"; },
       recalc: "重新算账", later: "邮件还没到？先挂了，拿到 zip 后点首页的「导入网页聊天」也行。",
@@ -50,8 +62,20 @@
       callerTm: "The Court",
       declined: "You hung up on AI", missed: "Missed call", laterTag: "Call back anytime", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
-      gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
-      claSteps: "claude.ai → your avatar → <b>Settings</b> → <b>Privacy</b> → <b>Export data</b>. The email lists several files: you only need <b>conversations-000.zip</b>.",
+      importH: "Import your chats", importSub: "Two steps: ask ChatGPT or Claude to email you your data, then drop the zip in here.",
+      gptSteps: [
+        "Open ChatGPT's <b>Settings → Data controls</b>: <a href=\"https://chatgpt.com/#settings/DataControls\" target=\"_blank\" rel=\"noopener noreferrer\">open it ↗</a>",
+        "Click <b>Export data</b>, then <b>Confirm export</b>",
+        "Wait for the email. Usually minutes; hours if you chat a lot. Click the download button in it (the link works for 24 hours)",
+        "Drop the zip below. <b>No need to unzip</b>, and a few hundred MB is fine",
+      ],
+      claSteps: [
+        "Open Claude's <b>Settings → Privacy</b>: <a href=\"https://claude.ai/settings/data-privacy-controls\" target=\"_blank\" rel=\"noopener noreferrer\">open it ↗</a>",
+        "Click <b>Export data</b>",
+        "Wait for the email and open its link. It lists several files: <b>only download conversations-000.zip</b>",
+        "Drop it below. <b>No need to unzip</b>",
+      ],
+      homeLater: "While you wait for the email, you can", homeTestify: "🧑‍⚖️ make AI testify (30 sec)",
       drop: "Drop the export zip here, or click to choose it", reading: "Auditing…",
       got: function (n, k) { return "✓ Found " + n + " " + (k === "chatgpt" ? "ChatGPT" : "Claude.ai") + " conversations"; },
       recalc: "Recalculate my bill", later: "Email not here yet? Hang up for now and use \"Import web chats\" on the home page later.",
@@ -149,12 +173,12 @@
   function answer(onImported, opts) {
     var quiet = opts && opts.quiet;
     // state, so a language switch can redraw every piece of text
-    var st = { secs: 0, said: 0, steps: null, drop: "idle", result: null };
+    var st = { secs: 0, said: 0, steps: "gpt", drop: "idle", result: null };
     var ov = el('<div class="call-ov' + (quiet ? " quiet" : "") + '"><button class="chip seg call-lang"></button>' +
-      '<div class="call-top"><div class="call-av big">' + (ctx.ai ? "⚖️" : "🤖") + '</div><b class="call-name"></b><span class="call-time"></span></div>' +
+      '<div class="call-top"><div class="call-av big">' + (ctx.ai ? "⚖️" : "🤖") + '</div><b class="call-name"></b><span class="call-time"></span>' + (quiet ? '<p class="call-sub"></p>' : "") + "</div>" +
       '<div class="call-lines"></div><div class="call-import" hidden>' +
       '<div class="call-pick"><button class="call-opt" data-k="gpt"></button><button class="call-opt" data-k="cla"></button></div>' +
-      '<p class="call-steps"></p><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span></span></label>' +
+      '<ol class="call-steps"></ol><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span></span></label>' +
       '<p class="call-later"></p></div><button class="call-btn no end">✕</button></div>');
     document.body.appendChild(ov);
     var box = ov.querySelector(".call-lines"), label = ov.querySelector(".call-drop span");
@@ -162,13 +186,20 @@
     var relabel = onLang(function () {
       var L = t(), cur = window.VW_LANG === "zh" ? "zh" : "en";
       ov.querySelector(".call-lang").innerHTML = '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>';
-      ov.querySelector(".call-name").textContent = ctx.ai ? L.callerTm : L.caller;
+      ov.querySelector(".call-name").textContent = quiet ? L.importH : ctx.ai ? L.callerTm : L.caller;
+      if (quiet) ov.querySelector(".call-sub").textContent = L.importSub;
       ov.querySelector(".call-time").textContent = clockText();
       var lines = say();
       box.innerHTML = lines.slice(0, st.said).map(function (x) { return '<p class="bubble still">' + x + "</p>"; }).join("");
       ov.querySelector('[data-k="gpt"]').textContent = L.gpt; ov.querySelector('[data-k="cla"]').textContent = L.cla;
-      ov.querySelector(".call-steps").innerHTML = st.steps === "gpt" ? L.gptSteps : st.steps === "cla" ? L.claSteps : "";
-      ov.querySelector(".call-later").textContent = L.later;
+      ov.querySelectorAll(".call-opt").forEach(function (b) { b.classList.toggle("on", b.dataset.k === st.steps); });
+      ov.querySelector(".call-steps").innerHTML = (st.steps === "cla" ? L.claSteps : L.gptSteps).map(function (x) { return "<li>" + x + "</li>"; }).join("");
+      var later = ov.querySelector(".call-later"), tf = quiet && document.getElementById("tf-open");
+      if (tf) {
+        later.innerHTML = L.homeLater + ' <button class="call-tf"></button>';
+        later.querySelector(".call-tf").textContent = L.homeTestify;
+        later.querySelector(".call-tf").onclick = function () { end(); tf.click(); };
+      } else later.textContent = L.later;
       if (st.drop === "idle") label.textContent = L.drop;
       else if (st.drop === "reading") label.textContent = L.reading;
       else if (st.drop === "bad") label.textContent = (st.badCode && L.badCodes[st.badCode]) || L.bad;

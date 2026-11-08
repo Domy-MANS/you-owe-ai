@@ -128,7 +128,11 @@ test("the call: decline → missed badge → call back → hang up → call-back
 test("the call follows the language switch: ringing, mid-call, badge, home page", async () => {
   const pg = await open(`${PAGE}?lang=zh`);
   await pg.click("#web"); await sleep(300);
-  assert.match(await text(pg, ".call-ov .call-later"), /邮件还没到/);
+  assert.match(await text(pg, ".call-ov .call-name"), /导入聊天记录/);
+  assert.match(await text(pg, ".call-ov .call-steps"), /数据控制.*导出数据.*等邮件.*不用解压/, "steps for ChatGPT shown right away");
+  await pg.click('.call-opt[data-k="cla"]');
+  assert.match(await text(pg, ".call-ov .call-steps"), /只下载 conversations-000\.zip/);
+  assert.match(await text(pg, ".call-ov .call-later"), /让 AI 出庭作证/);
   await pg.click(".call-ov .end");
   await pg.click("#demo"); await sleep(600);
   await pg.evaluate(() => window.VWCall.incoming(() => {})); await sleep(800);
