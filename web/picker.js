@@ -168,11 +168,20 @@
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
     S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
-    if (S.testimony) { var tr = VWTestimony.toRecords(S.testimony); sessions = sessions.concat(tr.sessions); prompts = prompts.concat(tr.prompts); }
+    // AI testimony: an estimate, used only when there are no real records from that AI.
+    // With real records it's cross-examined instead (the "perjury" page), never counted twice.
+    var tm = S.testimony, tool = tm && (tm.ai === "claude" ? "claudeai" : "chatgpt");
     var year = VWStats.defaultYear(prompts);
+    var realN = tm ? prompts.filter(function (p) { return p.tool === tool && new Date(p.ts).getFullYear() === year; }).length : 0;
+    if (tm && !realN) { var tr = VWTestimony.toRecords(tm); sessions = sessions.concat(tr.sessions); prompts = prompts.concat(tr.prompts); year = VWStats.defaultYear(prompts); }
     var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
-    if (S.testimony) { stats.roast = VWTestimony.mergeRoast(stats.roast, S.testimony); stats.testimony = { ai: S.testimony.ai, line: S.testimony.line }; }
+    if (tm && !realN) { stats.roast = VWTestimony.mergeRoast(stats.roast, tm); stats.testimony = { ai: tm.ai, line: tm.line }; }
+    if (tm && realN) {
+      var mine = S.web.filter(function (w) { return w.kind === tool; });
+      var rr = VWRoast.computeRoast([].concat.apply([], mine.map(function (w) { return w.texts; })), [].concat.apply([], mine.map(function (w) { return w.replies; })), { year: year });
+      stats.perjury = { ai: tm.ai, line: tm.line, said: [tm.prompts, tm.deny, tm.thanks], real: [realN, rr ? rr.you.deny : 0, rr ? rr.you.thanks : 0] };
+    }
     return stats;
   }
 
@@ -183,7 +192,8 @@
     document.body.classList.add("playing");
     window.VWReport(stats);
     // a few seconds into a real bill, the web AI calls to collect on your web chats
-    if (real && !S.web.length && !S.testimony && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
+    // on an AI-testimony bill, it's the court calling instead, to cross-examine the witness with the real records
+    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb, stats.testimony ? { ai: stats.testimony.ai === "claude" ? "Claude" : "ChatGPT" } : null); }, 6000);
   }
 
   function addWeb(r) {

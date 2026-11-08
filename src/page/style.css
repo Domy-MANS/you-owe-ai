@@ -306,3 +306,4 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .rc-witness { font-style: italic; }
 .rc-witness small { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: #7a6a52; margin-bottom: 2px; }
 .cmp .est { display: block; font-size: 10px; font-weight: 600; color: #2563eb; }
+.stamp.red.low { top: auto; bottom: -14px; right: -6px; transform: rotate(-12deg); }

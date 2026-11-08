@@ -277,10 +277,37 @@ test("on a phone: make AI testify, paste its reply, get a bill stamped as testim
     assert.doesNotMatch(all, /undefined|NaN/);
     assert.equal(await pg.evaluate(() => document.documentElement.scrollWidth), w);
     await sleep(6500);
-    assert.equal(await exists(pg, ".call-bar"), false, "no incoming call asking for exports on a testimony bill");
+    assert.match(await text(pg, ".call-bar .call-who"), /法院/, "on a testimony bill, the court calls instead");
     assert.deepEqual(errors, []);
     await pg.close();
   }
+});
+
+test("after AI testimony the court calls; real records cross-examine the witness instead of being counted twice", async () => {
+  const pg = await browser.newPage();
+  await pg.setUserAgent(IPHONE);
+  await pg.setViewport({ width: 375, height: 667, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  const errors = []; pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.goto(`${PAGE}?lang=zh&still`); await sleep(300);
+  await pg.click("#tf-open"); await sleep(200);
+  await pg.evaluate(() => { document.getElementById("tf-in").value = '{"yoa":1,"ai":"chatgpt","prompts":800,"active_days":90,"deny":3,"thanks":1,"ai_sorry":4,"swear":0,"why":2,"night_share":0.1,"peak_hour":15,"catchphrases":[],"roast":"一个很普通的老板"}'; });
+  await pg.click("#tf-go");
+  await pg.waitForSelector(".call-bar", { timeout: 9000 });
+  assert.match(await text(pg, ".call-bar .call-who"), /法院/);
+  await pg.click(".call-bar .yes"); await sleep(400);
+  await pg.waitForFunction(() => !document.querySelector(".call-import").hidden, { timeout: 9000 });
+  assert.match(await pg.$eval(".call-ov", (e) => e.textContent), /包庇你/);
+  await (await pg.$(".call-drop input")).uploadFile(zipPath); await sleep(1200);
+  await pg.click(".go-recalc"); await sleep(1500);
+  const all = await pg.$$eval(".slide", (s) => s.map((e) => e.innerText.replace(/\s+/g, " ")).join(" | "));
+  assert.match(all, /庭审记录.*口供.*实际.*消息条数 800 160/, "testimony vs the records");
+  assert.match(all, /多报了 400%/);
+  assert.match(all, /伪证/);
+  assert.match(all, /证人 ChatGPT 当庭陈述：.*很普通的老板/, "the witness still gets quoted");
+  assert.doesNotMatch(all, /AI 口供|凭记忆提供/, "the bill itself is the real records now");
+  assert.match(all, /160 次使唤 AI/, "not 800 + 160");
+  assert.deepEqual(errors, []);
+  await pg.close();
 });
 
 test("desktop home page: folder buttons open the picker, also after importing web chats first", async () => {

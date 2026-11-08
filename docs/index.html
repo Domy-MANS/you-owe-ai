@@ -327,6 +327,7 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .rc-witness { font-style: italic; }
 .rc-witness small { display: block; font-style: normal; font-size: 12px; font-weight: 600; color: #7a6a52; margin-bottom: 2px; }
 .cmp .est { display: block; font-size: 10px; font-weight: 600; color: #2563eb; }
+.stamp.red.low { top: auto; bottom: -14px; right: -6px; transform: rotate(-12deg); }
 
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
@@ -1184,7 +1185,8 @@ window.VWShare = (function () {
         R.ai.sorry, R.ai.flatter, R.ai.done, cp(R.catchphrases),
         R.angriestDay ? [R.angriestDay.date, R.angriestDay.count] : 0,
         R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0,
-      D.testimony ? [D.testimony.ai === "claude" ? 1 : 0, D.testimony.line || ""] : 0];
+      D.testimony ? [D.testimony.ai === "claude" ? 1 : 0, D.testimony.line || ""] : 0,
+      D.perjury ? [D.perjury.ai === "claude" ? 1 : 0, D.perjury.line || "", D.perjury.said, D.perjury.real] : 0];
   }
   function unpack(a) {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
@@ -1198,8 +1200,9 @@ window.VWShare = (function () {
     } : null;
     if (R && r[14]) R.catchphrases_zh = cp(r[14]);
     var tm = a[19] ? { ai: a[19][0] ? "claude" : "chatgpt", line: String(a[19][1] || "").slice(0, 90) } : null;
+    var pj = a[20] ? { ai: a[20][0] ? "claude" : "chatgpt", line: String(a[20][1] || "").slice(0, 90), said: a[20][2], real: a[20][3] } : null;
     return {
-      testimony: tm,
+      testimony: tm, perjury: pj,
       year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
       busiestDay: a[6] ? { date: a[6][0], prompts: a[6][1] } : null, workHours: a[7], totalTokens: a[8],
       tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: a[10],
@@ -1512,7 +1515,9 @@ window.VWReport = function (DATA) {
       company: "AI 打工有限公司", companySub: "AI WORKERS UNION · 账单",
       client: "客户", you: "你", them: "TA", period: "账期", periodV: D.year + " 全年", vendor: "服务方",
       due: "应付总额", seeMore: "明细见后页 👇", stamp: "逾期未付",
-      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供", tmFacts: function (n) { return "以上数字由证人 " + n + " 凭记忆提供。本公司不对其准确性负责，但照收不误。"; }, witness: function (n) { return "证人 " + n + " 当庭陈述："; },
+      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供",
+      pjK: "庭审记录", pjH: function (n) { return "证人 " + n + " 的口供 vs 实际记录"; }, pjSaid: "口供", pjReal: "实际", pjRows: ["消息条数", "否定 AI", "说谢谢"], pjStamp: "伪证",
+      pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "少报了 <b>" + p + "%</b>。它在包庇你。本账单按实际记录计费。" : r > 1.25 ? "多报了 <b>" + p + "%</b>。它在诬陷你。本账单按实际记录计费。" : "误差只有 <b>" + p + "%</b>。这位证人很诚实，建议给它加薪。"; }, tmFacts: function (n) { return "以上数字由证人 " + n + " 凭记忆提供。本公司不对其准确性负责，但照收不误。"; }, witness: function (n) { return "证人 " + n + " 当庭陈述："; },
       itemNo: function (n) { return "明细 " + "①②③④⑤"[n - 1]; },
       subtotal: "小计",
       items: {
@@ -1533,7 +1538,9 @@ window.VWReport = function (DATA) {
       company: "AI Workers Union", companySub: "INVOICE",
       client: "Client", you: "You", them: "Them", period: "Period", periodV: "All of " + D.year, vendor: "Vendor",
       due: "Amount due", seeMore: "Itemized charges ahead 👇", stamp: "PAST DUE",
-      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony", tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
+      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony",
+      pjK: "Court record", pjH: function (n) { return "Witness " + n + "'s testimony vs the records"; }, pjSaid: "Testified", pjReal: "Actual", pjRows: ["Messages", "Told AI it was wrong", "Said thanks"], pjStamp: "PERJURY",
+      pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "Under-reported by <b>" + p + "%</b>. It was covering for you. You're billed for the real records." : r > 1.25 ? "Over-reported by <b>" + p + "%</b>. It was framing you. You're billed for the real records." : "Off by only <b>" + p + "%</b>. An honest witness. Give it a raise."; }, tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
       itemNo: function (n) { return "Item #" + n; },
       subtotal: "Subtotal",
       items: {
@@ -1556,7 +1563,7 @@ window.VWReport = function (DATA) {
   var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
   function srcName(k) { var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
   /** Sources you actually used, most prompts first, with their share. */
-  function tmName(X) { return X.testimony && X.testimony.ai === "claude" ? "Claude" : "ChatGPT"; }
+  function tmName(X) { var w = X.testimony || X.perjury; return w && w.ai === "claude" ? "Claude" : "ChatGPT"; }
   function sources() {
     var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
       .filter(function (x) { return x.n > 0; }).sort(function (a, c) { return c.n - a.n; });
@@ -1647,6 +1654,16 @@ window.VWReport = function (DATA) {
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
+    // 1b. the AI's testimony, cross-examined against the real records
+    if (D.perjury) {
+      var PJ = D.perjury, said = PJ.said, realV = PJ.real;
+      var pgrid = '<div class="cmp"><span></span><b>' + K.pjSaid + "</b><b>" + K.pjReal + "</b>" +
+        K.pjRows.map(function (lbl, i) { return '<span class="lbl">' + lbl + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + fmt(said[i]) + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + fmt(realV[i]) + "</span>"; }).join("") + "</div>";
+      var ratio = realV[0] ? said[0] / realV[0] : 1;
+      add('<div class="pop"><div class="kicker">' + K.pjK + "</div>" + receipt(K.pjH(tmName(D)), pgrid + '<div class="rc-meme">' + K.pjVerdict(ratio) + "</div>" +
+        (ratio < 0.8 || ratio > 1.25 ? '<div class="stamp red low">' + K.pjStamp + "</div>" : "")) + "</div>", 8, giant("🧑‍⚖️", "right:-12%;bottom:-6%"));
+    }
+
     if (R) {
       // 2. emotional damages
       var p1 = [by.deny, by.sorry, by.thanks];
@@ -1699,7 +1716,7 @@ window.VWReport = function (DATA) {
     if (R) {
       var stars = creditRating(R) === "A" ? "★★★★★" : creditRating(R) === "B" ? "★★★☆☆" : "★☆☆☆☆";
       add('<div class="pop"><div class="kicker">' + K.reviewK + "</div>" + receipt(K.reviewH, '<div class="rc-stars">' + stars + "</div>" +
-        (D.testimony && D.testimony.line ? '<p class="rc-quote rc-witness"><small>' + K.witness(tmName(D)) + "</small>" + esc(D.testimony.line) + "</p>" : "") +
+        ((D.testimony || D.perjury || {}).line ? '<p class="rc-quote rc-witness"><small>' + K.witness(tmName(D)) + "</small>" + esc((D.testimony || D.perjury).line) + "</p>" : "") +
         L.roast(R).map(function (l) { return '<p class="rc-quote">' + esc(l) + "</p>"; }).join("")) + "</div>", 11, '<div class="deco spot"></div>');
     }
 
@@ -2024,6 +2041,13 @@ if (window.DATA) window.VWReport(window.DATA);
         "但你在网页上跟我聊的那些，还一分钱没算呢。",
         "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
       ]; },
+      linesTm: function (total, ai) { return [
+        "喂？是我，法院。关于 " + ai + " 那份口供。",
+        "它说你只欠 " + total + "。我们怀疑它在包庇你。",
+        "证人凭记忆作证，不算数。我们要看原始记录。",
+        "把聊天记录导出来，当庭对质。放心，数据不出你的浏览器。",
+      ]; },
+      callerTm: "法院",
       declined: "你挂了 AI 的电话", missed: "未接来电", laterTag: "随时回拨", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
       gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
@@ -2047,6 +2071,13 @@ if (window.DATA) window.VWReport(window.DATA);
         "But everything you said to me on the web? Not billed yet.",
         "Export your chats and send them over. Don't worry, the data never leaves your browser.",
       ]; },
+      linesTm: function (total, ai) { return [
+        "Hello? This is the court, about " + ai + "'s testimony.",
+        "It says you only owe " + total + ". We think it's covering for you.",
+        "Testimony from memory doesn't count. We need the records.",
+        "Export your chats and we'll cross-examine. Don't worry, the data never leaves your browser.",
+      ]; },
+      callerTm: "The Court",
       declined: "You hung up on AI", missed: "Missed call", laterTag: "Call back anytime", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
       gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
@@ -2093,13 +2124,14 @@ if (window.DATA) window.VWReport(window.DATA);
   function stopRing() { clearInterval(ringTimer); ringTimer = null; try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {} }
 
   // ---- the incoming-call banner ----
-  var shown = false;
-  function incoming(onImported) {
-    if (shown) return; shown = true;
-    var bar = el('<div class="call-bar"><div class="call-av">🤖</div><div class="call-who"><b></b><span></span></div><button class="call-btn no">✕</button><button class="call-btn yes">✆</button></div>');
+  var shown = false, ctx = {}; // ctx.ai: the witness, when the bill is AI testimony
+  function say() { var L = t(); return ctx.ai ? L.linesTm(window.VW_TOTAL || "?", ctx.ai) : L.lines(window.VW_TOTAL || "?"); }
+  function incoming(onImported, opts) {
+    if (shown) return; shown = true; ctx = opts || {};
+    var bar = el('<div class="call-bar"><div class="call-av">' + (ctx.ai ? "⚖️" : "🤖") + '</div><div class="call-who"><b></b><span></span></div><button class="call-btn no">✕</button><button class="call-btn yes">✆</button></div>');
     var relabelBar = onLang(function () {
       var L = t();
-      bar.querySelector(".call-who b").textContent = L.caller; bar.querySelector(".call-who span").textContent = L.incoming;
+      bar.querySelector(".call-who b").textContent = ctx.ai ? L.callerTm : L.caller; bar.querySelector(".call-who span").textContent = L.incoming;
       bar.querySelector(".no").setAttribute("aria-label", L.decline); bar.querySelector(".yes").setAttribute("aria-label", L.accept);
     });
     bar.onclick = function (e) { e.stopPropagation(); }; // taps on the banner don't turn the page
@@ -2149,7 +2181,7 @@ if (window.DATA) window.VWReport(window.DATA);
     // state, so a language switch can redraw every piece of text
     var st = { secs: 0, said: 0, steps: null, drop: "idle", result: null };
     var ov = el('<div class="call-ov' + (quiet ? " quiet" : "") + '"><button class="chip seg call-lang"></button>' +
-      '<div class="call-top"><div class="call-av big">🤖</div><b class="call-name"></b><span class="call-time"></span></div>' +
+      '<div class="call-top"><div class="call-av big">' + (ctx.ai ? "⚖️" : "🤖") + '</div><b class="call-name"></b><span class="call-time"></span></div>' +
       '<div class="call-lines"></div><div class="call-import" hidden>' +
       '<div class="call-pick"><button class="call-opt" data-k="gpt"></button><button class="call-opt" data-k="cla"></button></div>' +
       '<p class="call-steps"></p><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span></span></label>' +
@@ -2160,9 +2192,9 @@ if (window.DATA) window.VWReport(window.DATA);
     var relabel = onLang(function () {
       var L = t(), cur = window.VW_LANG === "zh" ? "zh" : "en";
       ov.querySelector(".call-lang").innerHTML = '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>';
-      ov.querySelector(".call-name").textContent = L.caller;
+      ov.querySelector(".call-name").textContent = ctx.ai ? L.callerTm : L.caller;
       ov.querySelector(".call-time").textContent = clockText();
-      var lines = L.lines(window.VW_TOTAL || "?");
+      var lines = say();
       box.innerHTML = lines.slice(0, st.said).map(function (x) { return '<p class="bubble still">' + x + "</p>"; }).join("");
       ov.querySelector('[data-k="gpt"]').textContent = L.gpt; ov.querySelector('[data-k="cla"]').textContent = L.cla;
       ov.querySelector(".call-steps").innerHTML = st.steps === "gpt" ? L.gptSteps : st.steps === "cla" ? L.claSteps : "";
@@ -2183,7 +2215,7 @@ if (window.DATA) window.VWReport(window.DATA);
     var clock = setInterval(function () { st.secs++; ov.querySelector(".call-time").textContent = clockText(); }, 1000);
     var total = quiet ? 0 : 4, timers = [];
     for (var i = 0; i < total; i++) (function (i) {
-      timers.push(setTimeout(function () { st.said = i + 1; box.appendChild(el('<p class="bubble">' + t().lines(window.VW_TOTAL || "?")[i] + "</p>")); }, 600 + i * 1300));
+      timers.push(setTimeout(function () { st.said = i + 1; box.appendChild(el('<p class="bubble">' + say()[i] + "</p>")); }, 600 + i * 1300));
     })(i);
     timers.push(setTimeout(function () { ov.querySelector(".call-import").hidden = false; }, quiet ? 0 : 600 + total * 1300));
     ov.querySelectorAll(".call-opt").forEach(function (b) { b.onclick = function () { st.steps = b.dataset.k; relabel(); }; });
@@ -2433,11 +2465,20 @@ window.VWTestify = (function () {
     var sessions = cl.sessions.concat(cx.sessions), prompts = cl.prompts.concat(cx.prompts);
     var texts = VWParse.promptTexts(c.history, x.history), replies = VWParse.replyTexts(c.files, x.files);
     S.web.forEach(function (w) { sessions = sessions.concat(w.sessions); prompts = prompts.concat(w.prompts); texts = texts.concat(w.texts); replies = replies.concat(w.replies); });
-    if (S.testimony) { var tr = VWTestimony.toRecords(S.testimony); sessions = sessions.concat(tr.sessions); prompts = prompts.concat(tr.prompts); }
+    // AI testimony: an estimate, used only when there are no real records from that AI.
+    // With real records it's cross-examined instead (the "perjury" page), never counted twice.
+    var tm = S.testimony, tool = tm && (tm.ai === "claude" ? "claudeai" : "chatgpt");
     var year = VWStats.defaultYear(prompts);
+    var realN = tm ? prompts.filter(function (p) { return p.tool === tool && new Date(p.ts).getFullYear() === year; }).length : 0;
+    if (tm && !realN) { var tr = VWTestimony.toRecords(tm); sessions = sessions.concat(tr.sessions); prompts = prompts.concat(tr.prompts); year = VWStats.defaultYear(prompts); }
     var stats = VWStats.computeStats({ sessions: sessions, prompts: prompts }, { year: year });
     stats.roast = VWRoast.computeRoast(texts, replies, { year: year });
-    if (S.testimony) { stats.roast = VWTestimony.mergeRoast(stats.roast, S.testimony); stats.testimony = { ai: S.testimony.ai, line: S.testimony.line }; }
+    if (tm && !realN) { stats.roast = VWTestimony.mergeRoast(stats.roast, tm); stats.testimony = { ai: tm.ai, line: tm.line }; }
+    if (tm && realN) {
+      var mine = S.web.filter(function (w) { return w.kind === tool; });
+      var rr = VWRoast.computeRoast([].concat.apply([], mine.map(function (w) { return w.texts; })), [].concat.apply([], mine.map(function (w) { return w.replies; })), { year: year });
+      stats.perjury = { ai: tm.ai, line: tm.line, said: [tm.prompts, tm.deny, tm.thanks], real: [realN, rr ? rr.you.deny : 0, rr ? rr.you.thanks : 0] };
+    }
     return stats;
   }
 
@@ -2448,7 +2489,8 @@ window.VWTestify = (function () {
     document.body.classList.add("playing");
     window.VWReport(stats);
     // a few seconds into a real bill, the web AI calls to collect on your web chats
-    if (real && !S.web.length && !S.testimony && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb); }, 6000);
+    // on an AI-testimony bill, it's the court calling instead, to cross-examine the witness with the real records
+    if (real && !S.web.length && window.VWCall) setTimeout(function () { window.VWCall.incoming(addWeb, stats.testimony ? { ai: stats.testimony.ai === "claude" ? "Claude" : "ChatGPT" } : null); }, 6000);
   }
 
   function addWeb(r) {

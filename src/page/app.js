@@ -42,7 +42,8 @@ window.VWShare = (function () {
         R.ai.sorry, R.ai.flatter, R.ai.done, cp(R.catchphrases),
         R.angriestDay ? [R.angriestDay.date, R.angriestDay.count] : 0,
         R.latest ? [R.latest.time, R.latest.day] : 0, r5(R.tinyShare), R.catchphrases_zh ? cp(R.catchphrases_zh) : 0] : 0,
-      D.testimony ? [D.testimony.ai === "claude" ? 1 : 0, D.testimony.line || ""] : 0];
+      D.testimony ? [D.testimony.ai === "claude" ? 1 : 0, D.testimony.line || ""] : 0,
+      D.perjury ? [D.perjury.ai === "claude" ? 1 : 0, D.perjury.line || "", D.perjury.said, D.perjury.real] : 0];
   }
   function unpack(a) {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: a[9][i] || 0, tokens: 0 }; });
@@ -56,8 +57,9 @@ window.VWShare = (function () {
     } : null;
     if (R && r[14]) R.catchphrases_zh = cp(r[14]);
     var tm = a[19] ? { ai: a[19][0] ? "claude" : "chatgpt", line: String(a[19][1] || "").slice(0, 90) } : null;
+    var pj = a[20] ? { ai: a[20][0] ? "claude" : "chatgpt", line: String(a[20][1] || "").slice(0, 90), said: a[20][2], real: a[20][3] } : null;
     return {
-      testimony: tm,
+      testimony: tm, perjury: pj,
       year: a[1], empty: false, prompts: a[2], sessions: a[3], activeDays: a[4], streak: { days: a[5], end: null },
       busiestDay: a[6] ? { date: a[6][0], prompts: a[6][1] } : null, workHours: a[7], totalTokens: a[8],
       tokens: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 }, byTool: byTool, toolCalls: a[10],
@@ -370,7 +372,9 @@ window.VWReport = function (DATA) {
       company: "AI 打工有限公司", companySub: "AI WORKERS UNION · 账单",
       client: "客户", you: "你", them: "TA", period: "账期", periodV: D.year + " 全年", vendor: "服务方",
       due: "应付总额", seeMore: "明细见后页 👇", stamp: "逾期未付",
-      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供", tmFacts: function (n) { return "以上数字由证人 " + n + " 凭记忆提供。本公司不对其准确性负责，但照收不误。"; }, witness: function (n) { return "证人 " + n + " 当庭陈述："; },
+      evidence: "证据", evidenceV: function (n) { return n + " 的口供（AI 估算）"; }, tmStamp: "AI 口供", tmShort: "口供",
+      pjK: "庭审记录", pjH: function (n) { return "证人 " + n + " 的口供 vs 实际记录"; }, pjSaid: "口供", pjReal: "实际", pjRows: ["消息条数", "否定 AI", "说谢谢"], pjStamp: "伪证",
+      pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "少报了 <b>" + p + "%</b>。它在包庇你。本账单按实际记录计费。" : r > 1.25 ? "多报了 <b>" + p + "%</b>。它在诬陷你。本账单按实际记录计费。" : "误差只有 <b>" + p + "%</b>。这位证人很诚实，建议给它加薪。"; }, tmFacts: function (n) { return "以上数字由证人 " + n + " 凭记忆提供。本公司不对其准确性负责，但照收不误。"; }, witness: function (n) { return "证人 " + n + " 当庭陈述："; },
       itemNo: function (n) { return "明细 " + "①②③④⑤"[n - 1]; },
       subtotal: "小计",
       items: {
@@ -391,7 +395,9 @@ window.VWReport = function (DATA) {
       company: "AI Workers Union", companySub: "INVOICE",
       client: "Client", you: "You", them: "Them", period: "Period", periodV: "All of " + D.year, vendor: "Vendor",
       due: "Amount due", seeMore: "Itemized charges ahead 👇", stamp: "PAST DUE",
-      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony", tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
+      evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony",
+      pjK: "Court record", pjH: function (n) { return "Witness " + n + "'s testimony vs the records"; }, pjSaid: "Testified", pjReal: "Actual", pjRows: ["Messages", "Told AI it was wrong", "Said thanks"], pjStamp: "PERJURY",
+      pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "Under-reported by <b>" + p + "%</b>. It was covering for you. You're billed for the real records." : r > 1.25 ? "Over-reported by <b>" + p + "%</b>. It was framing you. You're billed for the real records." : "Off by only <b>" + p + "%</b>. An honest witness. Give it a raise."; }, tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
       itemNo: function (n) { return "Item #" + n; },
       subtotal: "Subtotal",
       items: {
@@ -414,7 +420,7 @@ window.VWReport = function (DATA) {
   var SRC = { claude: "Claude Code", codex: "Codex", chatgpt: "ChatGPT", claudeai: { zh: "Claude 网页版", en: "Claude.ai" } };
   function srcName(k) { var n = SRC[k] || k; return typeof n === "string" ? n : n[lang]; }
   /** Sources you actually used, most prompts first, with their share. */
-  function tmName(X) { return X.testimony && X.testimony.ai === "claude" ? "Claude" : "ChatGPT"; }
+  function tmName(X) { var w = X.testimony || X.perjury; return w && w.ai === "claude" ? "Claude" : "ChatGPT"; }
   function sources() {
     var tot = 0, list = Object.keys(D.byTool).map(function (k) { tot += D.byTool[k].prompts; return { k: k, n: D.byTool[k].prompts }; })
       .filter(function (x) { return x.n > 0; }).sort(function (a, c) { return c.n - a.n; });
@@ -505,6 +511,16 @@ window.VWReport = function (DATA) {
       '<div class="rc-note">' + K.seeMore + '</div><div class="stamp red">' + K.stamp + "</div>" + (D.testimony ? '<div class="stamp tm">' + K.tmStamp + "</div>" : "")) +
       '<div class="privacy">' + (D.shared ? L.sharedPrivacy : L.privacy) + "</div></div>", 6, tile("🧾", 60, "40px"));
 
+    // 1b. the AI's testimony, cross-examined against the real records
+    if (D.perjury) {
+      var PJ = D.perjury, said = PJ.said, realV = PJ.real;
+      var pgrid = '<div class="cmp"><span></span><b>' + K.pjSaid + "</b><b>" + K.pjReal + "</b>" +
+        K.pjRows.map(function (lbl, i) { return '<span class="lbl">' + lbl + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + fmt(said[i]) + '</span><span class="v' + (i === 0 ? " big" : "") + '">' + fmt(realV[i]) + "</span>"; }).join("") + "</div>";
+      var ratio = realV[0] ? said[0] / realV[0] : 1;
+      add('<div class="pop"><div class="kicker">' + K.pjK + "</div>" + receipt(K.pjH(tmName(D)), pgrid + '<div class="rc-meme">' + K.pjVerdict(ratio) + "</div>" +
+        (ratio < 0.8 || ratio > 1.25 ? '<div class="stamp red low">' + K.pjStamp + "</div>" : "")) + "</div>", 8, giant("🧑‍⚖️", "right:-12%;bottom:-6%"));
+    }
+
     if (R) {
       // 2. emotional damages
       var p1 = [by.deny, by.sorry, by.thanks];
@@ -557,7 +573,7 @@ window.VWReport = function (DATA) {
     if (R) {
       var stars = creditRating(R) === "A" ? "★★★★★" : creditRating(R) === "B" ? "★★★☆☆" : "★☆☆☆☆";
       add('<div class="pop"><div class="kicker">' + K.reviewK + "</div>" + receipt(K.reviewH, '<div class="rc-stars">' + stars + "</div>" +
-        (D.testimony && D.testimony.line ? '<p class="rc-quote rc-witness"><small>' + K.witness(tmName(D)) + "</small>" + esc(D.testimony.line) + "</p>" : "") +
+        ((D.testimony || D.perjury || {}).line ? '<p class="rc-quote rc-witness"><small>' + K.witness(tmName(D)) + "</small>" + esc((D.testimony || D.perjury).line) + "</p>" : "") +
         L.roast(R).map(function (l) { return '<p class="rc-quote">' + esc(l) + "</p>"; }).join("")) + "</div>", 11, '<div class="deco spot"></div>');
     }
 

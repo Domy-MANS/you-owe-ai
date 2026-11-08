@@ -11,6 +11,13 @@
         "但你在网页上跟我聊的那些，还一分钱没算呢。",
         "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
       ]; },
+      linesTm: function (total, ai) { return [
+        "喂？是我，法院。关于 " + ai + " 那份口供。",
+        "它说你只欠 " + total + "。我们怀疑它在包庇你。",
+        "证人凭记忆作证，不算数。我们要看原始记录。",
+        "把聊天记录导出来，当庭对质。放心，数据不出你的浏览器。",
+      ]; },
+      callerTm: "法院",
       declined: "你挂了 AI 的电话", missed: "未接来电", laterTag: "随时回拨", callBack: "回拨",
       gpt: "我用 ChatGPT", cla: "我用 Claude 网页版",
       gptSteps: "ChatGPT → 头像 → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → 确认。邮件到了以后下载 zip。",
@@ -34,6 +41,13 @@
         "But everything you said to me on the web? Not billed yet.",
         "Export your chats and send them over. Don't worry, the data never leaves your browser.",
       ]; },
+      linesTm: function (total, ai) { return [
+        "Hello? This is the court, about " + ai + "'s testimony.",
+        "It says you only owe " + total + ". We think it's covering for you.",
+        "Testimony from memory doesn't count. We need the records.",
+        "Export your chats and we'll cross-examine. Don't worry, the data never leaves your browser.",
+      ]; },
+      callerTm: "The Court",
       declined: "You hung up on AI", missed: "Missed call", laterTag: "Call back anytime", callBack: "Call back",
       gpt: "I use ChatGPT", cla: "I use Claude.ai",
       gptSteps: "ChatGPT → your avatar → <b>Settings</b> → <b>Data controls</b> → <b>Export data</b> → confirm. Download the zip from the email.",
@@ -80,13 +94,14 @@
   function stopRing() { clearInterval(ringTimer); ringTimer = null; try { if (navigator.vibrate) navigator.vibrate(0); } catch (e) {} }
 
   // ---- the incoming-call banner ----
-  var shown = false;
-  function incoming(onImported) {
-    if (shown) return; shown = true;
-    var bar = el('<div class="call-bar"><div class="call-av">🤖</div><div class="call-who"><b></b><span></span></div><button class="call-btn no">✕</button><button class="call-btn yes">✆</button></div>');
+  var shown = false, ctx = {}; // ctx.ai: the witness, when the bill is AI testimony
+  function say() { var L = t(); return ctx.ai ? L.linesTm(window.VW_TOTAL || "?", ctx.ai) : L.lines(window.VW_TOTAL || "?"); }
+  function incoming(onImported, opts) {
+    if (shown) return; shown = true; ctx = opts || {};
+    var bar = el('<div class="call-bar"><div class="call-av">' + (ctx.ai ? "⚖️" : "🤖") + '</div><div class="call-who"><b></b><span></span></div><button class="call-btn no">✕</button><button class="call-btn yes">✆</button></div>');
     var relabelBar = onLang(function () {
       var L = t();
-      bar.querySelector(".call-who b").textContent = L.caller; bar.querySelector(".call-who span").textContent = L.incoming;
+      bar.querySelector(".call-who b").textContent = ctx.ai ? L.callerTm : L.caller; bar.querySelector(".call-who span").textContent = L.incoming;
       bar.querySelector(".no").setAttribute("aria-label", L.decline); bar.querySelector(".yes").setAttribute("aria-label", L.accept);
     });
     bar.onclick = function (e) { e.stopPropagation(); }; // taps on the banner don't turn the page
@@ -136,7 +151,7 @@
     // state, so a language switch can redraw every piece of text
     var st = { secs: 0, said: 0, steps: null, drop: "idle", result: null };
     var ov = el('<div class="call-ov' + (quiet ? " quiet" : "") + '"><button class="chip seg call-lang"></button>' +
-      '<div class="call-top"><div class="call-av big">🤖</div><b class="call-name"></b><span class="call-time"></span></div>' +
+      '<div class="call-top"><div class="call-av big">' + (ctx.ai ? "⚖️" : "🤖") + '</div><b class="call-name"></b><span class="call-time"></span></div>' +
       '<div class="call-lines"></div><div class="call-import" hidden>' +
       '<div class="call-pick"><button class="call-opt" data-k="gpt"></button><button class="call-opt" data-k="cla"></button></div>' +
       '<p class="call-steps"></p><label class="call-drop"><input type="file" accept=".zip,.json" hidden><span></span></label>' +
@@ -147,9 +162,9 @@
     var relabel = onLang(function () {
       var L = t(), cur = window.VW_LANG === "zh" ? "zh" : "en";
       ov.querySelector(".call-lang").innerHTML = '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>';
-      ov.querySelector(".call-name").textContent = L.caller;
+      ov.querySelector(".call-name").textContent = ctx.ai ? L.callerTm : L.caller;
       ov.querySelector(".call-time").textContent = clockText();
-      var lines = L.lines(window.VW_TOTAL || "?");
+      var lines = say();
       box.innerHTML = lines.slice(0, st.said).map(function (x) { return '<p class="bubble still">' + x + "</p>"; }).join("");
       ov.querySelector('[data-k="gpt"]').textContent = L.gpt; ov.querySelector('[data-k="cla"]').textContent = L.cla;
       ov.querySelector(".call-steps").innerHTML = st.steps === "gpt" ? L.gptSteps : st.steps === "cla" ? L.claSteps : "";
@@ -170,7 +185,7 @@
     var clock = setInterval(function () { st.secs++; ov.querySelector(".call-time").textContent = clockText(); }, 1000);
     var total = quiet ? 0 : 4, timers = [];
     for (var i = 0; i < total; i++) (function (i) {
-      timers.push(setTimeout(function () { st.said = i + 1; box.appendChild(el('<p class="bubble">' + t().lines(window.VW_TOTAL || "?")[i] + "</p>")); }, 600 + i * 1300));
+      timers.push(setTimeout(function () { st.said = i + 1; box.appendChild(el('<p class="bubble">' + say()[i] + "</p>")); }, 600 + i * 1300));
     })(i);
     timers.push(setTimeout(function () { ov.querySelector(".call-import").hidden = false; }, quiet ? 0 : 600 + total * 1300));
     ov.querySelectorAll(".call-opt").forEach(function (b) { b.onclick = function () { st.steps = b.dataset.k; relabel(); }; });

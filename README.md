@@ -50,7 +50,7 @@ A few seconds into your invoice, the AI you chat with on the web calls to collec
 
 ## No export? Make AI testify
 
-Exporting your ChatGPT history can take hours to arrive by email. Instead, tap **Make AI testify**: the page opens ChatGPT or Claude with a subpoena asking it to estimate, from its memory of your past chats, how you treated it this year. It replies with a short code block; paste it back and your bill is ready in about 30 seconds. The numbers are the AI's own estimate, so the bill gets an **AI TESTIMONY** stamp, the comparison page marks it, and the client review quotes the witness. It needs the AI's memory turned on (in ChatGPT: Settings → Personalization → Reference chat history). The page still makes no network requests: you carry the text over yourself.
+Exporting your ChatGPT history can take hours to arrive by email. Instead, tap **Make AI testify**: the page opens ChatGPT or Claude with a subpoena asking it to estimate, from its memory of your past chats, how you treated it this year. It replies with a short code block; paste it back and your bill is ready in about 30 seconds. The numbers are the AI's own estimate, so the bill gets an **AI TESTIMONY** stamp, the comparison page marks it, and the client review quotes the witness. Halfway through, the court calls asking for the real records. If you later import your real chats from the same AI, they replace the estimate, and a **court record** page puts the testimony next to the facts (one ChatGPT said 850 messages; the export said 3,502: PERJURY). It needs the AI's memory turned on (in ChatGPT: Settings → Personalization → Reference chat history). The page still makes no network requests: you carry the text over yourself.
 
 ## Compare with a friend
 
