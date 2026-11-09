@@ -524,12 +524,12 @@ window.VWReport = function (DATA) {
   // The court: evidence, your excuse (overruled), then your plea and the ruling. fresh = the part that just happened, which animates in.
   function pleaBody(fresh) {
     var K = t(), them = D.shared, p = myPlea(), d = myDefense(), R = roastL();
-    var nw = function (part) { return fresh === part ? " ct-new" : ""; };
+    var nw = function (part) { return fresh === part || (fresh === "def" && part === "plea") ? " ct-new" : ""; }; // an excuse given after the plea brings the ruling back with it
     var h = '<div class="rc-note">' + K.ctOpen + "</div>" +
       exhibits().map(function (e, i) { return '<div class="rc-meme ct-ev"><span class="ct-n">' + (i + 1) + "</span><span>" + e + "</span></div>"; }).join("");
     if (d) h += '<div class="ct-turn' + nw("def") + '"><div class="ct-said"><small>' + K.ctWho + "</small>" + K.def[d](R) + "</div>" +
       '<div class="ct-rebut"><span class="ct-no">' + K.ctNo + "</span>" + K.rebut[d](R, money(-RATES[lang].thanks), D.testimony) + "</div></div>";
-    else if (!p && !them) return h + '<div class="rc-note ct-ask">' + K.ctAsk + '</div><div class="plea-btns ct-defs">' +
+    else if (!them) return h + '<div class="rc-note ct-ask">' + K.ctAsk + '</div><div class="plea-btns ct-defs">' +
       defenses().map(function (k) { return '<button class="btn ghost ct-def" data-d="' + k + '">' + K.def[k](R) + "</button>"; }).join("") + "</div>";
     if (!p) return h + (them ? "" : '<div class="ct-last' + nw("def") + '"><div class="rc-note">' + K.ctLast + '</div><div class="plea-btns"><button class="btn plea-btn" data-p="guilty">' + K.pleaPay + '</button><button class="btn plea-btn ghost" data-p="refuse">' + K.pleaRefuse + "</button></div>" +
       '<div class="rc-note">' + K.pleaWait + "</div></div>");
@@ -561,6 +561,8 @@ window.VWReport = function (DATA) {
     else if (!manual && !flip) timer = setTimeout(function () { go(idx + 1); }, 6000); // ruling read, the bill goes on
   }
   function wirePlea() {
+    var box = document.getElementById("plea");
+    if (box) box.onclick = function (e) { e.stopPropagation(); }; // a tap on the trial (say, on a button still printing in) doesn't turn the page
     document.querySelectorAll(".ct-def").forEach(function (btn) {
       btn.onclick = function (e) { e.stopPropagation(); defend(btn.getAttribute("data-d")); };
     });
@@ -574,9 +576,9 @@ window.VWReport = function (DATA) {
   function playTrial(box) {
     var part = box.querySelector(".ct-new");
     if (!part || still) return;
-    var lines = part.querySelectorAll(".rc-note, .ct-said, .ct-rebut, .plea-pick, .rc-meme, .plea-btns, .plea-appeal"), step = 0.35;
+    var lines = box.querySelectorAll(".ct-new .rc-note, .ct-new .ct-said, .ct-new .ct-rebut, .ct-new .plea-pick, .ct-new .rc-meme, .ct-new .plea-btns, .ct-new .plea-appeal"), step = 0.35;
     lines.forEach(function (ln, i) { ln.style.setProperty("--d", (0.1 + i * step).toFixed(2) + "s"); ln.classList.add("printed"); tick(0.1 + i * step); });
-    var no = part.querySelector(".ct-no"), gv = part.querySelector(".ct-gavel"), st = part.querySelector(".stamp");
+    var no = box.querySelector(".ct-new .ct-no"), gv = box.querySelector(".ct-new .ct-gavel"), st = box.querySelector(".ct-new .stamp");
     var at = function (k) { var i = Array.prototype.indexOf.call(lines, k); return 0.1 + Math.max(0, i) * step; };
     if (no) { no.style.animationDelay = (at(no.parentNode) + 0.3).toFixed(2) + "s"; no.classList.add("hit"); thud(at(no.parentNode) + 0.4); }
     if (gv) { gv.style.animationDelay = (at(gv.parentNode) + 0.1).toFixed(2) + "s"; gv.classList.add("hit"); thud(at(gv.parentNode) + 0.3); }
@@ -900,11 +902,12 @@ window.VWReport = function (DATA) {
     g.gain.setValueAtTime(0.22, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.2);
     o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + 0.22);
   }
-  var PRINT = ".rc-head, .rc-title, .rc-row, .rc-item, .rc-sub, hr.rc, .rc-label, .rc-total, .rc-note, .rc-meme, .rc-facts, .rc-quote, .rc-stars, .rc-persona, .rc-clock, .rc-axis";
+  var PRINT = ".rc-head, .rc-title, .rc-row, .rc-item, .rc-sub, hr.rc, .rc-label, .rc-total, .rc-note, .rc-meme, .ct-said, .ct-rebut, .plea-pick, .plea-btns, .plea-appeal, .rc-facts, .rc-quote, .rc-stars, .rc-persona, .rc-clock, .rc-axis";
   function printReceipt(el) {
     var rc = el.querySelector(".receipt");
     if (!rc || still) return;
-    var lines = rc.querySelectorAll(PRINT), start = 0.35, step = 0.11;
+    var court = !!el.querySelector("#plea"); // the trial is read, not skimmed: it prints slower, and OVERRULED and the gavel land
+    var lines = rc.querySelectorAll(PRINT), start = 0.35, step = court ? 0.3 : 0.11;
     lines.forEach(function (ln, i) {
       ln.classList.remove("printed"); void ln.offsetWidth;
       ln.style.setProperty("--d", (start + i * step).toFixed(2) + "s"); ln.classList.add("printed");
@@ -912,6 +915,12 @@ window.VWReport = function (DATA) {
     });
     var done = start + lines.length * step + 0.15;
     if (el.querySelector("[data-amt]")) done = Math.max(done, start + 5 * step + 1.1 + 0.15); // stamp after the total settles
+    var hit = function (sel) {
+      var x = el.querySelector(sel); if (!x) return;
+      var d = parseFloat((x.closest(".printed") || x).style.getPropertyValue("--d")) || 0;
+      x.classList.remove("hit"); void x.offsetWidth; x.style.animationDelay = (d + 0.25).toFixed(2) + "s"; x.classList.add("hit"); thud(d + 0.35);
+    };
+    if (court) { hit(".ct-no"); hit(".ct-gavel"); }
     var st = el.querySelector(".stamp");
     if (st) { st.style.animation = "none"; void st.offsetWidth; st.style.animation = ""; st.style.animationDelay = done.toFixed(2) + "s"; thud(done + 0.12); }
     el.querySelectorAll("[data-amt]").forEach(function (n) {

@@ -547,6 +547,15 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   await pg.click("#appeal"); await sleep(400); // back where you started: no verdict change to report
   assert.doesNotMatch(await text(pg, "#plea"), /改判/, "flipping back to the original choice isn't a change");
   assert.match(await text(pg, "#appeal"), /良心发现/);
+  // a plea from before the trial existed: the excuse is asked for first, then the ruling comes back
+  await pg.evaluate(() => localStorage.setItem("vw-plea", JSON.stringify({ y: window.VW_DEMO.year, p: "refuse" })));
+  await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(600);
+  await pg.keyboard.press("ArrowRight"); await sleep(300);
+  assert.equal(await pg.$$eval(".slide.on .ct-def", (b) => b.length), 3, "old plea, no excuse yet: asked for one");
+  assert.equal(await pg.$$eval(".slide.on .plea-pick", (b) => b.length), 0);
+  await pg.$eval('.slide.on .ct-def[data-d="wrong"]', (e) => e.click()); await sleep(400);
+  assert.match(await text(pg, "#plea"), /明明是它先写错的.*驳回.*就是不还.*本庭宣判/);
+  assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).p), "refuse", "the plea is kept");
   // a share link carries the plea; the friend sees it, without buttons
   const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse", defense: "broke" })));
   const fr = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1000);

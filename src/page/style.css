@@ -360,3 +360,6 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 @keyframes gavel { 0% { transform: rotate(-55deg); } 55% { transform: rotate(12deg); } 75% { transform: rotate(-6deg); } 100% { transform: none; } }
 .still .ct-no.hit, .still .ct-gavel.hit { animation: none; }
 @media (prefers-reduced-motion: reduce) { .printed, .ct-no.hit, .ct-gavel.hit { animation: none !important; } }
+/* buttons fade in instead of printing: a clipped button can't be tapped, and a reader may tap before it finishes */
+.plea-btns.printed, .plea-appeal.printed { animation-name: fadein; animation-timing-function: ease-out; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
