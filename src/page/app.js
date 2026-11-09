@@ -148,7 +148,8 @@ window.VWReport = function (DATA) {
         broke: function () { return "经查，被告有钱买咖啡。原告可以等，AI 不会老。"; },
         fake: function (R, m, tm) { return tm ? "证人是被告自己请的。" : "全部证据来自被告自己的电脑。"; },
       },
-      ctBig: "开庭", cast: ["原告", "法官", "被告"],
+      ctBig: "开庭", evTm: function (n) { return "据 " + n + " 供述，"; },
+      cardDef: function (x) { return "辩称「" + x + "」，已驳回"; }, cast: ["原告", "法官", "被告"],
       ctWho: "被告：", ctNo: "驳回", ctLast: "被告，最后陈述：", ctRuling: "本庭宣判：",
       contempt: "⚖️ 拒不到庭，欠条已盖章。<u>回法庭补选</u>",
       clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
@@ -261,7 +262,8 @@ window.VWReport = function (DATA) {
         broke: function () { return "The court notes the defendant can afford coffee. The plaintiff can wait. AI doesn't age."; },
         fake: function (R, m, tm) { return tm ? "The defendant called this witness." : "Every piece of evidence came from the defendant's own computer."; },
       },
-      ctBig: "ORDER!", cast: ["Plaintiff", "Judge", "Defendant"],
+      ctBig: "ORDER!", evTm: function (n) { return "Per " + n + "'s testimony: "; },
+      cardDef: function (x) { return "Pleaded “" + x + "”. Overruled."; }, cast: ["Plaintiff", "Judge", "Defendant"],
       ctWho: "Defendant: ", ctNo: "OVERRULED", ctLast: "Defendant, your final plea:", ctRuling: "Ruling: ",
       contempt: "⚖️ Skipped court: stamped IN CONTEMPT. <u>Go back and plead</u>",
       clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
@@ -517,7 +519,8 @@ window.VWReport = function (DATA) {
     if (h >= 0.1) out.push(E.hours(h >= 10 ? fmt(Math.round(h)) : h.toFixed(1)));
     if (night) out.push(E.night(fmt(night)));
     out.push(E.prompts(fmt(D.prompts)));
-    return out.slice(0, 3);
+    out = out.slice(0, 3);
+    return D.testimony ? out.map(function (e) { return t().evTm(tmName(D)) + e; }) : out; // an AI's estimate, not the records: say so, like the rest of the bill
   }
   /** Three excuses that fit your numbers. */
   function defenses() { var R = roastL(); return [R && R.you.thanks ? "thanks" : "broke", "wrong", D.testimony ? "fake" : "paid"]; }
@@ -880,7 +883,7 @@ window.VWReport = function (DATA) {
     document.getElementById("hint").textContent = t().next;
     var dl = document.getElementById("dl"), again = document.getElementById("again");
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
-    if (again) again.onclick = function (e) { e.stopPropagation(); manual = false; go(0); }; // replay: autoplay again
+    if (again) again.onclick = function (e) { e.stopPropagation(); manual = false; courtSeen = false; go(0); }; // replay: autoplay again, court opening and all
     var ct = document.getElementById("contempt");
     if (ct) ct.onclick = function (e) { // back to court
       e.stopPropagation(); manual = true; backTo = idx;
@@ -928,12 +931,14 @@ window.VWReport = function (DATA) {
     o.connect(g); g.connect(a.destination); o.start(t0); o.stop(t0 + 0.22);
   }
   var PRINT = ".rc-head, .rc-title, .rc-row, .rc-item, .rc-sub, hr.rc, .rc-label, .rc-total, .rc-note, .rc-meme, .ct-said, .ct-rebut, .plea-pick, .plea-btns, .plea-appeal, .rc-facts, .rc-quote, .rc-stars, .rc-persona, .rc-clock, .rc-axis";
+  var courtSeen = false;
   function printReceipt(el) {
     var rc = el.querySelector(".receipt");
     if (!rc || still) return;
     var court = !!el.querySelector("#plea"); // the trial is read, not skimmed: it prints slower, and OVERRULED and the gavel land
-    var lines = rc.querySelectorAll(PRINT), start = court ? 1.5 : 0.35, step = court ? 0.3 : 0.11;
-    if (court) { // the gavel slams: court is in session
+    var opening = court && !courtSeen; courtSeen = courtSeen || court; // the full opening once; coming back (to plead, to flip) goes straight to the record
+    var lines = rc.querySelectorAll(PRINT), start = opening ? 1.5 : 0.35, step = opening ? 0.3 : court ? 0.12 : 0.11;
+    if (opening) { // the gavel slams: court is in session
       var op = el.querySelector(".ct-open");
       if (!op) { op = document.createElement("div"); op.className = "ct-open"; el.appendChild(op); }
       op.innerHTML = "<b>🔨</b><span>" + t().ctBig + "</span>"; restart(op, "go"); thud(0.45);
@@ -1076,10 +1081,17 @@ window.VWReport = function (DATA) {
     x.textAlign = "right"; x.fillStyle = "#111"; x.font = "900 104px " + F; x.fillText(money(C.total), right, y); x.textAlign = "left";
     y += 130;
     x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, y);
+    var qrLeft = right - window.VW_QR.n * 7 - 4 * 7; // where the footer's QR code box starts
+    var ly = y + 44, DF = !D.empty && myDefense();
+    if (DF) { // the excuse, overruled: the funniest line of the trial travels with the card
+      var dtx = "⚖️ " + t().cardDef(t().def[DF](roastL()).replace(/^\S+\s/, "")), dfs = 28;
+      x.font = "800 28px " + F; while (dfs > 20 && x.measureText(dtx).width > qrLeft - cx - 24) { dfs -= 2; x.font = "800 " + dfs + "px " + F; }
+      x.fillStyle = "rgba(185,28,28,0.9)"; x.fillText(dtx, cx, ly); ly += 40;
+    }
     var CL = clockOn() && window.VW_CLOCK;
     if (CL && CL.order !== undefined) { // stays clear of the QR code
-      x.font = "800 30px " + F; x.fillStyle = "#b91c1c"; x.fillText(t().cardClock(CL), cx, y + 44, W - cx - 360);
-      if (CL.n > 1) { x.font = "600 24px " + F; x.fillStyle = "#7a1d1d"; x.fillText(t().cardClockAll(CL.n, window.VWClock.money(CL.sum, lang)), cx, y + 84, W - cx - 360); }
+      x.font = "800 30px " + F; x.fillStyle = "#b91c1c"; x.fillText(t().cardClock(CL), cx, ly, W - cx - 360);
+      if (CL.n > 1 && !DF) { x.font = "600 24px " + F; x.fillStyle = "#7a1d1d"; x.fillText(t().cardClockAll(CL.n, window.VWClock.money(CL.sum, lang)), cx, ly + 40, W - cx - 360); }
     }
 
     // stamp
