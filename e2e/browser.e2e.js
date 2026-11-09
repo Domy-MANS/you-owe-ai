@@ -311,6 +311,7 @@ test("you vs your friend: their total matches their own bill, labels in the curr
   assert.doesNotMatch(cmp, /undefined/);
   assert.match(cmp, /「继续」/, "friend's catchphrase in Chinese");
   assert.match(cmp, /TA 比你多否定了 AI/);
+  assert.match(await pg.$eval(".slide", (e) => e.textContent), /你 vs TA/, "came from a friend's link: the comparison opens the bill");
   // a friend saved more than two weeks ago is forgotten
   await pg.evaluate((code) => localStorage.setItem("vw-friend", JSON.stringify({ s: code, t: Date.now() - 15 * 864e5 })), link.split("#s=")[1]);
   await pg.goto(`${PAGE}?lang=zh&still`);
@@ -332,6 +333,7 @@ test("a friend's link, once you've made your own bill: compared in one tap, but 
   const fp = await open(`${PAGE}?lang=en&still${friendLink.slice(friendLink.indexOf("#"))}`); await sleep(1200);
   const cmp = await fp.$$eval(".slide", (s) => { const x = s.find((e) => /You vs them/.test(e.textContent)); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
   assert.ok(cmp, "comparison page on the friend's shared bill");
+  assert.match(await fp.$eval(".slide", (e) => e.textContent), /You vs them/, "and it's the first page there too");
   assert.ok(cmp.includes(myTotal), `your total ${myTotal} in: ${cmp.slice(0, 120)}`);
   assert.match(cmp, /They told AI it was wrong/);
   // your own share link doesn't compare you with yourself

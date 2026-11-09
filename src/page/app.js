@@ -810,6 +810,7 @@ window.VWReport = function (DATA) {
       var verdict = [L.cmpOwe(dOwe), L.cmpDeny((meR.you.deny || 0) - (fR.you.deny || 0)), L.cmpThanks((meR.you.thanks || 0) - (fR.you.thanks || 0))]
         .filter(Boolean).map(function (x) { return '<div class="rc-meme">' + x + "</div>"; }).join("");
       add('<div class="pop"><div class="kicker">' + L.cmpK + "</div>" + receipt(L.cmpH, grid + verdict) + "</div>", 9, '<div class="deco"><div class="giant vsbig">VS</div></div>');
+      out.unshift(out.pop()); // with a friend in the picture, the comparison is what you came for: it opens the bill
     }
 
     // 9. the IOU (share card)
