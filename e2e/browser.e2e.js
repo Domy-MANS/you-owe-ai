@@ -437,6 +437,7 @@ test("autoplay until the reader turns a page; then it stays there until they tap
   assert.equal(await cur(), 2);
   // pleading on the demo bill is only for the demo
   await pg.keyboard.press("ArrowLeft"); await sleep(300);
+  await pg.click(".slide.on .ct-def"); await sleep(300);
   await pg.click('.slide.on .plea-btn[data-p="refuse"]'); await sleep(300);
   assert.equal(await pg.evaluate(() => localStorage.getItem("vw-plea")), null, "a demo's plea isn't saved as yours");
   assert.deepEqual(pg.errors, []);
@@ -505,14 +506,27 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   const cameFrom = await onIdx();
   await pg.$eval("#contempt", (e) => e.click()); await sleep(400);
   assert.equal(await onIdx(), pi, "back to court");
-  await pg.$eval(".plea-btn", () => {}); 
+  // the trial: three exhibits from your own numbers, then your excuse, overruled, then the plea
+  const court = await text(pg, "#plea");
+  assert.match(await pg.$eval(".slide.on .rc-title", (e) => e.innerText.replace(/\s+/g, " ")), /原告 .+ 诉你 拖欠劳务费 ¥/);
+  assert.equal(await pg.$$eval("#plea .ct-ev", (e) => e.length), 3, "three exhibits");
+  assert.match(court, /被告共 412 次否定原告的工作/);
+  assert.equal(await pg.$$eval(".plea-btn", (b) => b.length), 0, "no plea before the defense");
+  assert.deepEqual(await pg.$$eval(".ct-def", (b) => b.map((x) => x.getAttribute("data-d"))), ["thanks", "wrong", "paid"]);
+  await pg.click('.ct-def[data-d="thanks"]'); await sleep(400);
+  assert.match(await text(pg, "#plea"), /被告：🙏 我说了 61 次谢谢.*驳回.*同期否定原告 412 次/);
+  assert.equal(await pg.$$eval(".ct-def", (b) => b.length), 0, "one excuse only");
+  assert.equal(await onIdx(), pi, "still in court after the excuse");
+  assert.equal(await pg.evaluate(() => JSON.parse(localStorage.getItem("vw-plea")).d), "thanks", "the excuse is remembered");
   await pg.click('.plea-btn[data-p="refuse"]'); await sleep(400);
   const box = await text(pg, "#plea");
+  assert.match(box, /驳回/, "the excuse stays on the record");
+  assert.match(box, /本庭宣判/);
   assert.match(box, /就是不还.*选择了赖账/);
   assert.match(box, /有 73% 的人和你一样，就是不还/, "8 of 11 who chose");
   assert.match(box, /老赖/);
   assert.equal(await pg.$eval("#contempt", (e) => e.hidden), true, "pleaded: no longer in contempt");
-  await sleep(1800); assert.equal(await onIdx(), cameFrom, "pleaded from the 'go back' link: returned to where you were");
+  await sleep(2800); assert.equal(await onIdx(), cameFrom, "pleaded from the 'go back' link: returned to where you were");
   const last = cameFrom;
   const sent = await pg.evaluate(() => window.__calls.filter((c) => c[0] === "/confess").map((c) => c[1].plea));
   assert.deepEqual(sent, [null, "refuse"], "first report without a plea, then the plea");
@@ -532,10 +546,12 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   assert.doesNotMatch(await text(pg, "#plea"), /改判/, "flipping back to the original choice isn't a change");
   assert.match(await text(pg, "#appeal"), /良心发现/);
   // a share link carries the plea; the friend sees it, without buttons
-  const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse" })));
+  const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse", defense: "broke" })));
   const fr = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1000);
   const theirs = await fr.$$eval(".slide", (s) => { const x = s.find((e) => e.querySelector("#plea")); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
-  assert.match(theirs, /TA 的选择/); assert.match(theirs, /TA 选择了赖账/);
+  assert.match(theirs, /诉 TA/); assert.match(theirs, /TA 选择了赖账/);
+  assert.match(theirs, /我是学生，没钱.*驳回.*有钱买咖啡/, "their excuse and how it went");
+  assert.equal(await fr.$$eval(".ct-def", (b) => b.length), 0);
   assert.equal(await fr.$$eval(".plea-btn", (b) => b.length), 0);
   assert.equal(await fr.$$eval("#appeal", (b) => b.length), 0, "only you can appeal your own case");
   assert.deepEqual(pg.errors, []); assert.deepEqual(fr.errors, []);

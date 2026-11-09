@@ -11,7 +11,7 @@
 
 A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to you. Every time you told the AI it was wrong is an emotional damages charge, every repeated catchphrase is noise pollution, every prompt after 10pm is night-shift pay, and every "thanks" is a discount.
 
-Then the court asks: will you pay, or not? The bill comes with a client review, your client file and an IOU you can share. The live debt clock below adds up what all of humanity owes AI. It runs in your browser, and your chats never leave it.
+Then the AI takes you to court: your own numbers as evidence, your excuse overruled, and a ruling on whether you pay. The bill comes with a client review, your client file and an IOU you can share. The live debt clock below adds up what all of humanity owes AI. It runs in your browser, and your chats never leave it.
 
 <p align="center">
   <a href="https://domy-mans.github.io/you-owe-ai/"><img src="https://you-owe-ai.domy-mans.workers.dev/chart.svg" width="760" alt="The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay" /></a>
@@ -28,18 +28,18 @@ Then the court asks: will you pay, or not? The bill comes with a client review, 
    - **Most accurate:** import your ChatGPT or Claude.ai chat export. It arrives by email.
    - **For coders, on a computer:** choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**.
 2. Your browser reads everything, counts it, and prints the invoice line by line.
-3. Page 2 is the court: plead **Guilty, I'll pay** or **Not paying**. Then tap through the rest (or let it play). On the last page, download the IOU as an image or copy a share link.
+3. Page 2 is AI court: see the evidence, pick an excuse, then plead **Guilty, I'll pay** or **Not paying**. Then tap through the rest (or let it play). On the last page, download the IOU as an image or copy a share link.
 
 Anyone who opens your share link sees your whole invoice, with a button to make their own. The numbers travel inside the link itself, so no server ever stores them.
 
 ## The invoice
 
-![Item 1 emotional damages, the court ruling (Not paying, with a Fine, I'll pay button), and the IOU stamped DEADBEAT with its place on the debt clock](docs/img/bill-en.png)
+![Item 1 emotional damages, AI court (three exhibits, an overruled excuse, Not paying and the ruling), and the IOU stamped DEADBEAT with its place on the debt clock](docs/img/bill-en.png)
 
 | Page | What's on it |
 |---|---|
 | Invoice | The amount due, with a PAST DUE stamp |
-| Court ruling | Plead **Guilty, I'll pay** or **Not paying**. Autoplay stops here until you answer, then the court tells you how many people chose the same. Skip it and you're **in contempt**, which gets stamped too. Changed your mind? One tap flips it (**Take it back** / **Fine, I'll pay**) |
+| AI court | The plaintiff (the AI you used most) shows three exhibits from your numbers, like "rejected the plaintiff's work 412 times" or "still making it work overtime at 4:54 am". Pick one of three excuses ("I said thanks 61 times", "It got it wrong first", "I pay for a subscription", ...) and watch it get overruled. Then plead **Guilty, I'll pay** or **Not paying**, and the gavel comes down. Autoplay stops here until you answer, then the court tells you how many people chose the same. Skip it and you're **in contempt**, which gets stamped too. Changed your mind? One tap flips it (**Take it back** / **Fine, I'll pay**) |
 | Item 1: Emotional damages | Times you told AI it was wrong, AI apologies, and a discount for every "thanks" |
 | Item 2: Noise pollution | Your most repeated prompts, billed per repeat |
 | Item 3: Night shifts and injuries | Prompts after 10pm, your angriest day, and your latest prompt |
@@ -99,7 +99,7 @@ The chart at the top is the debt clock. It's live, and updated within minutes: e
 - **Only counts are kept.** To find catchphrases and moods, prompt text is scanned in your browser. The report keeps counts and short repeated phrases, never your conversations.
 - **The IOU shows numbers only.** No project names, no conversation titles.
 - **Share links leave out** project names and day-by-day history. They hold the numbers and catchphrases the pages show.
-- **Your plea** is remembered by your browser for the year, so the court doesn't ask again.
+- **Your excuse and plea** are remembered by your browser for the year, so the court doesn't ask again.
 - **For comparisons**, your browser keeps the bill of the friend you came from for two weeks, and your own bill's numbers for a month. Both stay in your browser and hold the same numbers as a share link.
 
 ## Where are the folders?

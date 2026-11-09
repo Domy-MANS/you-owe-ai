@@ -338,3 +338,25 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .wx-save { position: fixed; inset: 0; z-index: 100; background: rgba(20,14,6,0.86); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; }
 .wx-save img { max-width: min(100%, 420px); max-height: 78vh; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); -webkit-touch-callout: default; user-select: auto; }
 .wx-save p { color: #f1e2b8; font: 700 15px var(--font); text-align: center; }
+
+/* the court: exhibits, your excuse (overruled), your plea, the ruling */
+.ct-ev { display: flex; gap: 9px; margin-top: 7px; font-size: 14px; line-height: 1.5; }
+.ct-n { flex: none; width: 21px; height: 21px; margin-top: 1px; border-radius: 50%; background: var(--ink); color: #f1e2b8; font: 800 12px/21px var(--font); text-align: center; }
+.ct-turn, .ct-last, .ct-verdict { position: relative; margin-top: 12px; padding-top: 8px; border-top: 1.5px dashed rgba(110,80,30,0.4); }
+.ct-ask { margin-top: 14px; font-weight: 700; color: var(--ink); }
+.ct-defs { gap: 8px; }
+.ct-defs .ct-def { padding: 12px 16px; font-size: 15px; text-align: left; border-radius: 14px; }
+.ct-said { margin: 4px 0 8px; font: 800 17px var(--font); }
+.ct-said small { font-weight: 600; font-size: 14px; color: #7a6a52; }
+.ct-rebut { font-size: 14px; line-height: 1.55; color: #3d2f1c; }
+.ct-no { display: inline-block; margin-right: 8px; padding: 0 7px; border: 2.5px solid rgba(220,38,38,0.85); border-radius: 4px; color: rgba(220,38,38,0.95); font-weight: 900; letter-spacing: 0.08em; transform: rotate(-6deg); }
+.ct-no.hit { animation: ctno 0.4s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes ctno { from { opacity: 0; transform: rotate(-6deg) scale(2.4); } to { opacity: 1; transform: rotate(-6deg) scale(1); } }
+.ct-ruling { display: flex; align-items: flex-start; gap: 8px; margin-top: 6px; }
+.ct-verdict .plea-pick { font-size: clamp(20px, 6vw, 26px); margin: 2px 0 4px; }
+.plea-pick small { font-size: 14px; font-weight: 600; color: #7a6a52; }
+.ct-gavel { display: inline-block; font-size: 22px; transform-origin: 75% 75%; }
+.ct-gavel.hit { animation: gavel 0.55s ease-in both; }
+@keyframes gavel { 0% { transform: rotate(-55deg); } 55% { transform: rotate(12deg); } 75% { transform: rotate(-6deg); } 100% { transform: none; } }
+.still .ct-no.hit, .still .ct-gavel.hit { animation: none; }
+@media (prefers-reduced-motion: reduce) { .printed, .ct-no.hit, .ct-gavel.hit { animation: none !important; } }
