@@ -363,6 +363,27 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 /* buttons fade in instead of printing: a clipped button can't be tapped, and a reader may tap before it finishes */
 .plea-btns.printed, .plea-appeal.printed { animation-name: fadein; animation-timing-function: ease-out; }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+/* the court waits for you: a few seconds after the buttons print, they pulse so it's clear they're for tapping */
+.ct-defs .ct-def, .ct-last .plea-btn { animation: nudge 1.3s ease-in-out calc(var(--d, 0s) + 4s) 3; }
+#snd.nudge { animation: nudge 1.3s ease-in-out 3; } /* the first sound: here's where to turn it off */
+@keyframes nudge { 0%, 100% { transform: none; box-shadow: 0 0 0 0 rgba(185,28,28,0); } 50% { transform: scale(1.04); box-shadow: 0 0 0 5px rgba(185,28,28,0.22); } }
+.still .ct-def, .still .plea-btn, .still #snd { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .ct-def, .plea-btn, #snd { animation: none !important; } }
+/* the final plea: both choices side by side, so the whole trial fits on a phone */
+.ct-last .plea-btns { grid-template-columns: 1fr 1fr; margin-bottom: 4px; }
+.ct-last .plea-btn { padding: 13px 8px; font-size: 16px; }
+@media (max-height: 720px) {
+  .ct-cast { padding-bottom: 3px; }
+  .ct-face { font-size: 24px; }
+  .ct-p.judge .ct-face { font-size: 28px; }
+  .ct-ev { margin-top: 4px; font-size: 13.5px; line-height: 1.45; }
+  .ct-turn, .ct-last, .ct-verdict { margin-top: 8px; padding-top: 6px; }
+  .ct-said { margin: 2px 0 6px; font-size: 16px; }
+  .ct-rebut { font-size: 13.5px; line-height: 1.5; }
+  .ct-defs .ct-def { padding: 10px 14px; font-size: 14px; }
+  .ct-verdict .plea-pick { margin: 0 0 2px; }
+  .ct-verdict .plea-appeal { margin-top: 8px; }
+}
 
 /* the courtroom cast */
 .ct-cast { display: flex; justify-content: space-around; align-items: flex-end; margin: 0 0 4px; padding: 0 0 6px; border-bottom: 1.5px dashed rgba(110,80,30,0.4); }

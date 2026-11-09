@@ -923,8 +923,10 @@ window.VWReport = function (DATA) {
     src.buffer = buf; f.type = "bandpass"; f.frequency.value = 3200; f.Q.value = 0.8; g.gain.value = 0.05;
     src.connect(f); f.connect(g); g.connect(a.destination); src.start(a.currentTime + at);
   }
+  var soundHinted = (function () { try { return localStorage.getItem("vw-sound") !== null; } catch (e) { return true; } })();
   function thud(at) { // the stamp
     var a = audio(); if (!a) return;
+    if (!soundHinted) { soundHinted = true; setTimeout(function () { restart(document.getElementById("snd"), "nudge"); }, at * 1000); } // the first thud: that's the switch for it
     var o = a.createOscillator(), g = a.createGain(), t0 = a.currentTime + at;
     o.frequency.setValueAtTime(140, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + 0.15);
     g.gain.setValueAtTime(0.22, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.2);
