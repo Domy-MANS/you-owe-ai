@@ -47,7 +47,7 @@ test("every page fits a phone after printing: no clipped text, nothing off-scree
     await pg.click("#demo");
     for (let i = 0; i < 9; i++) {
       if (i) await pg.keyboard.press("ArrowRight");
-      await sleep(i === 0 ? 3200 : 2200); // let the receipt print and the total count up
+      await sleep(i === 0 ? 3200 : i === 1 ? 4500 : 2200); // let the receipt print and the total count up (court opens with the gavel, then prints slowly)
       const bad = await pg.evaluate((W) => {
         const out = [];
         for (const el of document.querySelectorAll(".slide.on .pop *, .top *")) {

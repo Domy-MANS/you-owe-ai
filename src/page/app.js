@@ -127,7 +127,6 @@ window.VWReport = function (DATA) {
       pleaSame: function (p, pct) { return p === "refuse" ? "全人类有 <b>" + pct + "%</b> 的人和你一样，就是不还。" : "全人类有 <b>" + pct + "%</b> 的人和你一样认罪了。"; },
       pleaStamp: function (p) { return p === "refuse" ? "老赖" : p ? "已认罪" : "拒不到庭"; },
       ctH: function (who, m, them) { return "原告 " + who + " 诉" + (them ? " TA " : "你") + "<br>拖欠劳务费 " + m; },
-      ctOpen: "现在开庭。原告出示证据：",
       ev: {
         deny: function (n) { return "被告共 <b>" + n + "</b> 次否定原告的工作。"; },
         late: function (l) { return "<b>" + l.day + "</b> 凌晨 <b>" + l.time + "</b>，被告还在让原告加班。"; },
@@ -149,6 +148,7 @@ window.VWReport = function (DATA) {
         broke: function () { return "经查，被告有钱买咖啡。原告可以等，AI 不会老。"; },
         fake: function (R, m, tm) { return tm ? "证人是被告自己请的。" : "全部证据来自被告自己的电脑。"; },
       },
+      ctBig: "开庭", cast: ["原告", "法官", "被告"],
       ctWho: "被告：", ctNo: "驳回", ctLast: "被告，最后陈述：", ctRuling: "本庭宣判：",
       contempt: "⚖️ 拒不到庭，欠条已盖章。<u>回法庭补选</u>",
       clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
@@ -240,7 +240,6 @@ window.VWReport = function (DATA) {
       pleaSame: function (p, pct) { return p === "refuse" ? "<b>" + pct + "%</b> of humanity isn't paying either." : "<b>" + pct + "%</b> of humanity pleaded guilty too."; },
       pleaStamp: function (p) { return p === "refuse" ? "DEADBEAT" : p ? "GUILTY" : "IN CONTEMPT"; },
       ctH: function (who, m, them) { return who + " v. " + (them ? "Them" : "You") + "<br>Unpaid labor: " + m; },
-      ctOpen: "Court is in session. The plaintiff's evidence:",
       ev: {
         deny: function (n) { return "The defendant rejected the plaintiff's work <b>" + n + "</b> times."; },
         late: function (l) { return "At <b>" + l.time + " am</b> on <b>" + l.day + "</b>, the defendant was still making the plaintiff work overtime."; },
@@ -262,6 +261,7 @@ window.VWReport = function (DATA) {
         broke: function () { return "The court notes the defendant can afford coffee. The plaintiff can wait. AI doesn't age."; },
         fake: function (R, m, tm) { return tm ? "The defendant called this witness." : "Every piece of evidence came from the defendant's own computer."; },
       },
+      ctBig: "ORDER!", cast: ["Plaintiff", "Judge", "Defendant"],
       ctWho: "Defendant: ", ctNo: "OVERRULED", ctLast: "Defendant, your final plea:", ctRuling: "Ruling: ",
       contempt: "⚖️ Skipped court: stamped IN CONTEMPT. <u>Go back and plead</u>",
       clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
@@ -525,7 +525,10 @@ window.VWReport = function (DATA) {
   function pleaBody(fresh) {
     var K = t(), them = D.shared, p = myPlea(), d = myDefense(), R = roastL();
     var nw = function (part) { return fresh === part || (fresh === "def" && part === "plea") ? " ct-new" : ""; }; // an excuse given after the plea brings the ruling back with it
-    var h = '<div class="rc-note">' + K.ctOpen + "</div>" +
+    var face = p === "refuse" ? "😤" : p === "guilty" ? "🙇" : d ? "😓" : "😰";
+    var h = '<div class="ct-cast"><div class="ct-p" data-r="pl"><span class="ct-face">🤖</span><small>' + K.cast[0] + "</small></div>" +
+      '<div class="ct-p judge" data-r="jd"><span class="ct-face">🧑‍⚖️</span><span class="ct-gv">🔨</span><small>' + K.cast[1] + "</small></div>" +
+      '<div class="ct-p" data-r="df"><span class="ct-face">' + face + "</span><small>" + K.cast[2] + "</small></div></div>" +
       exhibits().map(function (e, i) { return '<div class="rc-meme ct-ev"><span class="ct-n">' + (i + 1) + "</span><span>" + e + "</span></div>"; }).join("");
     if (d) h += '<div class="ct-turn' + nw("def") + '"><div class="ct-said"><small>' + K.ctWho + "</small>" + K.def[d](R) + "</div>" +
       '<div class="ct-rebut"><span class="ct-no">' + K.ctNo + "</span>" + K.rebut[d](R, money(-RATES[lang].thanks), D.testimony) + "</div></div>";
@@ -572,6 +575,27 @@ window.VWReport = function (DATA) {
     var ap = document.getElementById("appeal");
     if (ap) ap.onclick = function (e) { e.stopPropagation(); manual = true; plead(ap.getAttribute("data-p"), true); };
   }
+  // ---- the courtroom: whoever speaks hops; OVERRULED fills the screen; the judge's gavel shakes the room ----
+  var cueT = [];
+  function later(sec, fn) { cueT.push(setTimeout(fn, sec * 1000)); }
+  function stopCues() { cueT.forEach(clearTimeout); cueT = []; }
+  function restart(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  function shake(slide) { restart(slide.querySelector(".pop"), "shake"); }
+  function bang(slide, text) {
+    var b = document.createElement("div"); b.className = "ct-bang"; b.textContent = text; slide.appendChild(b);
+    shake(slide); thud(0); setTimeout(function () { b.remove(); }, 1200);
+  }
+  function cues(slide, lines) {
+    if (!slide || still) return;
+    Array.prototype.forEach.call(lines, function (ln) {
+      var d = parseFloat(ln.style.getPropertyValue("--d")) || 0, c = ln.classList;
+      var who = c.contains("ct-ev") || c.contains("ct-rebut") ? "pl" : c.contains("ct-said") || c.contains("plea-pick") ? "df" : c.contains("ct-ruling") ? "jd" : null;
+      if (!who) return;
+      later(d, function () { restart(slide.querySelector('.ct-p[data-r="' + who + '"]'), "talk"); });
+      if (c.contains("ct-rebut")) later(d + 0.3, function () { bang(slide, t().ctNo); });
+      if (who === "jd") later(d + 0.3, function () { shake(slide); });
+    });
+  }
   // the part of the trial that just happened prints in line by line; OVERRULED and the gavel land with a thud
   function playTrial(box) {
     var part = box.querySelector(".ct-new");
@@ -583,6 +607,7 @@ window.VWReport = function (DATA) {
     if (no) { no.style.animationDelay = (at(no.parentNode) + 0.3).toFixed(2) + "s"; no.classList.add("hit"); thud(at(no.parentNode) + 0.4); }
     if (gv) { gv.style.animationDelay = (at(gv.parentNode) + 0.1).toFixed(2) + "s"; gv.classList.add("hit"); thud(at(gv.parentNode) + 0.3); }
     if (st) { st.style.animationDelay = (0.1 + lines.length * step + 0.2).toFixed(2) + "s"; thud(0.1 + lines.length * step + 0.3); }
+    cues(box.closest(".slide"), lines);
     setTimeout(function () { var sl = part.closest(".slide.tall"); if (sl) sl.scrollTo({ top: sl.scrollHeight, behavior: "smooth" }); }, 50);
   }
   function refreshPlea(fresh) {
@@ -907,7 +932,12 @@ window.VWReport = function (DATA) {
     var rc = el.querySelector(".receipt");
     if (!rc || still) return;
     var court = !!el.querySelector("#plea"); // the trial is read, not skimmed: it prints slower, and OVERRULED and the gavel land
-    var lines = rc.querySelectorAll(PRINT), start = 0.35, step = court ? 0.3 : 0.11;
+    var lines = rc.querySelectorAll(PRINT), start = court ? 1.5 : 0.35, step = court ? 0.3 : 0.11;
+    if (court) { // the gavel slams: court is in session
+      var op = el.querySelector(".ct-open");
+      if (!op) { op = document.createElement("div"); op.className = "ct-open"; el.appendChild(op); }
+      op.innerHTML = "<b>🔨</b><span>" + t().ctBig + "</span>"; restart(op, "go"); thud(0.45);
+    }
     lines.forEach(function (ln, i) {
       ln.classList.remove("printed"); void ln.offsetWidth;
       ln.style.setProperty("--d", (start + i * step).toFixed(2) + "s"); ln.classList.add("printed");
@@ -920,7 +950,7 @@ window.VWReport = function (DATA) {
       var d = parseFloat((x.closest(".printed") || x).style.getPropertyValue("--d")) || 0;
       x.classList.remove("hit"); void x.offsetWidth; x.style.animationDelay = (d + 0.25).toFixed(2) + "s"; x.classList.add("hit"); thud(d + 0.35);
     };
-    if (court) { hit(".ct-no"); hit(".ct-gavel"); }
+    if (court) { hit(".ct-no"); hit(".ct-gavel"); stopCues(); cues(el, lines); }
     var st = el.querySelector(".stamp");
     if (st) { st.style.animation = "none"; void st.offsetWidth; st.style.animation = ""; st.style.animationDelay = done.toFixed(2) + "s"; thud(done + 0.12); }
     el.querySelectorAll("[data-amt]").forEach(function (n) {
@@ -962,7 +992,7 @@ window.VWReport = function (DATA) {
 
   function go(i) {
     var from = stage.children[idx], next = Math.max(0, Math.min(list_.length - 1, i));
-    if (from && next !== idx && from.querySelector("#plea")) backTo = -1;
+    if (from && next !== idx && from.querySelector("#plea")) { backTo = -1; stopCues(); }
     idx = next;
     document.getElementById("hint").style.visibility = idx === 0 ? "" : "hidden";
     var secs = stage.children;

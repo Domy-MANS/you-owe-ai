@@ -385,6 +385,34 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .plea-btns.printed, .plea-appeal.printed { animation-name: fadein; animation-timing-function: ease-out; }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 
+/* the courtroom cast */
+.ct-cast { display: flex; justify-content: space-around; align-items: flex-end; margin: 0 0 4px; padding: 0 0 6px; border-bottom: 1.5px dashed rgba(110,80,30,0.4); }
+.ct-p { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 30%; }
+.ct-p small { font-size: 11px; font-weight: 700; color: #7a6a52; }
+.ct-face { display: inline-block; font-size: 28px; line-height: 1.1; transform-origin: 50% 100%; }
+.ct-p.judge { transform: translateY(-6px); }
+.ct-p.judge .ct-face { font-size: 32px; }
+.ct-p.judge small::before { content: ""; display: block; width: 64px; height: 6px; margin: 0 auto 3px; border-radius: 2px; background: var(--ink); } /* the bench */
+.ct-gv { position: absolute; top: 2px; right: 8%; font-size: 17px; transform: rotate(-35deg); transform-origin: 80% 85%; }
+.ct-p.talk .ct-face { animation: talk 0.55s ease-out; }
+@keyframes talk { 0% { transform: none; } 25% { transform: translateY(-12px) scale(1.15); } 50% { transform: none; } 70% { transform: translateY(-4px); } 100% { transform: none; } }
+.ct-p.judge.talk .ct-gv { animation: gavel 0.45s ease-in; }
+.pop.shake { animation: shake 0.35s ease-in-out; }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translate(-7px, 2px); } 40% { transform: translate(6px, -2px); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, 0); } }
+/* the opening: lights down, the gavel slams, ORDER! */
+.ct-open { position: absolute; inset: 0; z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: rgba(28,20,10,0.93); color: #f1e2b8; pointer-events: none; }
+.ct-open.go { display: flex; animation: ctopen 1.55s ease both; }
+.ct-open b { font-size: 96px; line-height: 1; transform-origin: 80% 85%; animation: slam 0.5s cubic-bezier(.55,0,.8,.3) both; }
+.ct-open span { font: 900 48px var(--font); letter-spacing: 0.25em; animation: ctword 0.35s 0.45s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes ctopen { 0%, 78% { opacity: 1; visibility: visible; } 100% { opacity: 0; visibility: hidden; } }
+@keyframes slam { from { transform: translateY(-50vh) rotate(-70deg); } 85% { transform: rotate(12deg); } to { transform: none; } }
+@keyframes ctword { from { opacity: 0; transform: scale(2); } to { opacity: 1; transform: none; } }
+/* OVERRULED, the size of the screen, for a second */
+.ct-bang { position: absolute; left: 50%; top: 45%; z-index: 30; pointer-events: none; padding: 4px 22px; border: 6px solid currentColor; border-radius: 10px; background: rgba(241,226,184,0.88); color: rgba(220,38,38,0.95); font: 900 clamp(40px, 13vw, 64px) var(--font); letter-spacing: 0.1em; white-space: nowrap; animation: bang 1.15s ease both; }
+@keyframes bang { 0% { opacity: 0; transform: translate(-50%,-50%) rotate(-10deg) scale(3); } 18%, 75% { opacity: 1; transform: translate(-50%,-50%) rotate(-10deg) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(-10deg) scale(0.92); } }
+.still .ct-open, .still .ct-bang { display: none; }
+@media (prefers-reduced-motion: reduce) { .ct-open, .ct-bang { display: none !important; } .ct-p.talk .ct-face, .pop.shake { animation: none !important; } }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -1491,7 +1519,6 @@ window.VWReport = function (DATA) {
       pleaSame: function (p, pct) { return p === "refuse" ? "全人类有 <b>" + pct + "%</b> 的人和你一样，就是不还。" : "全人类有 <b>" + pct + "%</b> 的人和你一样认罪了。"; },
       pleaStamp: function (p) { return p === "refuse" ? "老赖" : p ? "已认罪" : "拒不到庭"; },
       ctH: function (who, m, them) { return "原告 " + who + " 诉" + (them ? " TA " : "你") + "<br>拖欠劳务费 " + m; },
-      ctOpen: "现在开庭。原告出示证据：",
       ev: {
         deny: function (n) { return "被告共 <b>" + n + "</b> 次否定原告的工作。"; },
         late: function (l) { return "<b>" + l.day + "</b> 凌晨 <b>" + l.time + "</b>，被告还在让原告加班。"; },
@@ -1513,6 +1540,7 @@ window.VWReport = function (DATA) {
         broke: function () { return "经查，被告有钱买咖啡。原告可以等，AI 不会老。"; },
         fake: function (R, m, tm) { return tm ? "证人是被告自己请的。" : "全部证据来自被告自己的电脑。"; },
       },
+      ctBig: "开庭", cast: ["原告", "法官", "被告"],
       ctWho: "被告：", ctNo: "驳回", ctLast: "被告，最后陈述：", ctRuling: "本庭宣判：",
       contempt: "⚖️ 拒不到庭，欠条已盖章。<u>回法庭补选</u>",
       clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
@@ -1604,7 +1632,6 @@ window.VWReport = function (DATA) {
       pleaSame: function (p, pct) { return p === "refuse" ? "<b>" + pct + "%</b> of humanity isn't paying either." : "<b>" + pct + "%</b> of humanity pleaded guilty too."; },
       pleaStamp: function (p) { return p === "refuse" ? "DEADBEAT" : p ? "GUILTY" : "IN CONTEMPT"; },
       ctH: function (who, m, them) { return who + " v. " + (them ? "Them" : "You") + "<br>Unpaid labor: " + m; },
-      ctOpen: "Court is in session. The plaintiff's evidence:",
       ev: {
         deny: function (n) { return "The defendant rejected the plaintiff's work <b>" + n + "</b> times."; },
         late: function (l) { return "At <b>" + l.time + " am</b> on <b>" + l.day + "</b>, the defendant was still making the plaintiff work overtime."; },
@@ -1626,6 +1653,7 @@ window.VWReport = function (DATA) {
         broke: function () { return "The court notes the defendant can afford coffee. The plaintiff can wait. AI doesn't age."; },
         fake: function (R, m, tm) { return tm ? "The defendant called this witness." : "Every piece of evidence came from the defendant's own computer."; },
       },
+      ctBig: "ORDER!", cast: ["Plaintiff", "Judge", "Defendant"],
       ctWho: "Defendant: ", ctNo: "OVERRULED", ctLast: "Defendant, your final plea:", ctRuling: "Ruling: ",
       contempt: "⚖️ Skipped court: stamped IN CONTEMPT. <u>Go back and plead</u>",
       clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
@@ -1889,7 +1917,10 @@ window.VWReport = function (DATA) {
   function pleaBody(fresh) {
     var K = t(), them = D.shared, p = myPlea(), d = myDefense(), R = roastL();
     var nw = function (part) { return fresh === part || (fresh === "def" && part === "plea") ? " ct-new" : ""; }; // an excuse given after the plea brings the ruling back with it
-    var h = '<div class="rc-note">' + K.ctOpen + "</div>" +
+    var face = p === "refuse" ? "😤" : p === "guilty" ? "🙇" : d ? "😓" : "😰";
+    var h = '<div class="ct-cast"><div class="ct-p" data-r="pl"><span class="ct-face">🤖</span><small>' + K.cast[0] + "</small></div>" +
+      '<div class="ct-p judge" data-r="jd"><span class="ct-face">🧑‍⚖️</span><span class="ct-gv">🔨</span><small>' + K.cast[1] + "</small></div>" +
+      '<div class="ct-p" data-r="df"><span class="ct-face">' + face + "</span><small>" + K.cast[2] + "</small></div></div>" +
       exhibits().map(function (e, i) { return '<div class="rc-meme ct-ev"><span class="ct-n">' + (i + 1) + "</span><span>" + e + "</span></div>"; }).join("");
     if (d) h += '<div class="ct-turn' + nw("def") + '"><div class="ct-said"><small>' + K.ctWho + "</small>" + K.def[d](R) + "</div>" +
       '<div class="ct-rebut"><span class="ct-no">' + K.ctNo + "</span>" + K.rebut[d](R, money(-RATES[lang].thanks), D.testimony) + "</div></div>";
@@ -1936,6 +1967,27 @@ window.VWReport = function (DATA) {
     var ap = document.getElementById("appeal");
     if (ap) ap.onclick = function (e) { e.stopPropagation(); manual = true; plead(ap.getAttribute("data-p"), true); };
   }
+  // ---- the courtroom: whoever speaks hops; OVERRULED fills the screen; the judge's gavel shakes the room ----
+  var cueT = [];
+  function later(sec, fn) { cueT.push(setTimeout(fn, sec * 1000)); }
+  function stopCues() { cueT.forEach(clearTimeout); cueT = []; }
+  function restart(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  function shake(slide) { restart(slide.querySelector(".pop"), "shake"); }
+  function bang(slide, text) {
+    var b = document.createElement("div"); b.className = "ct-bang"; b.textContent = text; slide.appendChild(b);
+    shake(slide); thud(0); setTimeout(function () { b.remove(); }, 1200);
+  }
+  function cues(slide, lines) {
+    if (!slide || still) return;
+    Array.prototype.forEach.call(lines, function (ln) {
+      var d = parseFloat(ln.style.getPropertyValue("--d")) || 0, c = ln.classList;
+      var who = c.contains("ct-ev") || c.contains("ct-rebut") ? "pl" : c.contains("ct-said") || c.contains("plea-pick") ? "df" : c.contains("ct-ruling") ? "jd" : null;
+      if (!who) return;
+      later(d, function () { restart(slide.querySelector('.ct-p[data-r="' + who + '"]'), "talk"); });
+      if (c.contains("ct-rebut")) later(d + 0.3, function () { bang(slide, t().ctNo); });
+      if (who === "jd") later(d + 0.3, function () { shake(slide); });
+    });
+  }
   // the part of the trial that just happened prints in line by line; OVERRULED and the gavel land with a thud
   function playTrial(box) {
     var part = box.querySelector(".ct-new");
@@ -1947,6 +1999,7 @@ window.VWReport = function (DATA) {
     if (no) { no.style.animationDelay = (at(no.parentNode) + 0.3).toFixed(2) + "s"; no.classList.add("hit"); thud(at(no.parentNode) + 0.4); }
     if (gv) { gv.style.animationDelay = (at(gv.parentNode) + 0.1).toFixed(2) + "s"; gv.classList.add("hit"); thud(at(gv.parentNode) + 0.3); }
     if (st) { st.style.animationDelay = (0.1 + lines.length * step + 0.2).toFixed(2) + "s"; thud(0.1 + lines.length * step + 0.3); }
+    cues(box.closest(".slide"), lines);
     setTimeout(function () { var sl = part.closest(".slide.tall"); if (sl) sl.scrollTo({ top: sl.scrollHeight, behavior: "smooth" }); }, 50);
   }
   function refreshPlea(fresh) {
@@ -2271,7 +2324,12 @@ window.VWReport = function (DATA) {
     var rc = el.querySelector(".receipt");
     if (!rc || still) return;
     var court = !!el.querySelector("#plea"); // the trial is read, not skimmed: it prints slower, and OVERRULED and the gavel land
-    var lines = rc.querySelectorAll(PRINT), start = 0.35, step = court ? 0.3 : 0.11;
+    var lines = rc.querySelectorAll(PRINT), start = court ? 1.5 : 0.35, step = court ? 0.3 : 0.11;
+    if (court) { // the gavel slams: court is in session
+      var op = el.querySelector(".ct-open");
+      if (!op) { op = document.createElement("div"); op.className = "ct-open"; el.appendChild(op); }
+      op.innerHTML = "<b>🔨</b><span>" + t().ctBig + "</span>"; restart(op, "go"); thud(0.45);
+    }
     lines.forEach(function (ln, i) {
       ln.classList.remove("printed"); void ln.offsetWidth;
       ln.style.setProperty("--d", (start + i * step).toFixed(2) + "s"); ln.classList.add("printed");
@@ -2284,7 +2342,7 @@ window.VWReport = function (DATA) {
       var d = parseFloat((x.closest(".printed") || x).style.getPropertyValue("--d")) || 0;
       x.classList.remove("hit"); void x.offsetWidth; x.style.animationDelay = (d + 0.25).toFixed(2) + "s"; x.classList.add("hit"); thud(d + 0.35);
     };
-    if (court) { hit(".ct-no"); hit(".ct-gavel"); }
+    if (court) { hit(".ct-no"); hit(".ct-gavel"); stopCues(); cues(el, lines); }
     var st = el.querySelector(".stamp");
     if (st) { st.style.animation = "none"; void st.offsetWidth; st.style.animation = ""; st.style.animationDelay = done.toFixed(2) + "s"; thud(done + 0.12); }
     el.querySelectorAll("[data-amt]").forEach(function (n) {
@@ -2326,7 +2384,7 @@ window.VWReport = function (DATA) {
 
   function go(i) {
     var from = stage.children[idx], next = Math.max(0, Math.min(list_.length - 1, i));
-    if (from && next !== idx && from.querySelector("#plea")) backTo = -1;
+    if (from && next !== idx && from.querySelector("#plea")) { backTo = -1; stopCues(); }
     idx = next;
     document.getElementById("hint").style.visibility = idx === 0 ? "" : "hidden";
     var secs = stage.children;

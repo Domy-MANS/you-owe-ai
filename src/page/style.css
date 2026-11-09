@@ -363,3 +363,31 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 /* buttons fade in instead of printing: a clipped button can't be tapped, and a reader may tap before it finishes */
 .plea-btns.printed, .plea-appeal.printed { animation-name: fadein; animation-timing-function: ease-out; }
 @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+/* the courtroom cast */
+.ct-cast { display: flex; justify-content: space-around; align-items: flex-end; margin: 0 0 4px; padding: 0 0 6px; border-bottom: 1.5px dashed rgba(110,80,30,0.4); }
+.ct-p { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 30%; }
+.ct-p small { font-size: 11px; font-weight: 700; color: #7a6a52; }
+.ct-face { display: inline-block; font-size: 28px; line-height: 1.1; transform-origin: 50% 100%; }
+.ct-p.judge { transform: translateY(-6px); }
+.ct-p.judge .ct-face { font-size: 32px; }
+.ct-p.judge small::before { content: ""; display: block; width: 64px; height: 6px; margin: 0 auto 3px; border-radius: 2px; background: var(--ink); } /* the bench */
+.ct-gv { position: absolute; top: 2px; right: 8%; font-size: 17px; transform: rotate(-35deg); transform-origin: 80% 85%; }
+.ct-p.talk .ct-face { animation: talk 0.55s ease-out; }
+@keyframes talk { 0% { transform: none; } 25% { transform: translateY(-12px) scale(1.15); } 50% { transform: none; } 70% { transform: translateY(-4px); } 100% { transform: none; } }
+.ct-p.judge.talk .ct-gv { animation: gavel 0.45s ease-in; }
+.pop.shake { animation: shake 0.35s ease-in-out; }
+@keyframes shake { 0%, 100% { transform: none; } 20% { transform: translate(-7px, 2px); } 40% { transform: translate(6px, -2px); } 60% { transform: translate(-4px, 1px); } 80% { transform: translate(3px, 0); } }
+/* the opening: lights down, the gavel slams, ORDER! */
+.ct-open { position: absolute; inset: 0; z-index: 30; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: rgba(28,20,10,0.93); color: #f1e2b8; pointer-events: none; }
+.ct-open.go { display: flex; animation: ctopen 1.55s ease both; }
+.ct-open b { font-size: 96px; line-height: 1; transform-origin: 80% 85%; animation: slam 0.5s cubic-bezier(.55,0,.8,.3) both; }
+.ct-open span { font: 900 48px var(--font); letter-spacing: 0.25em; animation: ctword 0.35s 0.45s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes ctopen { 0%, 78% { opacity: 1; visibility: visible; } 100% { opacity: 0; visibility: hidden; } }
+@keyframes slam { from { transform: translateY(-50vh) rotate(-70deg); } 85% { transform: rotate(12deg); } to { transform: none; } }
+@keyframes ctword { from { opacity: 0; transform: scale(2); } to { opacity: 1; transform: none; } }
+/* OVERRULED, the size of the screen, for a second */
+.ct-bang { position: absolute; left: 50%; top: 45%; z-index: 30; pointer-events: none; padding: 4px 22px; border: 6px solid currentColor; border-radius: 10px; background: rgba(241,226,184,0.88); color: rgba(220,38,38,0.95); font: 900 clamp(40px, 13vw, 64px) var(--font); letter-spacing: 0.1em; white-space: nowrap; animation: bang 1.15s ease both; }
+@keyframes bang { 0% { opacity: 0; transform: translate(-50%,-50%) rotate(-10deg) scale(3); } 18%, 75% { opacity: 1; transform: translate(-50%,-50%) rotate(-10deg) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(-10deg) scale(0.92); } }
+.still .ct-open, .still .ct-bang { display: none; }
+@media (prefers-reduced-motion: reduce) { .ct-open, .ct-bang { display: none !important; } .ct-p.talk .ct-face, .pop.shake { animation: none !important; } }
