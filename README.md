@@ -79,9 +79,9 @@ A few seconds into your invoice, the AI you chat with on the web calls to collec
 
 ![A friend's shared invoice, the phone home page, and the bill comparison](docs/img/friends-en.png)
 
-Open a friend's share link, tap **Make my own**, and your bill ends with a page that puts the two side by side: the amount due, how often each of you told AI it was wrong or said thanks, your top catchphrases and personas, and who's the worse boss. On a phone, **Send to my computer** carries your friend along, so the comparison still shows up when you make your bill on your computer.
+Open a friend's share link, tap **Make my own**, and your bill opens with a page that puts the two side by side: the amount due, how often each of you told AI it was wrong or said thanks, your top catchphrases and personas, and who's the worse boss. On a phone, **Send to my computer** carries your friend along, so the comparison still shows up when you make your bill on your computer.
 
-Already made yours? Then send your link back. Your browser remembers your own bill, so when you open their link the comparison page is already there, with no folders to pick again.
+Already made yours? Then send your link back. Your browser remembers your own bill, so their link opens on the comparison, with no folders to pick again.
 
 ## The AI debt clock
 
