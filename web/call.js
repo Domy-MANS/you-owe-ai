@@ -144,9 +144,9 @@
     bar.querySelector(".yes").onclick = function (e) { e.stopPropagation(); close("answered"); answer(onImported); };
   }
 
-  /** Shrink the banner into the bottom-right corner, where the missed-call badge appears. */
+  /** Shrink the banner into the top-left corner, where the missed-call badge appears (its centre: 14 + 20, 18 + 20). */
   function flyToCorner(bar, then) {
-    var r = bar.getBoundingClientRect(), tx = window.innerWidth - 40 - (r.left + r.width / 2), ty = window.innerHeight - 120 - (r.top + r.height / 2);
+    var r = bar.getBoundingClientRect(), tx = 34 - (r.left + r.width / 2), ty = 38 - (r.top + r.height / 2);
     bar.style.transition = "transform 0.5s cubic-bezier(.5,0,.2,1), opacity 0.5s";
     bar.style.transform = "translate(calc(-50% + " + tx + "px), " + ty + "px) scale(0.12)";
     bar.style.opacity = "0.4";
