@@ -568,7 +568,11 @@ window.VWReport = function (DATA) {
   }
   function wirePlea() {
     var box = document.getElementById("plea");
-    if (box) box.onclick = function (e) { e.stopPropagation(); }; // a tap on the trial (say, on a button still printing in) doesn't turn the page
+    // while the court waits for an excuse or a plea, a tap on the trial (say, on a button still printing in) doesn't turn the page forward.
+    // Once the ruling is in, the trial turns pages like any other: on a phone it fills the whole screen, so swallowing taps there trapped you in court.
+    if (box) box.onclick = function (e) {
+      if (box.querySelector(".ct-def, .plea-btn") && e.clientX >= window.innerWidth / 3) e.stopPropagation();
+    };
     document.querySelectorAll(".ct-def").forEach(function (btn) {
       btn.onclick = function (e) { e.stopPropagation(); defend(btn.getAttribute("data-d")); };
     });

@@ -547,6 +547,12 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   await pg.click("#appeal"); await sleep(400); // back where you started: no verdict change to report
   assert.doesNotMatch(await text(pg, "#plea"), /改判/, "flipping back to the original choice isn't a change");
   assert.match(await text(pg, "#appeal"), /良心发现/);
+  // after the ruling, a tap on the trial itself turns the page (on a phone the trial is the whole screen)
+  const tapTrial = (fx) => pg.$eval(".slide.on #plea", (b, fx) => { const r = b.getBoundingClientRect(); b.querySelector(".ct-ruling").dispatchEvent(new MouseEvent("click", { bubbles: true, clientX: innerWidth * fx, clientY: r.top + 10 })); }, fx);
+  await tapTrial(0.8); await sleep(300); assert.equal(await onIdx(), pi + 1, "a tap on the ruling goes forward");
+  await pg.keyboard.press("ArrowLeft"); await sleep(300);
+  await tapTrial(0.1); await sleep(300); assert.equal(await onIdx(), pi - 1, "a tap on the left of the ruling goes back");
+  await pg.keyboard.press("ArrowRight"); await sleep(300);
   // a plea from before the trial existed: the excuse is asked for first, then the ruling comes back
   await pg.evaluate(() => localStorage.setItem("vw-plea", JSON.stringify({ y: window.VW_DEMO.year, p: "refuse" })));
   await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(600);
