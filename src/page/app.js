@@ -989,7 +989,7 @@ window.VWReport = function (DATA) {
   }
 
   function go(i) {
-    var from = stage.children[idx], next = Math.max(0, Math.min(list_.length - 1, i));
+    var from = stage.children[idx], left = idx, next = Math.max(0, Math.min(list_.length - 1, i));
     if (from && next !== idx && from.querySelector("#plea")) { backTo = -1; stopCues(); }
     idx = next;
     var instant = !!seen[idx]; seen[idx] = true; // back to a page you've seen: it's simply there, no replay
@@ -998,6 +998,7 @@ window.VWReport = function (DATA) {
     if (instant) secs[idx].querySelectorAll(".ct-new").forEach(function (x) { x.classList.remove("ct-new"); }); // last visit's plea is old news now
     for (var k = 0; k < secs.length; k++) {
       secs[k].classList.toggle("instant", k === idx && instant);
+      secs[k].classList.toggle("skip", k !== idx && k !== left); // only the page you just left fades out; older ones are gone at once
       secs[k].classList.toggle("on", k === idx);
       secs[k].querySelectorAll("[data-w]").forEach(function (b) { if (k !== idx) b.style.width = 0; });
       secs[k].querySelectorAll("[data-h]").forEach(function (b) { if (k !== idx) b.style.height = "2px"; });

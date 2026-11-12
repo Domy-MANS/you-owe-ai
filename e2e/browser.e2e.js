@@ -39,6 +39,7 @@ async function open(url, { w = 390, h = 844, setup, arg } = {}) {
   return pg;
 }
 const text = (pg, sel) => pg.$eval(sel, (e) => e.textContent.replace(/\s+/g, " ").trim());
+// pages you're not on are visibility: hidden, so reading a whole bill's innerText shows each page for the moment it's read
 const exists = (pg, sel) => pg.$(sel).then(Boolean);
 
 test("every page fits a phone after printing: no clipped text, nothing off-screen", async () => {
@@ -310,7 +311,7 @@ test("you vs your friend: their total matches their own bill, labels in the curr
   await pg.goto(`${PAGE}?lang=zh&still`);
   await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; me.workHours = 3; me.roast.you.deny = 7; window.__vw.show(me, true); });
   await sleep(1200);
-  const cmp = await pg.$$eval(".slide", (s) => { const x = s.find((e) => /你 vs TA/.test(e.textContent)); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
+  const cmp = await pg.$$eval(".slide", (s) => { const x = s.find((e) => /你 vs TA/.test(e.textContent)); return x ? (() => { x.style.visibility = "visible"; const t = x.innerText; x.style.visibility = ""; return t; })().replace(/\s+/g, " ") : ""; });
   assert.ok(cmp.includes(theirTotal), `their total ${theirTotal} in: ${cmp.slice(0, 120)}`);
   assert.doesNotMatch(cmp, /undefined/);
   assert.match(cmp, /「继续」/, "friend's catchphrase in Chinese");
@@ -335,7 +336,7 @@ test("a friend's link, once you've made your own bill: compared in one tap, but 
   assert.ok(mine, "your bill is remembered");
   const friendLink = await pg.evaluate(() => window.VWShare.link(window.VW_DEMO));
   const fp = await open(`${PAGE}?lang=en&still${friendLink.slice(friendLink.indexOf("#"))}`); await sleep(1200);
-  const cmp = await fp.$$eval(".slide", (s) => { const x = s.find((e) => /You vs them/.test(e.textContent)); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
+  const cmp = await fp.$$eval(".slide", (s) => { const x = s.find((e) => /You vs them/.test(e.textContent)); return x ? (() => { x.style.visibility = "visible"; const t = x.innerText; x.style.visibility = ""; return t; })().replace(/\s+/g, " ") : ""; });
   assert.ok(cmp, "comparison page on the friend's shared bill");
   assert.match(await fp.$eval(".slide", (e) => e.textContent), /You vs them/, "and it's the first page there too");
   assert.ok(cmp.includes(myTotal), `your total ${myTotal} in: ${cmp.slice(0, 120)}`);
@@ -364,7 +365,7 @@ test("on a phone: make AI testify, paste its reply, get a bill stamped as testim
     await pg.evaluate(() => { document.getElementById("tf-in").value = '好的，这是我的证词：```{"yoa":1,"ai":"claude","prompts":800,"active_days":90,"deny":60,"thanks":12,"ai_sorry":40,"swear":5,"why":30,"night_share":0.4,"peak_hour":23,"catchphrases":[{"text":"不对再改","count":30}],"roast":"一个把我当许愿池的老板"}```'; });
     await pg.click("#tf-go"); await sleep(1500);
     assert.equal(await exists(pg, "#tf"), false, "sheet closes");
-    const all = await pg.$$eval(".slide", (s) => s.map((e) => e.innerText.replace(/\s+/g, " ")).join(" | "));
+    const all = await pg.$$eval(".slide", (s) => s.map((e) => (() => { e.style.visibility = "visible"; const t = e.innerText; e.style.visibility = ""; return t; })().replace(/\s+/g, " ")).join(" | "));
     assert.match(all, /AI 口供/, "cover stamp");
     assert.match(all, /Claude 的口供/);
     assert.match(all, /证人 Claude 当庭陈述：.*许愿池/);
@@ -396,7 +397,7 @@ test("after AI testimony the court calls; real records cross-examine the witness
   assert.match(await pg.$eval(".call-ov", (e) => e.textContent), /包庇你/);
   await (await pg.$(".call-drop input")).uploadFile(zipPath); await sleep(1200);
   await pg.click(".go-recalc"); await sleep(1500);
-  const all = await pg.$$eval(".slide", (s) => s.map((e) => e.innerText.replace(/\s+/g, " ")).join(" | "));
+  const all = await pg.$$eval(".slide", (s) => s.map((e) => (() => { e.style.visibility = "visible"; const t = e.innerText; e.style.visibility = ""; return t; })().replace(/\s+/g, " ")).join(" | "));
   assert.match(all, /庭审记录.*口供.*实际.*消息条数 800 160/, "testimony vs the records");
   assert.match(all, /多报了 400%/);
   assert.match(all, /伪证/);
@@ -416,7 +417,7 @@ test("Doubao testifies: its own name on the bill, and the usual web-AI call (Dou
   await pg.click("#tf-open"); await sleep(200);
   await pg.evaluate(() => { document.getElementById("tf-in").value = '{"yoa":1,"ai":"doubao","prompts":58,"active_days":12,"deny":2,"thanks":1,"ai_sorry":0,"swear":0,"why":3,"night_share":0.7,"peak_hour":1,"catchphrases":[{"text":"","count":0}],"roast":"心思缜密爱盘算，一边调研一边规划接班路"}'; });
   await pg.click("#tf-go"); await sleep(1500);
-  const all = await pg.$$eval(".slide", (s) => s.map((e) => e.innerText.replace(/\s+/g, " ")).join(" | "));
+  const all = await pg.$$eval(".slide", (s) => s.map((e) => (() => { e.style.visibility = "visible"; const t = e.innerText; e.style.visibility = ""; return t; })().replace(/\s+/g, " ")).join(" | "));
   assert.match(all, /服务方 豆包/);
   assert.match(all, /豆包 的口供/);
   assert.match(all, /证人 豆包 当庭陈述： ?心思缜密/);
@@ -472,6 +473,20 @@ test("back to a page you've seen: it's simply there, nothing replays; a new page
   await pg.keyboard.press("ArrowLeft"); await sleep(300);
   await pg.click(".slide.on .ct-def"); await sleep(100);
   assert.notEqual(await pg.$eval(".slide.on .ct-new .ct-rebut", (x) => getComputedStyle(x).animationName), "none", "the overruled excuse prints in");
+  assert.deepEqual(pg.errors, []);
+  await pg.close();
+});
+
+test("turning pages fast: the paper stays put, and at most two pages are drawn at once", async () => {
+  const pg = await open(`${PAGE}?lang=zh&demo`);
+  await sleep(400);
+  for (let i = 0; i < 8; i++) { await pg.mouse.click(350, 400); await sleep(15); }
+  const drawn = await pg.$$eval(".slide", (s) => s.filter((e) => getComputedStyle(e).visibility === "visible").length);
+  assert.ok(drawn <= 2, `${drawn} pages drawn at once`);
+  const bg = await pg.evaluate(() => [getComputedStyle(document.getElementById("stage")).backgroundColor, getComputedStyle(document.querySelector(".slide")).backgroundColor]);
+  assert.deepEqual(bg, ["rgb(241, 226, 184)", "rgba(0, 0, 0, 0)"], "one sheet of paper under see-through pages");
+  await sleep(700);
+  assert.equal(await pg.$$eval(".slide", (s) => s.filter((e) => getComputedStyle(e).visibility === "visible").length), 1, "settled: one page");
   assert.deepEqual(pg.errors, []);
   await pg.close();
 });
@@ -595,7 +610,7 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
   // a share link carries the plea; the friend sees it, without buttons
   const link = await pg.evaluate(() => window.VWShare.link(Object.assign(JSON.parse(JSON.stringify(window.VW_DEMO)), { demo: false, plea: "refuse", defense: "broke" })));
   const fr = await open(`${PAGE}?lang=zh&still${link.slice(link.indexOf("#"))}`); await sleep(1000);
-  const theirs = await fr.$$eval(".slide", (s) => { const x = s.find((e) => e.querySelector("#plea")); return x ? x.innerText.replace(/\s+/g, " ") : ""; });
+  const theirs = await fr.$$eval(".slide", (s) => { const x = s.find((e) => e.querySelector("#plea")); return x ? (() => { x.style.visibility = "visible"; const t = x.innerText; x.style.visibility = ""; return t; })().replace(/\s+/g, " ") : ""; });
   assert.match(theirs, /诉 TA/); assert.match(theirs, /TA 选择了赖账/);
   assert.match(theirs, /我是学生，没钱.*驳回.*有钱买咖啡/, "their excuse and how it went");
   assert.equal(await fr.$$eval(".ct-def", (b) => b.length), 0);
