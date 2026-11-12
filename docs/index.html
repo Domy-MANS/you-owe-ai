@@ -108,9 +108,14 @@ canvas#card { display: block; margin: 0 auto; width: min(100%, 360px); aspect-ra
    What you do there now (an excuse, a plea: .ct-new) still plays, and the waiting court's buttons still pulse. */
 .slide.instant .pop > *, .slide.instant.on .pop > * { opacity: 1; transform: none; animation: none; }
 .slide.instant .split div, .slide.instant .meter b, .slide.instant .clock i { transition: none; }
-.slide.instant .printed:not(.ct-new *), .slide.instant.on .stamp:not(.ct-new *),
-.slide.instant .ct-no.hit:not(.ct-new *), .slide.instant .ct-gavel.hit:not(.ct-new *) { animation: none; }
+.slide.instant .printed, .slide.instant.on .stamp, .slide.instant .ct-no.hit, .slide.instant .ct-gavel.hit { animation: none; }
 .slide.instant .ct-open { display: none; }
+/* ...and the part that just happened gets its animations back (spelled out, not :not(.ct-new *), which older in-app browsers drop along with the whole rule) */
+.slide.instant .ct-new .printed { animation: printin 0.2s steps(3, end) backwards; animation-delay: var(--d, 0s); }
+.slide.instant .ct-new .plea-btns.printed, .slide.instant .ct-new .plea-appeal.printed { animation-name: fadein; animation-timing-function: ease-out; }
+.slide.instant.on .ct-new .stamp { animation: stamp 0.5s cubic-bezier(.2,1.6,.4,1) 0.9s both; }
+.slide.instant .ct-new .ct-no.hit { animation: ctno 0.4s cubic-bezier(.2,1.6,.4,1) both; }
+.slide.instant .ct-new .ct-gavel.hit { animation: gavel 0.55s ease-in both; }
 
 .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px; }
 .vs-cell { border-radius: 16px; padding: 16px; background: rgba(0,0,0,0.22); }
