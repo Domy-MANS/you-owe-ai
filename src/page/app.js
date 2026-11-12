@@ -847,7 +847,7 @@ window.VWReport = function (DATA) {
 
   // ---------- player ----------
   var stage = document.getElementById("stage"), barsEl = document.getElementById("bars");
-  var list_ = [], idx = 0, timer = null;
+  var list_ = [], idx = 0, timer = null, seen = {}; // seen: pages already shown once, by index
   var manual = false; // autoplay until the reader turns a page themselves; from then on, pages stay put (like Instagram stories, paused)
   if (window.__vwStop) window.__vwStop(); // a previous report on this page stops its autoplay
   window.__vwStop = function () { clearTimeout(timer); };
@@ -873,7 +873,7 @@ window.VWReport = function (DATA) {
     document.getElementById("hint").textContent = t().next;
     var dl = document.getElementById("dl"), again = document.getElementById("again");
     if (dl) dl.onclick = function (e) { e.stopPropagation(); download(); };
-    if (again) again.onclick = function (e) { e.stopPropagation(); manual = false; courtSeen = false; go(0); }; // replay: autoplay again, court opening and all
+    if (again) again.onclick = function (e) { e.stopPropagation(); manual = false; courtSeen = false; seen = {}; go(0); }; // replay: autoplay again, every page animating, court opening and all
     var ct = document.getElementById("contempt");
     if (ct) ct.onclick = function (e) { // back to court
       e.stopPropagation(); manual = true; backTo = idx;
@@ -969,10 +969,11 @@ window.VWReport = function (DATA) {
     el.classList.toggle("tall", need > el.clientHeight + 2);
   }
   window.addEventListener("resize", function () { var on = stage.querySelector(".slide.on"); if (on) fitSlide(on); });
-  function animateIn(el) {
-    printReceipt(el);
+  function animateIn(el, instant) {
+    if (instant) el.querySelectorAll("[data-amt]").forEach(function (n) { n.textContent = money(parseFloat(n.getAttribute("data-amt"))); });
+    else printReceipt(el);
     el.querySelectorAll("[data-count]").forEach(function (n) {
-      if (still) { var v = parseFloat(n.getAttribute("data-count")); n.textContent = v % 1 ? v.toFixed(1) : fmt(v); return; }
+      if (still || instant) { var v = parseFloat(n.getAttribute("data-count")); n.textContent = v % 1 ? v.toFixed(1) : fmt(v); return; }
       var target = parseFloat(n.getAttribute("data-count")), t0 = performance.now(), dec = target % 1 ? 1 : 0;
       (function tick(now) {
         var p = Math.min(1, (now - t0) / 1400), e = 1 - Math.pow(1 - p, 3);
@@ -991,9 +992,12 @@ window.VWReport = function (DATA) {
     var from = stage.children[idx], next = Math.max(0, Math.min(list_.length - 1, i));
     if (from && next !== idx && from.querySelector("#plea")) { backTo = -1; stopCues(); }
     idx = next;
+    var instant = !!seen[idx]; seen[idx] = true; // back to a page you've seen: it's simply there, no replay
     document.getElementById("hint").style.visibility = idx === 0 ? "" : "hidden";
     var secs = stage.children;
+    if (instant) secs[idx].querySelectorAll(".ct-new").forEach(function (x) { x.classList.remove("ct-new"); }); // last visit's plea is old news now
     for (var k = 0; k < secs.length; k++) {
+      secs[k].classList.toggle("instant", k === idx && instant);
       secs[k].classList.toggle("on", k === idx);
       secs[k].querySelectorAll("[data-w]").forEach(function (b) { if (k !== idx) b.style.width = 0; });
       secs[k].querySelectorAll("[data-h]").forEach(function (b) { if (k !== idx) b.style.height = "2px"; });
@@ -1008,7 +1012,7 @@ window.VWReport = function (DATA) {
     var dur = manual ? 0 : list_[idx].dur;
     if (dur) { bars[idx].className = "now"; bars[idx].style.setProperty("--dur", dur + "s"); }
     else bars[idx].className = "done";
-    animateIn(secs[idx]);
+    animateIn(secs[idx], instant);
     fitSlide(secs[idx]);
     clearTimeout(timer);
     if (dur && !still && idx < list_.length - 1) timer = setTimeout(function () { go(idx + 1); }, dur * 1000);

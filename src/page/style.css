@@ -83,6 +83,13 @@ canvas#card { display: block; margin: 0 auto; width: min(100%, 360px); aspect-ra
 .still .pop > *, .still .slide.on .pop > * { opacity: 1; transform: none; animation: none; }
 .still .split div, .still .meter b, .still .clock i { transition: none; }
 .still .slide::before { animation: none; }
+/* a page you've already seen comes back as you left it: nothing prints, rises, counts or lands again.
+   What you do there now (an excuse, a plea: .ct-new) still plays, and the waiting court's buttons still pulse. */
+.slide.instant .pop > *, .slide.instant.on .pop > * { opacity: 1; transform: none; animation: none; }
+.slide.instant .split div, .slide.instant .meter b, .slide.instant .clock i { transition: none; }
+.slide.instant .printed:not(.ct-new *), .slide.instant.on .stamp:not(.ct-new *),
+.slide.instant .ct-no.hit:not(.ct-new *), .slide.instant .ct-gavel.hit:not(.ct-new *) { animation: none; }
+.slide.instant .ct-open { display: none; }
 
 .vs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 24px; }
 .vs-cell { border-radius: 16px; padding: 16px; background: rgba(0,0,0,0.22); }

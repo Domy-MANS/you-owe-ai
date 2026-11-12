@@ -446,6 +446,32 @@ test("autoplay until the reader turns a page; then it stays there until they tap
   await pg.close();
 });
 
+test("back to a page you've seen: it's simply there, nothing replays; a new page still animates", async () => {
+  const pg = await open(`${PAGE}?lang=en&demo`);
+  const cur = () => pg.$$eval(".slide", (s) => s.findIndex((e) => e.classList.contains("on")));
+  await sleep(6800); assert.equal(await cur(), 1, "autoplay turned the cover");
+  await pg.keyboard.press("ArrowLeft"); await sleep(80);
+  assert.equal(await cur(), 0);
+  const cover = await pg.$eval(".slide.on", (s) => ({
+    instant: s.classList.contains("instant"),
+    total: s.querySelector(".rc-total").textContent, want: s.querySelector(".rc-total").getAttribute("data-amt"),
+    stamp: getComputedStyle(s.querySelector(".stamp")).animationName,
+    shown: [...s.querySelectorAll(".pop > *")].every((x) => getComputedStyle(x).opacity === "1"),
+  }));
+  assert.ok(cover.instant);
+  assert.notEqual(cover.total, "$0.00", "the total is there at once, not counting up again");
+  assert.equal(cover.stamp, "none", "the stamp doesn't land again");
+  assert.ok(cover.shown, "everything visible at once");
+  await pg.keyboard.press("ArrowRight"); await pg.keyboard.press("ArrowRight"); await sleep(80);
+  assert.equal(await pg.$eval(".slide.on", (s) => s.classList.contains("instant")), false, "a page you haven't seen animates in");
+  // after going back to court, a plea made there still plays: its ruling prints in
+  await pg.keyboard.press("ArrowLeft"); await sleep(300);
+  await pg.click(".slide.on .ct-def"); await sleep(100);
+  assert.notEqual(await pg.$eval(".slide.on .ct-new .ct-rebut", (x) => getComputedStyle(x).animationName), "none", "the overruled excuse prints in");
+  assert.deepEqual(pg.errors, []);
+  await pg.close();
+});
+
 test("debt clock: off by default (no requests at all); with a counter, only the total goes out", async () => {
   // the built page in tests is a file:// page: the clock must stay off and never call out
   const off = await open(`${PAGE}?lang=en&still`, { setup: () => { window.__fetches = 0; const f = window.fetch; window.fetch = function () { window.__fetches++; return f.apply(this, arguments); }; } });
