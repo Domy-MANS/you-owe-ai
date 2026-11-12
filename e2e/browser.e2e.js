@@ -279,6 +279,10 @@ test("on a phone: no folder buttons, import is the way in, 'send to computer' ca
   const errors = []; pg.on("pageerror", (e) => errors.push(e.message));
   await pg.evaluateOnNewDocument(() => { navigator.share = (d) => { window.__shared = d.url; return Promise.resolve(); }; });
   await pg.goto(`${PAGE}?lang=en`);
+  // tapping fast through the bill: no grey tap flash over the whole screen, no double-tap zoom, no text selection
+  const touch = await pg.evaluate(() => { const h = getComputedStyle(document.documentElement), s = getComputedStyle(document.getElementById("stage"));
+    return [h.webkitTapHighlightColor, h.touchAction, s.userSelect || s.webkitUserSelect]; });
+  assert.deepEqual(touch, ["rgba(0, 0, 0, 0)", "manipulation", "none"]);
   const friend = await pg.evaluate(() => window.VWShare.link(window.VW_DEMO));
   await pg.evaluate((code) => localStorage.setItem("vw-friend", JSON.stringify({ s: code, t: Date.now() })), friend.split("#s=")[1]);
   await pg.goto(`${PAGE}?lang=en&from=friend`); await sleep(300);
