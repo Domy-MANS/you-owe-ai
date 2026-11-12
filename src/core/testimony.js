@@ -17,13 +17,15 @@
       "ai：你是哪个 AI，写你的名字（比如 chatgpt、claude、豆包、deepseek）\nprompts：我今年大概给你发了多少条消息\nactive_days：大概有多少天找过你\n" +
       "deny：我说你错了、不对、不是这样的次数\nthanks：我说谢谢的次数\nai_sorry：你向我道歉的次数\nswear：我发火或骂人的次数\nwhy：我问「为什么」的次数\n" +
       "night_share：晚上 10 点以后发的消息占多少（0 到 1）\npeak_hour：我最常找你的钟点（0 到 23）\n" +
-      "catchphrases：我最常对你说的 3 句口头禅，用我的原话，每句不超过 12 个字，带上大概次数\nroast：用一句话毒舌评价我这个老板，不超过 40 个字",
+      "catchphrases：我最常对你说的 3 句口头禅，用我的原话，每句不超过 12 个字，带上大概次数\nroast：用一句话毒舌评价我这个老板，不超过 40 个字\n\n" +
+      "隐私：这份 JSON 会印在一张可以分享给别人的账单上。不要写任何能认出我或别人的信息：真实姓名（包括我和家人、朋友、同事的名字）、昵称、学校、公司、地址、电话、账号、具体地点或事件。口头禅只挑不含这些内容的日常短句；吐槽只评价我怎么对待你。",
     en: "You've been subpoenaed to testify against your boss: me. Go through your memory of me and our past chats (as much as you can see) and estimate how I treated you this year. Where you're unsure, make a reasonable guess rather than 0. If you can't see any of my history at all, put 0 for prompts.\n\n" +
       "Reply with one code block containing only this JSON, nothing else:\n" + TEMPLATE + "\n\n" +
       "ai: which AI you are, by name (for example chatgpt, claude, gemini, deepseek)\nprompts: about how many messages I sent you this year\nactive_days: about how many days I talked to you\n" +
       "deny: times I told you that you were wrong\nthanks: times I said thanks\nai_sorry: times you apologized to me\nswear: times I swore or lost my temper\nwhy: times I asked \"why\"\n" +
       "night_share: share of my messages sent after 10pm (0 to 1)\npeak_hour: the hour I most often message you (0 to 23)\n" +
-      "catchphrases: the 3 things I say to you most, in my own words, 12 characters or fewer each, with rough counts\nroast: one savage sentence about me as a boss, under 25 words",
+      "catchphrases: the 3 things I say to you most, in my own words, 12 characters or fewer each, with rough counts\nroast: one savage sentence about me as a boss, under 25 words\n\n" +
+      "Privacy: this JSON goes on a bill that can be shared with others. Leave out anything that could identify me or anyone else: real names (mine, my family's, friends', coworkers'), nicknames, schools, employers, addresses, phone numbers, accounts, specific places or events. Pick catchphrases that are everyday phrases with none of that in them, and roast only how I treat you as a boss.",
   };
 
   // Any AI can testify. ChatGPT and Claude can also be cross-examined, since their chats can be exported.
