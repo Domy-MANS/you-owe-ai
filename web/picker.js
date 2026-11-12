@@ -119,11 +119,12 @@
 
   /** Fallback (Safari, Firefox): <input webkitdirectory>. */
   function pickWithInput() {
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
       var input = document.createElement("input");
       input.type = "file";
       input.webkitdirectory = true;
       input.multiple = true;
+      input.oncancel = function () { var e = new Error("cancelled"); e.name = "AbortError"; reject(e); }; // closed the window without picking
       input.onchange = function () {
         resolve(Array.prototype.map.call(input.files, function (f) {
           var parts = (f.webkitRelativePath || f.name).split("/");
@@ -140,12 +141,14 @@
     var btn = document.getElementById("pick-" + kind), status = document.getElementById("st-" + kind);
     var entries;
     try { if (navigator.clipboard) navigator.clipboard.writeText(pathFor(kind)).catch(function () {}); } catch (e) {}
+    var before = [status.innerHTML, status.className];
     status.innerHTML = t().copied(kind);
     status.className = "st hint";
     try {
       entries = window.showDirectoryPicker ? await pickWithHandle(kind) : await pickWithInput();
     } catch (e) {
-      if (e && e.name === "AbortError") return;
+      if (e && e.name === "AbortError") { status.innerHTML = before[0]; status.className = before[1]; return; } // cancelled: back to how it was
+
       status.textContent = String(e.message || e);
       return;
     }

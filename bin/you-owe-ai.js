@@ -91,7 +91,7 @@ async function main() {
   if (o.year === null) o.year = o.demo ? new Date().getFullYear() : defaultYear(data.prompts);
   const stats = computeStats(data, { year: o.year });
   stats.demo = !!o.demo;
-  if (o.hideProjects) stats.topProjects = [];
+  if (o.hideProjects) { stats.topProjects = []; if (stats.biggestSession) stats.biggestSession.project = ""; }
   stats.roast = o.noText ? null : o.demo ? demoRoast() : computeRoast(texts, replies, { year: o.year });
 
   if (o.json) return console.log(JSON.stringify(stats, null, 2));

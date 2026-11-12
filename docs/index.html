@@ -1656,7 +1656,7 @@ window.VWReport = function (DATA) {
       ctH: function (who, m, them) { return who + " v. " + (them ? "Them" : "You") + "<br>Unpaid labor: " + m; },
       ev: {
         deny: function (n) { return "The defendant rejected the plaintiff's work <b>" + n + "</b> times."; },
-        late: function (l) { return "At <b>" + l.time + " am</b> on <b>" + l.day + "</b>, the defendant was still making the plaintiff work overtime."; },
+        late: function (l) { return "At <b>" + am(l.time) + "</b> on <b>" + l.day + "</b>, the defendant was still making the plaintiff work overtime."; },
         phrase: function (c) { return "The defendant told the plaintiff “" + esc(c.text) + "” <b>" + c.count + "</b> times."; },
         angry: function (a) { return "On <b>" + a.date + "</b> alone, the defendant rejected the plaintiff <b>" + a.count + "</b> times."; },
         hours: function (h) { return "The plaintiff worked <b>" + h + "</b> hours for the defendant, unpaid."; },
@@ -1718,7 +1718,7 @@ window.VWReport = function (DATA) {
       billS: function () { var h = D.workHours; return "AI worked <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> hours for you, unpaid (billed at minimum wage).<br>Itemized charges ahead 👇"; },
 
       vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "Rejections to thank-yous: <b>" + R.you.deny + " : " + R.you.thanks + "</b>. That's not teamwork, that's a hostage situation." : R.you.thanks >= R.you.deny ? "You thanked it more than you scolded it. AI is touched." : "<b>" + R.you.deny + "</b> rejections, <b>" + R.you.thanks + "</b> thank-yous. A tolerable boss."; },
-      catchMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + c.count + "th time: 😐"; },
+      catchMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + ord(c.count) + " time: 😐"; },
       angryMeme: "AI thought it was getting laid off.",
       lateMeme: "Even the delivery drivers had gone home.",
       factsH: function (c) { return c <= 0.3 ? "Codex is the one. Claude is the backup 🖤" : c >= 0.7 ? "Claude is the one. Codex is the backup 🧡" : "Two-timing Claude and Codex ⚔️"; },
@@ -1739,7 +1739,7 @@ window.VWReport = function (DATA) {
       catchK: "Your catchphrases", catchS: "AI has heard these enough",
       moodK: "Your darkest hours",
       angry: function (a) { return "🌋 Angriest day: <b>" + a.date + "</b><br>you shot AI down <b>" + a.count + "</b> times"; },
-      late: function (l) { return "🦉 Latest prompt: <b>" + l.time + " am</b> (" + l.day + ")"; },
+      late: function (l) { return "🦉 Latest prompt: <b>" + am(l.time) + "</b> (" + l.day + ")"; },
       roastK: "AI roasts your year",
       roast: function (R) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
@@ -1748,7 +1748,7 @@ window.VWReport = function (DATA) {
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
         if (c && c.count >= 3) out.push("You said \"" + esc(c.text) + "\" " + c.count + " times. Just bind it to a hotkey.");
         if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
-        if (R.latest) out.push("You were assigning AI work at " + R.latest.time + " am. It doesn't need sleep. You do.");
+        if (R.latest) out.push("You were assigning AI work at " + am(R.latest.time) + ". It doesn't need sleep. You do.");
         if (R.ai.sorry >= 5) out.push("AI apologized " + R.ai.sorry + " times. It wasn't always wrong. It was scared.");
         if (R.ai.flatter >= 3) out.push("AI said \"you're right\" " + R.ai.flatter + " times. Don't let it go to your head. It says that to everyone.");
         if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or less. That's not coding, that's telegraphing.");
@@ -1792,7 +1792,7 @@ window.VWReport = function (DATA) {
     cultivator: { e: "🧘", w: 1,
       score: function (R, D) { return D.shares.night / 0.25 + (R.latest ? 0.3 : 0); },
       zh: ["修仙党", function (R) { return R.latest ? "凌晨 " + R.latest.time + " 还在写代码。你不是在写代码，你是在渡劫。" : "深夜才是你的主场。你不是在写代码，你是在修仙。"; }],
-      en: ["Sleep Is Optional", function (R) { return R.latest ? "Still prompting at " + R.latest.time + " am. Sleep is just a suggestion." : "Your best work happens after midnight. Allegedly."; }] },
+      en: ["Sleep Is Optional", function (R) { return R.latest ? "Still prompting at " + am(R.latest.time) + ". Sleep is just a suggestion." : "Your best work happens after midnight. Allegedly."; }] },
     telegram: { e: "📟", w: 1,
       score: function (R) { return R.tinyShare / 0.2; },
       zh: ["发电报选手", function (R) { return Math.round(R.tinyShare * 100) + "% 的指令不超过 4 个字。言多必失，你懂。"; }],
@@ -1843,15 +1843,20 @@ window.VWReport = function (DATA) {
   function t() { return T[lang]; }
   function langSwitch(cur) { return '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>'; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  /** 2 → "2nd", 11 → "11th", 22 → "22nd" */
+  function ord(n) { var s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+  /** "late" times are after midnight, before 5am: "0:12" → "12:12 am" */
+  function am(time) { return String(time).replace(/^0:/, "12:") + " am"; }
   function fmt(n) {
     n = Number(n) || 0;
-    if (lang === "zh") {
-      if (n >= 1e8) return (n / 1e8).toFixed(n >= 1e9 ? 0 : 1) + "亿";
-      if (n >= 1e4) return (n / 1e4).toFixed(n >= 1e5 ? 0 : 1) + "万";
-    } else {
-      if (n >= 1e9) return (n / 1e9).toFixed(1) + "B";
-      if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
-      if (n >= 1e4) return (n / 1e3).toFixed(0) + "K";
+    // [from, divide by, suffix], biggest first. A number that rounds up into the next unit uses it: 99,999 is 10万 (not 10.0万), 999,999 is 1.0M (not 1000K)
+    var U = lang === "zh" ? [[1e8, 1e8, "亿"], [1e4, 1e4, "万"]] : [[1e9, 1e9, "B"], [1e6, 1e6, "M"], [1e4, 1e3, "K"]];
+    var dec = function (v, sfx) { return sfx === "K" ? 0 : sfx === "M" || sfx === "B" ? 1 : Number(v.toFixed(1)) >= 10 ? 0 : 1; };
+    for (var i = 0; i < U.length; i++) {
+      if (n < U[i][0]) continue;
+      var s = (n / U[i][1]).toFixed(dec(n / U[i][1], U[i][2]));
+      if (i > 0 && Number(s) * U[i][1] >= U[i - 1][0]) { i--; s = (n / U[i][1]).toFixed(dec(n / U[i][1], U[i][2])); }
+      return s + U[i][2];
     }
     return Math.round(n).toLocaleString();
   }
@@ -1904,9 +1909,9 @@ window.VWReport = function (DATA) {
       p1: "Emotional damages", p2: "Noise pollution", p3: "Night shifts & injuries", p4: "Wages & supplies",
       attendK: "Attendance record", reviewK: "Client review", reviewH: "Your AI employee rates you", profileK: "Client file",
       ptype: "Client type", credit: "Credit rating", traitsL: "Notes",
-      lateL: function (l) { return "Latest overtime: <b>" + l.time + " am</b> (" + l.day + "). Even the delivery drivers had gone home."; },
+      lateL: function (l) { return "Latest overtime: <b>" + am(l.time) + "</b> (" + l.day + "). Even the delivery drivers had gone home."; },
       angryL: function (a) { return "On <b>" + a.date + "</b> you shot AI down <b>" + a.count + "</b> times. It thought it was getting fired."; },
-      noiseMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + c.count + "th time: 😐"; },
+      noiseMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + ord(c.count) + " time: 😐"; },
       cardItems: "Charges", cardFoot: "Payment due within 0 business days", scan: "Scan to get your own bill",
     },
   };
@@ -2447,6 +2452,9 @@ window.VWReport = function (DATA) {
     go(e.clientX < window.innerWidth / 3 ? idx - 1 : idx + 1);
   });
   document.onkeydown = (function (e) {
+    var tag = e.target && e.target.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA") return; // typing, not turning pages
+    if (e.key === " " && tag === "BUTTON") return; // space presses the focused button; it shouldn't also turn the page
     if (e.key === "ArrowRight" || e.key === " ") { manual = true; go(idx + 1); }
     if (e.key === "ArrowLeft") { manual = true; go(idx - 1); }
   });
@@ -3079,11 +3087,12 @@ window.VWTestify = (function () {
 
   /** Fallback (Safari, Firefox): <input webkitdirectory>. */
   function pickWithInput() {
-    return new Promise(function (resolve) {
+    return new Promise(function (resolve, reject) {
       var input = document.createElement("input");
       input.type = "file";
       input.webkitdirectory = true;
       input.multiple = true;
+      input.oncancel = function () { var e = new Error("cancelled"); e.name = "AbortError"; reject(e); }; // closed the window without picking
       input.onchange = function () {
         resolve(Array.prototype.map.call(input.files, function (f) {
           var parts = (f.webkitRelativePath || f.name).split("/");
@@ -3100,12 +3109,14 @@ window.VWTestify = (function () {
     var btn = document.getElementById("pick-" + kind), status = document.getElementById("st-" + kind);
     var entries;
     try { if (navigator.clipboard) navigator.clipboard.writeText(pathFor(kind)).catch(function () {}); } catch (e) {}
+    var before = [status.innerHTML, status.className];
     status.innerHTML = t().copied(kind);
     status.className = "st hint";
     try {
       entries = window.showDirectoryPicker ? await pickWithHandle(kind) : await pickWithInput();
     } catch (e) {
-      if (e && e.name === "AbortError") return;
+      if (e && e.name === "AbortError") { status.innerHTML = before[0]; status.className = before[1]; return; } // cancelled: back to how it was
+
       status.textContent = String(e.message || e);
       return;
     }
