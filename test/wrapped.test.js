@@ -101,7 +101,7 @@ test("html is self-contained and safe against odd project names", () => {
   const st = computeStats(demoData(2026), { year: 2026 });
   st.topProjects = [{ name: "</script><script>alert(1)</script>", count: 1 }];
   const html = renderHtml(st);
-  assert.equal((html.match(/<\/script>/g) || []).length, 2);
+  assert.equal((html.match(/<\/script>/g) || []).length, 3); // data, format.js, app.js: an odd project name adds none
   assert.doesNotMatch(html, /src=["']https?:/);
   assert.ok(st.prompts > 500);
 });

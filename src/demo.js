@@ -1,8 +1,13 @@
 "use strict";
 const { newSession } = require("./core/parse");
 
-/** Deterministic fake year of activity, for `--demo` and screenshots. */
-function demoData(year) {
+/** Deterministic fake year of activity, for `--demo` and screenshots. It runs up to the start of this month,
+    so the published demo (docs/index.html) only changes once a month, not on every build. */
+function monthStart(year) { // in January there is no finished month yet: up to today then
+  const now = new Date(), m = new Date(now.getFullYear(), now.getMonth(), 1);
+  return m.getFullYear() === year && m.getMonth() === 0 ? now : m;
+}
+function demoData(year, until = monthStart(year)) {
   let seed = 42;
   const rand = () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648);
   const pick = (arr) => arr[Math.floor(rand() * arr.length)];
@@ -13,7 +18,7 @@ function demoData(year) {
 
   for (let day = 0; day < 365; day++) {
     const date = new Date(year, 0, 1 + day);
-    if (date.getFullYear() !== year || date > new Date()) break;
+    if (date.getFullYear() !== year || date >= until) break;
     const busy = (day > 200 ? 0.8 : 0.45) + (date.getDay() === 0 || date.getDay() === 6 ? 0.1 : 0);
     if (rand() > busy) continue;
     const n = 1 + Math.floor(rand() * 3);

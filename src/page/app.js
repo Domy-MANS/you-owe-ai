@@ -430,23 +430,10 @@ window.VWReport = function (DATA) {
   function t() { return T[lang]; }
   function langSwitch(cur) { return '<span class="' + (cur === "en" ? "on" : "") + '">EN</span><span class="' + (cur === "zh" ? "on" : "") + '">中</span>'; }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
-  /** 2 → "2nd", 11 → "11th", 22 → "22nd" */
-  function ord(n) { var s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
-  /** "late" times are after midnight, before 5am: "0:12" → "12:12 am" */
-  function am(time) { return String(time).replace(/^0:/, "12:") + " am"; }
-  function fmt(n) {
-    n = Number(n) || 0;
-    // [from, divide by, suffix], biggest first. A number that rounds up into the next unit uses it: 99,999 is 10万 (not 10.0万), 999,999 is 1.0M (not 1000K)
-    var U = lang === "zh" ? [[1e8, 1e8, "亿"], [1e4, 1e4, "万"]] : [[1e9, 1e9, "B"], [1e6, 1e6, "M"], [1e4, 1e3, "K"]];
-    var dec = function (v, sfx) { return sfx === "K" ? 0 : sfx === "M" || sfx === "B" ? 1 : Number(v.toFixed(1)) >= 10 ? 0 : 1; };
-    for (var i = 0; i < U.length; i++) {
-      if (n < U[i][0]) continue;
-      var s = (n / U[i][1]).toFixed(dec(n / U[i][1], U[i][2]));
-      if (i > 0 && Number(s) * U[i][1] >= U[i - 1][0]) { i--; s = (n / U[i][1]).toFixed(dec(n / U[i][1], U[i][2])); }
-      return s + U[i][2];
-    }
-    return Math.round(n).toLocaleString();
-  }
+  // number formatting lives in src/core/format.js (unit-tested); these follow the current language
+  var ord = window.VWFormat.ord, am = window.VWFormat.am;
+  function fmt(n) { return window.VWFormat.fmt(n, lang); }
+  function money(v) { return window.VWFormat.money(v, lang); }
   // ================= the bill =================
   // Every slide is a receipt. The jokes are line items; they add up to one total.
   var DEFS = window.VWShare.DEFS;
@@ -664,12 +651,6 @@ window.VWReport = function (DATA) {
     return !b2 ? a + " is the one 💍" : src.length >= 3 && src[2].share >= 0.15 ? "Juggling " + src.length + " AIs 🚢" : src[1].share >= 0.3 ? "Two-timing " + a + " and " + b2 + " ⚔️" : a + " is the one. " + b2 + " is the backup 🖤";
   }
 
-  function money(v) {
-    var neg = v < 0, a = Math.abs(v), s;
-    if (lang === "zh") s = "¥" + (a < 10 ? String(+a.toFixed(1)) : Math.round(a).toLocaleString()); // ¥6, ¥0.4, ¥8,459
-    else s = "$" + a.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return (neg ? "-" : "") + s;
-  }
 
   /** All line items, computed once so every page and the card agree. */
   function charges(X) {

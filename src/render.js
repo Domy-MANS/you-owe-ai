@@ -20,6 +20,7 @@ const CSP = [
 function renderHtml(stats) {
   const css = fs.readFileSync(path.join(PAGE, "style.css"), "utf8");
   const js = fs.readFileSync(path.join(PAGE, "app.js"), "utf8");
+  const format = fs.readFileSync(path.join(__dirname, "core", "format.js"), "utf8");
   // JSON inside <script>: escape "<" so a project name can't close the tag
   const data = JSON.stringify(stats).replace(/</g, "\\u003c");
   return `<!doctype html>
@@ -37,6 +38,7 @@ function renderHtml(stats) {
 <main id="stage"></main>
 <div class="hint" id="hint"></div>
 <script>var DATA = ${data};</script>
+<script>${format}</script>
 <script>${js}</script>
 </body>
 </html>

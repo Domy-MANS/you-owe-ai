@@ -59,6 +59,7 @@ ${read("web/landing.css")}</style>
 <script>${read("src/core/roast.js")}</script>
 <script>${read("src/core/webchat.js")}</script>
 <script>${read("src/core/testimony.js")}</script>
+<script>${read("src/core/format.js")}</script>
 <script>${read("src/page/app.js")}</script>
 <script>${read("web/call.js")}</script>
 <script>${read("web/testify.js")}</script>
