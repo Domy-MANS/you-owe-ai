@@ -65,3 +65,28 @@ test("collects from both history files, skips slash commands", () => {
   assert.deepEqual(collectPrompts(cl, cx).map((p) => p.text), ["继续", "然后呢"]);
   assert.deepEqual(collectReplies(cl, cx).map((r) => r.text), ["Done"]);
 });
+
+test("the counts mean what the bill says: ordinary questions and everyday phrases aren't charged", () => {
+  const { YOU, AI } = require("../src/core/roast");
+  const hit = (k, s) => YOU[k].test(s);
+  // told AI it was wrong
+  for (const s of ["不对", "这不对吧", "不是这样的", "不行，重来", "你搞错了", "这个没用", "没用啊", "No, use the other file", "nope", "that's wrong", "that's not what I asked", "it doesn't work", "this is not working", "not right"])
+    assert.ok(hit("deny", s), "deny: " + s);
+  for (const s of ["对不对？", "这样行不行", "我没用过这个库", "no problem", "no worries, take your time", "there is no config file", "左右不对称", "怎么部署"])
+    assert.ok(!hit("deny", s), "not deny: " + s);
+  // lost
+  for (const s of ["我不知道怎么办", "看不懂", "啥意思", "这是什么意思", "没看懂", "I'm confused", "I don't understand this", "no idea what this does", "i'm stuck"])
+    assert.ok(hit("lost", s), "lost: " + s);
+  for (const s of ["怎么部署到服务器", "会不会有性能问题", "配置文件在哪", "how to deploy this", "how do I add a test", "how can we speed this up"])
+    assert.ok(!hit("lost", s), "not lost: " + s);
+  // swearing
+  for (const s of ["卧槽", "我去，又挂了", "我去", "太离谱了", "wtf", "what the fuck", "damn"]) assert.ok(hit("swear", s), "swear: " + s);
+  for (const s of ["我去看看日志", "我去年写的代码", "等我去问一下"]) assert.ok(!hit("swear", s), "not swear: " + s);
+  // "still" and "again" alone are just words
+  for (const s of ["还是不行", "又报错了", "still not working", "still broken", "not again", "same error"]) assert.ok(hit("again", s), "again: " + s);
+  for (const s of ["try again with the other model", "I still need the tests", "run it again"]) assert.ok(!hit("again", s), "not again: " + s);
+  // thanks, and the AI's apologies
+  for (const s of ["谢谢", "多谢", "辛苦了", "thanks!", "thank u", "ty"]) assert.ok(hit("thanks", s), "thanks: " + s);
+  assert.ok(!hit("thanks", "empty the cache"));
+  for (const s of ["Sorry about that", "对不起，我看错了", "这是我的错", "I apologize", "I was wrong about that"]) assert.ok(AI.sorry.test(s), "sorry: " + s);
+});
