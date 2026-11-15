@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
 const TM = require("../src/core/testimony");
-const { computeStats } = require("../src/core/stats");
+const { computeStats, defaultYear } = require("../src/core/stats");
 const { computeRoast } = require("../src/core/roast");
 
 const reply = 'Sure! Here is my testimony:\n```json\n{"yoa":1,"ai":"chatgpt","prompts":1200,"active_days":140,"deny":85,"thanks":"约 40","ai_sorry":60,"swear":7,"why":90,"night_share":35,"peak_hour":23,"catchphrases":[{"text":"再详细一点","count":50},"继续",{"text":"","count":3}],"roast":"把我当成 24 小时不下班的<b>实习生</b>"}\n```\nHope that helps!';
@@ -129,4 +129,22 @@ test("loose JSON from real AIs still reads: trailing commas, comments, full-widt
   assert.throws(() => TM.parse("我看不到你的聊天记录。"), (e) => e.code === "no-memory", "an AI saying it can't see your history");
   assert.throws(() => TM.parse("I don't have access to your past conversations."), (e) => e.code === "no-memory");
   assert.throws(() => TM.parse("好的！"), (e) => e.code === "no-code");
+});
+
+test("in January the testimony is about last year: the subpoena names the year, and the records fill that whole year", () => {
+  const jan = new Date(2027, 0, 5, 10).getTime(), nov = new Date(2026, 10, 7).getTime();
+  assert.equal(TM.billYear(jan), 2026);
+  assert.equal(TM.billYear(nov), 2026);
+  assert.equal(TM.billYear(new Date(2027, 2, 1).getTime()), 2027);
+  assert.match(TM.prompt("en", jan), /how I treated you in 2026\./);
+  assert.match(TM.prompt("zh", jan), /我在 2026 年是怎么对待你的/);
+  assert.doesNotMatch(TM.prompt("en", jan) + TM.prompt("zh", jan), /\{Y\}/);
+  const t = TM.parse('{"yoa":1,"ai":"chatgpt","prompts":1200,"active_days":200,"deny":90,"thanks":10,"ai_sorry":30,"swear":2,"why":40,"night_share":0.3,"peak_hour":15,"catchphrases":[],"roast":"x"}');
+  const recs = TM.toRecords(t, jan);
+  assert.equal(recs.prompts.length, 1200);
+  assert.ok(recs.prompts.every((p) => new Date(p.ts).getFullYear() === 2026), "all in 2026");
+  const D = computeStats(recs, { year: defaultYear(recs.prompts, new Date(jan)) });
+  assert.equal(D.year, 2026);
+  assert.equal(D.prompts, 1200);
+  assert.equal(D.activeDays, 200);
 });

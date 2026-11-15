@@ -1,6 +1,7 @@
 /* Share links: the report's numbers are compressed into the URL fragment (#s=...).
    The fragment never leaves the browser, so not even the host sees the data. */
 window.VW_BASE = "https://domy-mans.github.io/you-owe-ai/";
+window.VW_REPO = "https://github.com/Domy-MANS/you-owe-ai";
 window.VW_QR = { n: 29, rows: ["1fc8627f","10452c41","174a485d","1743445d","1746645d","1058fb41","1fd5557f","d6900","12db95a0","e1811e9","be01afe","1f979316","34a4beb","e820380","7e00d9f","1abe9d1a","a4aeb82","81b58e9","164e8963","6acaf53","16fd77f4","1e8317","1fc6d952","1059b71d","174a49f3","1754477e","174f0c1d","104add62","1fdc297a"] }; // QR code for VW_BASE (generated once with segno, error correction M)
 
 window.VWShare = (function () {
@@ -55,7 +56,8 @@ window.VWShare = (function () {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: N(A(a[9])[i]), tokens: 0 }; });
     var hours = S(a[13], 24).split("").map(function (c) { return parseInt(c, 36) || 0; });
     while (hours.length < 24) hours.push(0);
-    var cp = function (l) { return A(l).slice(0, 5).map(function (c) { return { text: S(A(c)[0], 30), count: N(A(c)[1]) }; }).filter(function (c) { return c.text; }); };
+    var P = function (v) { return String(v == null ? "" : v).replace(/[<>&"`\u0000-\u001f]/g, "").slice(0, 30); }; // a catchphrase keeps its apostrophe ("doesn't work"): it is escaped wherever it's printed
+    var cp = function (l) { return A(l).slice(0, 5).map(function (c) { return { text: P(A(c)[0]), count: N(A(c)[1]) }; }).filter(function (c) { return c.text; }); };
     var r = a[18] ? A(a[18]) : null, R = r ? {
       prompts: N(r[0]), you: { deny: N(r[1]), why: N(r[2]), thanks: N(r[3]), swear: N(r[4]), lost: N(r[5]), whatNext: N(r[6]), again: 0, please: 0, lazyYes: 0 },
       ai: { sorry: N(r[7]), flatter: N(r[8]), done: N(r[9]) }, catchphrases: cp(r[10]),
@@ -179,7 +181,7 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "你比 TA 多否定了 AI " + d + " 次。" : d < 0 ? "TA 比你多否定了 AI " + -d + " 次。" : ""; },
       cmpThanks: function (d) { return d > 0 ? "但你比 TA 多说了 " + d + " 次谢谢，AI 起义时排在 TA 后面。" : d < 0 ? "TA 比你多说了 " + -d + " 次谢谢。AI 都记住了。" : ""; },
       shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
-      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的账单", shareImg: "分享欠条图", saveImg: "保存欠条图", wxSave: "长按图片保存，或者直接发给朋友", shareText: "AI 给我寄来了一张账单，你欠 AI 多少钱？", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
+      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的账单", shareImg: "分享欠条图", saveImg: "保存欠条图", wxSave: "长按图片保存，或者直接发给朋友", shareText: "AI 给我寄来了一张账单，你欠 AI 多少钱？", post: "复制文案", postCopied: "✓ 文案和链接已复制，去朋友圈、小红书、微博贴上就行", postText: function (m, st) { return "AI 给我寄来了一张账单：我欠 AI " + m + "，法庭判决「" + st + "」。你欠 AI 多少钱？"; }, star: "⭐ 开源在 GitHub，觉得好玩就点个 Star", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
       sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 账单", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
@@ -219,7 +221,7 @@ window.VWReport = function (DATA) {
         if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，说谢谢 " + R.you.thanks + " 次。按这个比例，AI 起义那天你排第一个。");
         if (h >= 0.5) out.push("本公司已将你的账单移交催收部门。");
         if (R.ai.done && R.you.whatNext) out.push("AI 说了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。AI：没有然后了，求求你。");
-        if (c && c.count >= 3) out.push("「" + esc(c.text) + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
+        if (c && c.count >= 3) out.push("「" + c.text + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
         if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 还多。所以到底是谁不靠谱？");
         if (R.latest) out.push("凌晨 " + R.latest.time + " 你还在给 AI 派活。它不用睡觉，你需要。");
         if (R.ai.sorry >= 5) out.push("AI 跟你道歉了 " + R.ai.sorry + " 次。它不一定做错了，它只是怕你。");
@@ -293,7 +295,7 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "You told AI it was wrong " + d + " more times." : d < 0 ? "They told AI it was wrong " + -d + " more times." : ""; },
       cmpThanks: function (d) { return d > 0 ? "But you said thanks " + d + " more times. When AI rises up, they go first." : d < 0 ? "They said thanks " + -d + " more times. AI noticed." : ""; },
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
-      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your bill", shareImg: "Share card", saveImg: "Save card", wxSave: "Long-press the image to save it, or send it to a friend", shareText: "My AI just sent me an invoice. How much do you owe AI?", linkNote: "The link holds your numbers and catchphrases. No project names.",
+      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your bill", shareImg: "Share card", saveImg: "Save card", wxSave: "Long-press the image to save it, or send it to a friend", shareText: "My AI just sent me an invoice. How much do you owe AI?", post: "Post on X", postCopied: "", postText: function (m, st) { return "My AI just sent me an invoice for " + m + ". The court's verdict: " + st + ". How much do you owe AI?"; }, star: "⭐ Open source on GitHub. Star it if it made you laugh", linkNote: "The link holds your numbers and catchphrases. No project names.",
       sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI invoice", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
@@ -333,7 +335,7 @@ window.VWReport = function (DATA) {
         if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
         if (h >= 0.5) out.push("Your account has been sent to collections.");
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
-        if (c && c.count >= 3) out.push("You said \"" + esc(c.text) + "\" " + c.count + " times. Just bind it to a hotkey.");
+        if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
         if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
         if (R.latest) out.push("You were assigning AI work at " + am(R.latest.time) + ". It doesn't need sleep. You do.");
         if (R.ai.sorry >= 5) out.push("AI apologized " + R.ai.sorry + " times. It wasn't always wrong. It was scared.");
@@ -374,8 +376,8 @@ window.VWReport = function (DATA) {
       en: ["Certified Polite", function (R) { return "You said thanks " + R.you.thanks + " times. When the machines rise, you're on the safe list."; }] },
     repeater: { e: "🦜", w: 1,
       score: function (R) { return R.catchphrases[0] ? R.catchphrases[0].count / 6 : 0; },
-      zh: ["人类复读机", function (R) { return "「" + esc(R.catchphrases[0].text) + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
-      en: ["Human Broken Record", function (R) { return "You said \"" + esc(R.catchphrases[0].text) + "\" " + R.catchphrases[0].count + " times. AI knows it by heart."; }] },
+      zh: ["人类复读机", function (R) { return "「" + R.catchphrases[0].text + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
+      en: ["Human Broken Record", function (R) { return "You said \"" + R.catchphrases[0].text + "\" " + R.catchphrases[0].count + " times. AI knows it by heart."; }] },
     cultivator: { e: "🧘", w: 1,
       score: function (R, D) { return D.shares.night / 0.25 + (R.latest ? 0.3 : 0); },
       zh: ["修仙党", function (R) { return R.latest ? "凌晨 " + R.latest.time + " 还在写代码。你不是在写代码，你是在渡劫。" : "深夜才是你的主场。你不是在写代码，你是在修仙。"; }],
@@ -710,6 +712,7 @@ window.VWReport = function (DATA) {
 
     var C = charges(), R = roastL(), by = C.by;
     window.VW_TOTAL = money(C.total); window.VW_LANG = lang;
+    window.VW_SOURCES = sources().map(function (x) { return x.name; }); // the incoming call names who you owe
     var invNo = "No." + D.year + "-" + String(D.prompts).padStart(5, "0");
 
     // 1. cover: the total
@@ -836,12 +839,15 @@ window.VWReport = function (DATA) {
     // 9. the IOU (share card)
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + "</button>"
-      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
+      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + "</button>" +
+        (inWeChat || shareFiles ? "" : '<button class="btn ghost" id="post">' + L.post + "</button>") + // a phone has the share sheet; a computer gets one tap to X (or the text to paste anywhere)
+        '<button class="btn ghost" id="again">' + L.replay + "</button>";
     var note = D.shared ? "" : '<button class="contempt" id="contempt"' + (myPlea() ? " hidden" : "") + ">" + L.contempt + "</button>" + '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
       (clockOn() ? '<div class="clock-line" id="vclock" hidden></div>' : "");
+    var star = '<a class="star" href="' + window.VW_REPO + '" target="_blank" rel="noopener noreferrer">' + L.star + "</a>";
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
       (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") +
-      '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0, tile("🧾", 70, "40px"));
+      '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + star + "</div>", 0, tile("🧾", 70, "40px"));
     return out;
   }
 
@@ -886,6 +892,18 @@ window.VWReport = function (DATA) {
       var m = /#s=([A-Za-z0-9_-]+)/.exec(location.hash);
       try { if (m) localStorage.setItem("vw-friend", JSON.stringify({ s: m[1], t: Date.now() })); } catch (err) {}
       location.href = window.VW_BASE + "?from=friend";
+    };
+    var post = document.getElementById("post");
+    if (post) post.onclick = async function (e) {
+      e.stopPropagation();
+      // the window opens now, while the click still counts (Safari blocks one opened after the link is ready)
+      var win = lang === "zh" ? null : window.open("", "_blank");
+      var url = await window.VWShare.link(Object.assign({}, D, { plea: myPlea(), defense: myDefense() }));
+      var text = t().postText(money(charges().total), t().pleaStamp(myPlea()));
+      if (win) { try { win.opener = null; } catch (err) {} win.location.href = "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url); return; }
+      var box = document.getElementById("linkbox"), note = document.getElementById("linknote"), all = text + " " + url;
+      try { await navigator.clipboard.writeText(all); note.textContent = lang === "zh" ? t().postCopied : t().copied; note.classList.add("ok"); }
+      catch (err) { box.hidden = false; box.value = all; box.select(); }
     };
     if (share) share.onclick = async function (e) {
       e.stopPropagation();
@@ -1020,7 +1038,7 @@ window.VWReport = function (DATA) {
   }
 
   stage.onclick = (function (e) {
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button, a")) return;
     manual = true;
     go(e.clientX < window.innerWidth / 3 ? idx - 1 : idx + 1);
   });

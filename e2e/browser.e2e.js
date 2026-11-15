@@ -424,6 +424,11 @@ test("Doubao testifies: its own name on the bill, and the usual web-AI call (Dou
   assert.doesNotMatch(all, /ChatGPT|undefined|NaN/);
   await pg.waitForSelector(".call-bar", { timeout: 9000 });
   assert.match(await text(pg, ".call-bar .call-who"), /网页版 AI/);
+  // the caller knows who the bill is from: this person never touched Claude Code or Codex
+  await pg.click(".call-bar .yes"); await sleep(4200);
+  const said = await text(pg, ".call-lines");
+  assert.match(said, /听说你在 豆包 那边欠了 ¥/);
+  assert.doesNotMatch(said, /Claude Code|Codex/);
   assert.deepEqual(errors, []);
   await pg.close();
 });
@@ -632,6 +637,61 @@ test("desktop home page: folder buttons open the picker, also after importing we
   await pg.click(".go-recalc"); await sleep(300);
   await pg.click("#pick-codex"); await sleep(200);
   assert.deepEqual(await pg.evaluate(() => window.__picker), ["claude", "codex"]);
+  assert.deepEqual(errors, []);
+  await pg.close();
+});
+
+test("a catchphrase with an apostrophe or an ampersand reads the same on the bill and through a share link", async () => {
+  const pg = await open(`${PAGE}?lang=en&still`);
+  const link = await pg.evaluate(() => {
+    const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false;
+    me.roast.catchphrases = [{ text: "doesn't work & \"why\"", count: 300 }, { text: "what's next", count: 9 }]; delete me.roast.catchphrases_zh;
+    window.__vw.show(me, true);
+    return window.VWShare.link(me);
+  });
+  await sleep(600);
+  const read = (p) => p.$$eval(".slide", (s) => s.map((e) => (() => { e.style.visibility = "visible"; const t = e.innerText; e.style.visibility = ""; return t; })().replace(/\s+/g, " ")).join(" | "));
+  const mine = await read(pg);
+  assert.match(mine, /You said "doesn't work & "why"" 300 times\. Just bind it to a hotkey\./, "the review prints it once-escaped");
+  assert.match(mine, /You said "doesn't work & "why"" 300 times\. AI knows it by heart\./, "so does the persona");
+  assert.doesNotMatch(mine, /&amp;|&quot;|&lt;/);
+  const theirs = await open(`${PAGE}?lang=en&still${link.slice(link.indexOf("#"))}`); await sleep(800);
+  const shared = await read(theirs);
+  assert.match(shared, /“doesn't work why”/, "a link keeps the apostrophe (and still drops what could be markup)");
+  assert.match(shared, /“what's next”/);
+  assert.doesNotMatch(shared, /&amp;|&quot;|&#39;|undefined/);
+  assert.deepEqual(pg.errors.concat(theirs.errors), []);
+  await pg.close(); await theirs.close();
+});
+
+test("the last page: a star link that doesn't turn the page, and on a computer one tap posts the total, the verdict and the link", async () => {
+  const pg = await browser.newPage(); await pg.setViewport({ width: 1280, height: 900 });
+  const errors = []; pg.on("pageerror", (e) => errors.push(e.message));
+  await pg.evaluateOnNewDocument(() => { window.__opened = []; window.open = () => { const w = { location: {} }; window.__opened.push(w); return w; }; });
+  await pg.goto(`${PAGE}?lang=en`); await sleep(300);
+  assert.equal(await pg.$eval("#landing a.star", (a) => a.href), "https://github.com/Domy-MANS/you-owe-ai");
+  await pg.evaluate(() => localStorage.setItem("vw-plea", JSON.stringify({ y: window.VW_DEMO.year, p: "refuse", d: "paid" })));
+  await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); });
+  const last = (await pg.$$(".slide")).length - 1;
+  for (let i = 0; i < last; i++) await pg.keyboard.press("ArrowRight");
+  await sleep(400);
+  const star = await pg.$eval(".slide.on a.star", (a) => { a.addEventListener("click", (e) => e.preventDefault()); return [a.href, a.target, a.rel]; });
+  assert.deepEqual(star, ["https://github.com/Domy-MANS/you-owe-ai", "_blank", "noopener noreferrer"]);
+  await pg.click(".slide.on a.star"); await sleep(200);
+  assert.ok(await exists(pg, ".slide.on #card"), "still on the IOU");
+  await pg.click("#post"); await sleep(600);
+  const to = new URL(await pg.evaluate(() => window.__opened[0].location.href));
+  assert.equal(to.origin + to.pathname, "https://x.com/intent/post");
+  assert.match(to.searchParams.get("text"), /^My AI just sent me an invoice for \$[\d,]+\.\d\d\. The court's verdict: DEADBEAT\. How much do you owe AI\?$/);
+  assert.match(to.searchParams.get("url"), /^https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=y[\w-]+$/);
+  // in Chinese the same button copies the caption and the link, to paste anywhere
+  await pg.evaluate(() => { window.__clip = ""; Object.defineProperty(navigator, "clipboard", { value: { writeText: (x) => { window.__clip = x; return Promise.resolve(); } }, configurable: true }); });
+  await pg.click("#lang"); await sleep(400);
+  assert.equal(await text(pg, "#post"), "复制文案");
+  await pg.click("#post"); await sleep(500);
+  assert.match(await pg.evaluate(() => window.__clip), /^AI 给我寄来了一张账单：我欠 AI ¥[\d,]+，法庭判决「老赖」。你欠 AI 多少钱？ https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=y[\w-]+$/);
+  assert.match(await text(pg, "#linknote"), /文案和链接已复制/);
+  assert.equal(await pg.evaluate(() => window.__opened.length), 1, "no second window");
   assert.deepEqual(errors, []);
   await pg.close();
 });

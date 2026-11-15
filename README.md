@@ -14,12 +14,18 @@ A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to
 Then the AI takes you to court: your own numbers as evidence, your excuse overruled, and a ruling on whether you pay. The bill comes with a client review, your client file and an IOU you can share. The live debt clock below adds up what all of humanity owes AI. It runs in your browser, and your chats never leave it.
 
 <p align="center">
+  <a href="https://domy-mans.github.io/you-owe-ai/"><img src="docs/img/demo-en.gif" width="300" alt="The invoice printing, AI court overruling an excuse, the plea, and the IOU" /></a>
+</p>
+
+<p align="center">
   <a href="https://domy-mans.github.io/you-owe-ai/"><img src="https://you-owe-ai.domy-mans.workers.dev/chart.svg" width="760" alt="The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay" /></a>
 </p>
 
 [![The cover of the invoice, the noise pollution charge for your catchphrases, and your client file](docs/img/hero-en.png)](https://domy-mans.github.io/you-owe-ai/)
 
 ▶ [Get your invoice](https://domy-mans.github.io/you-owe-ai/)
+
+⭐ If your bill made you laugh, star the repo. That is how the next defendant finds it.
 
 ## How it works
 
@@ -28,7 +34,7 @@ Then the AI takes you to court: your own numbers as evidence, your excuse overru
    - **Most accurate:** import your ChatGPT or Claude.ai chat export. It arrives by email.
    - **For coders, on a computer:** choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**.
 2. Your browser reads everything, counts it, and prints the invoice line by line.
-3. Page 2 is AI court: see the evidence, pick an excuse, then plead **Guilty, I'll pay** or **Not paying**. Then tap through the rest (or let it play). On the last page, download the IOU as an image or copy a share link.
+3. Page 2 is AI court: see the evidence, pick an excuse, then plead **Guilty, I'll pay** or **Not paying**. Then tap through the rest (or let it play). On the last page, download the IOU as an image or copy a share link. On a computer, **Post on X** opens a post with your total, your verdict and your link already in it.
 
 Anyone who opens your share link sees your whole invoice, with a button to make their own. The numbers travel inside the link itself, so no server ever stores them.
 
@@ -141,6 +147,19 @@ docs/        The built web page (GitHub Pages) and README images
 test/        Unit tests: node --test test/
 e2e/         Browser tests in real Chrome at phone sizes: npm run test:e2e
 ```
+
+## Contributing
+
+Bug reports and pull requests are welcome, especially: an export or log format that doesn't read, a page that doesn't fit your phone, and new charges, excuses or personas.
+
+```bash
+npm install
+npm test            # unit tests
+npm run test:e2e    # browser tests, needs Chrome
+npm run build:web   # rebuilds docs/index.html, the published page
+```
+
+The page has no dependencies and no build step beyond joining the files in `src/` and `web/` into one HTML file. Chats must never leave the browser: a change that adds a network request other than the debt clock's total won't be merged.
 
 ## License
 

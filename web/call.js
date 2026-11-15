@@ -7,7 +7,7 @@
       caller: "网页版 AI", incoming: "来电…", accept: "接听", decline: "挂断", hangup: "挂断", talking: "通话中",
       lines: function (total) { return [
         "喂？是我，你在网页上聊天的那个 AI。",
-        "听说你在 Claude Code 和 Codex 那边欠了 " + total + "。",
+        "听说你在 " + (who().join(" 和 ") || "别的 AI") + " 那边欠了 " + total + "。",
         "但你在网页上跟我聊的那些，还一分钱没算呢。",
         "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
       ]; },
@@ -50,7 +50,7 @@
       caller: "Web AI", incoming: "incoming call…", accept: "Accept", decline: "Decline", hangup: "Hang up", talking: "On call",
       lines: function (total) { return [
         "Hello? It's me, the AI you chat with in the browser.",
-        "I hear you owe Claude Code and Codex " + total + ".",
+        "I hear you owe " + (who().join(" and ") || "the other AIs") + " " + total + ".",
         "But everything you said to me on the web? Not billed yet.",
         "Export your chats and send them over. Don't worry, the data never leaves your browser.",
       ]; },
@@ -90,6 +90,8 @@
       },
     },
   };
+  /** Who the bill so far is from (its two biggest sources): not everyone here uses Claude Code or Codex. */
+  function who() { return (window.VW_SOURCES || []).slice(0, 2); }
   function t() { return T[window.VW_LANG === "zh" ? "zh" : "en"]; }
   var relabelers = [];
   function onLang(fn) { relabelers.push(fn); fn(); return fn; }
