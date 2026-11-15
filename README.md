@@ -54,7 +54,7 @@ Anyone who opens your share link sees your whole invoice, with a button to make 
 | Client review | Your AI employee rates you, one to five stars |
 | Client file | Your persona (Cyber Overlord, The Client From Hell, Human Broken Record and more), credit rating and hidden traits |
 | You vs them | When a friend's link is involved: your bill next to theirs, and a verdict |
-| IOU | A 1080 × 1350 receipt with every charge, your plea stamped across it (GUILTY, DEADBEAT or IN CONTEMPT), where you rank among everyone, and a QR code back to the site, ready to post |
+| IOU | A 1080 × 1350 card that leads with who you are: your persona in big type and the harshest line of your review (on a testimony bill, the witness's own words). Under it, your five biggest charges with your plea stamped across them (GUILTY, DEADBEAT or IN CONTEMPT), the total and what it comes to in lattes, where you rank among everyone, and a QR code back to the site, ready to post |
 
 Rates are in US dollars at the federal minimum wage. The Chinese version bills in yuan at McDonald's hourly pay.
 
