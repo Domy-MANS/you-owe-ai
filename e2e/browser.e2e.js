@@ -162,7 +162,10 @@ test("share links: short, same total for the viewer, old links still open", asyn
   const viewer = await open(PAGE + "?lang=en" + mine.link.slice(mine.link.indexOf("#")));
   await sleep(3200);
   assert.equal(await viewer.evaluate(() => window.VW_TOTAL), mine.total);
-  assert.match(await text(viewer, ".slide.on .kicker"), /shared their AI invoice/);
+  assert.match(await text(viewer, ".slide.on .kicker"), /You've been summoned\. They bet you owe AI more than this/);
+  // the way to your own bill is on the first page, not ten pages in
+  assert.equal(await text(viewer, ".slide.on .own-cta"), "⚖️ Get my own bill");
+  assert.equal(await viewer.$$eval(".own", (b) => b.length), 2, "first page and last page");
   const v1 = await pg.evaluate(async () => {
     const bytes = new TextEncoder().encode(JSON.stringify(window.VWShare.shareable(window.VW_DEMO)));
     const z = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("deflate-raw"))).arrayBuffer());
@@ -252,7 +255,7 @@ test("sharing the IOU: WeChat gets an image to long-press, a phone gets the shar
   await ph.$eval("#dl", (e) => e.click()); await sleep(600);
   const sh = await ph.evaluate(() => window.__shared);
   assert.deepEqual([sh.n, sh.type], [1, "image/png"]);
-  assert.match(sh.text, /How much do you owe AI\? https:\/\/domy-mans\.github\.io\/you-owe-ai\//);
+  assert.match(sh.text, /^My AI just sent me an invoice for \$[\d,]+\.\d\d\. The court's verdict: IN CONTEMPT\. I bet you owe more\. Prove me wrong 👉 https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=y[\w-]+$/, "the share sheet carries your own link, so the friend lands on the comparison");
   assert.deepEqual(ph.errors, []);
   await ph.close();
 });
@@ -509,7 +512,7 @@ test("debt clock: off by default (no requests at all); with a counter, only the 
     window.__clockFake = (path, body) => { window.__calls.push([path, body]); return path === "/stats" ? { n: 41, sum: 1000 } : path === "/confess" ? { n: 42, sum: 1100, order: 42, pct: 87 } : { n: 41, sum: 1000 }; };
   };
   const pg = await open(`${PAGE}?lang=zh&still`, { setup: fake }); await sleep(400);
-  assert.match(await text(pg, "#hclock"), /已有 41 人收到 AI 的账单，共欠 AI ¥4,000/);
+  assert.match(await text(pg, "#hclock"), /第 42 号账单在等你。全人类已欠 AI ¥4,000/);
   assert.match(await text(pg, ".land .privacy"), /匿名上报你的账单总额/);
   // the demo isn't counted
   await pg.click("#demo"); await sleep(600);
@@ -541,7 +544,7 @@ test("the plea: the court waits for 'guilty' or 'not paying', stamps it, counts 
     window.__clockFake = (path, body) => { window.__calls.push([path, body]); return path === "/stats" ? { n: 10, sum: 100, guilty: 3, refuse: 7 } : { n: 11, sum: 120, order: 11, pct: 50, guilty: 3, refuse: body && body.plea === "refuse" ? 8 : 7 }; };
   };
   const pg = await open(`${PAGE}?lang=zh`, { setup: fake }); await sleep(400);
-  assert.match(await text(pg, "#hclock"), /已有 10 人收到 AI 的账单.*其中 70% 表示就是不还/);
+  assert.match(await text(pg, "#hclock"), /第 11 号账单在等你/, "under 500 bills the home page talks about your number, not the crowd");
   await pg.evaluate(() => { const me = JSON.parse(JSON.stringify(window.VW_DEMO)); me.demo = false; window.__vw.show(me, true); }); await sleep(600);
   const idxOf = () => pg.$$eval(".slide", (s) => s.findIndex((e) => e.querySelector("#plea")));
   const pi = await idxOf();
@@ -682,14 +685,14 @@ test("the last page: a star link that doesn't turn the page, and on a computer o
   await pg.click("#post"); await sleep(600);
   const to = new URL(await pg.evaluate(() => window.__opened[0].location.href));
   assert.equal(to.origin + to.pathname, "https://x.com/intent/post");
-  assert.match(to.searchParams.get("text"), /^My AI just sent me an invoice for \$[\d,]+\.\d\d\. The court's verdict: DEADBEAT\. How much do you owe AI\?$/);
+  assert.match(to.searchParams.get("text"), /^My AI just sent me an invoice for \$[\d,]+\.\d\d\. The court's verdict: DEADBEAT\. I bet you owe more\. Prove me wrong 👉$/);
   assert.match(to.searchParams.get("url"), /^https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=y[\w-]+$/);
   // in Chinese the same button copies the caption and the link, to paste anywhere
   await pg.evaluate(() => { window.__clip = ""; Object.defineProperty(navigator, "clipboard", { value: { writeText: (x) => { window.__clip = x; return Promise.resolve(); } }, configurable: true }); });
   await pg.click("#lang"); await sleep(400);
   assert.equal(await text(pg, "#post"), "复制文案");
   await pg.click("#post"); await sleep(500);
-  assert.match(await pg.evaluate(() => window.__clip), /^AI 给我寄来了一张账单：我欠 AI ¥[\d,]+，法庭判决「老赖」。你欠 AI 多少钱？ https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=y[\w-]+$/);
+  assert.match(await pg.evaluate(() => window.__clip), /^AI 给我寄来了一张账单：我欠 AI ¥[\d,]+，法庭判决「老赖」。我赌你欠得比我多，出庭自证 👉 https:\/\/domy-mans\.github\.io\/you-owe-ai\/#s=y[\w-]+$/);
   assert.match(await text(pg, "#linknote"), /文案和链接已复制/);
   assert.equal(await pg.evaluate(() => window.__opened.length), 1, "no second window");
   assert.deepEqual(errors, []);

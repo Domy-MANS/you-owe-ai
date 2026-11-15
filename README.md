@@ -11,14 +11,10 @@
 
 A year of Claude Code, Codex, ChatGPT and Claude.ai, itemized and billed back to you. Every time you told the AI it was wrong is an emotional damages charge, every repeated catchphrase is noise pollution, every prompt after 10pm is night-shift pay, and every "thanks" is a discount.
 
-Then the AI takes you to court: your own numbers as evidence, your excuse overruled, and a ruling on whether you pay. The bill comes with a client review, your client file and an IOU you can share. The live debt clock below adds up what all of humanity owes AI. It runs in your browser, and your chats never leave it.
+Then the AI takes you to court: your own numbers as evidence, your excuse overruled, and a ruling on whether you pay. The bill comes with a client review, your client file and an IOU you can share. A live debt clock adds up what all of humanity owes AI. It runs in your browser, and your chats never leave it.
 
 <p align="center">
   <a href="https://domy-mans.github.io/you-owe-ai/"><img src="docs/img/demo-en.gif" width="300" alt="The invoice printing, AI court overruling an excuse, the plea, and the IOU" /></a>
-</p>
-
-<p align="center">
-  <a href="https://domy-mans.github.io/you-owe-ai/"><img src="https://you-owe-ai.domy-mans.workers.dev/chart.svg" width="760" alt="The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay" /></a>
 </p>
 
 [![The cover of the invoice, the noise pollution charge for your catchphrases, and your client file](docs/img/hero-en.png)](https://domy-mans.github.io/you-owe-ai/)
@@ -36,7 +32,7 @@ Then the AI takes you to court: your own numbers as evidence, your excuse overru
 2. Your browser reads everything, counts it, and prints the invoice line by line.
 3. Page 2 is AI court: see the evidence, pick an excuse, then plead **Guilty, I'll pay** or **Not paying**. Then tap through the rest (or let it play). On the last page, download the IOU as an image or copy a share link. On a computer, **Post on X** opens a post with your total, your verdict and your link already in it.
 
-Anyone who opens your share link sees your whole invoice, with a button to make their own. The numbers travel inside the link itself, so no server ever stores them.
+Your share goes out as a dare ("I bet you owe more. Prove me wrong"). Whoever opens the link is told they've been summoned, sees your whole invoice, and has a **Get my own bill** button on the first page. On a phone, the share sheet sends the IOU image with that same link. The numbers travel inside the link itself, so no server ever stores them.
 
 ## The invoice
 
@@ -85,13 +81,17 @@ A few seconds into your invoice, the AI you chat with on the web calls to collec
 
 ![A friend's shared invoice, the phone home page, and the bill comparison](docs/img/friends-en.png)
 
-Open a friend's share link, tap **Make my own**, and your bill opens with a page that puts the two side by side: the amount due, how often each of you told AI it was wrong or said thanks, your top catchphrases and personas, and who's the worse boss. On a phone, **Send to my computer** carries your friend along, so the comparison still shows up when you make your bill on your computer.
+Open a friend's share link, tap **Get my own bill**, and your bill opens with a page that puts the two side by side: the amount due, how often each of you told AI it was wrong or said thanks, your top catchphrases and personas, and who's the worse boss. On a phone, **Send to my computer** carries your friend along, so the comparison still shows up when you make your bill on your computer.
 
 Already made yours? Then send your link back. Your browser remembers your own bill, so their link opens on the comparison, with no folders to pick again.
 
 ## The AI debt clock
 
-The chart at the top is the debt clock. It's live, and updated within minutes: every real bill adds to it. The home page shows how many people got their AI bill, how much humanity owes AI in total, and how many refuse to pay. Your last page tells you which bill you are and how many people you owe more than (or that you owe the least, or the most, of anyone), and your IOU prints it.
+<p align="center">
+  <a href="https://domy-mans.github.io/you-owe-ai/"><img src="https://you-owe-ai.domy-mans.workers.dev/chart.svg" width="760" alt="The AI debt clock, live: how many people got their bill, how much humanity owes AI, and how many refuse to pay" /></a>
+</p>
+
+This chart is the debt clock. It's live, and updated within minutes: every real bill adds to it. The home page shows what humanity owes AI in total and the number your bill will get; once 500 people have their bill, it shows how many there are and how many refuse to pay. Your last page tells you which bill you are and how many people you owe more than (or that you owe the least, or the most, of anyone), and your IOU prints it.
 
 - **One person per browser.** Making your bill again, with more chats or a new plea, updates your entry instead of adding a person, and you keep your place in line. A different browser or phone counts as someone new.
 - **The bar is everyone:** blue pleaded guilty, red isn't paying, and gray skipped court (in contempt). The percentages count only those who chose.

@@ -437,3 +437,6 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 /* the way to the source (and the star button) */
 .star { display: block; text-align: center; margin-top: 12px; font: 700 13px var(--font); color: #7a6a52; text-decoration: underline; text-underline-offset: 3px; }
 .star:hover { color: #2a1f12; }
+
+/* on a friend's bill: the way to your own, on the first page */
+.own-cta { margin-top: 18px; align-self: flex-start; }
