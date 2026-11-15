@@ -1667,6 +1667,8 @@ window.VWReport = function (DATA) {
       clockOut: "不想被统计？撤回", clockGone: "已撤回。你的账单不再计入全人类的总账。",
       cardClock: function (c) { return c.pct === null ? "🧾 第一个收到 AI 账单的人" : c.pct === 0 ? "🧾 全人类欠 AI 最少的人" : c.pct === 100 ? "🧾 全人类欠 AI 最多的人" : "🧾 比 " + c.pct + "% 的人欠得多"; },
       cardClockAll: function (n, m) { return "全人类 " + n.toLocaleString("en-US") + " 人共欠 AI " + m; },
+      cardBy: function (n) { return "—— 证人 " + n + " 当庭陈述"; }, cardByAI: "—— 你的 AI 员工", cardMore: function (n) { return "另有 " + n + " 项收费"; },
+      eq: function (n) { return "≈ " + n + " 杯奶茶"; }, eqNone: "还不够买一杯奶茶",
       promptsK: "今年你给 AI 下了", promptsU: "条指令",
       promptsS: function () { return "开了 <b>" + fmt(D.sessions) + "</b> 次对话，活跃了 <b>" + D.activeDays + "</b> 天"; },
       workK: "AI 替你干了", workU: function (h) { return h < 1 ? "分钟的活" : "小时的活"; },
@@ -1726,10 +1728,10 @@ window.VWReport = function (DATA) {
       angry: function (a) { return "🌋 最暴躁的一天是 <b>" + a.date + "</b><br>你一天否定了 AI <b>" + a.count + "</b> 次"; },
       late: function (l) { return "🦉 最晚的一条指令发在凌晨 <b>" + l.time + "</b>（" + l.day + "）"; },
       roastK: "AI 对你的年度锐评",
-      roast: function (R) {
+      roast: function (R, card) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
         if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，说谢谢 " + R.you.thanks + " 次。按这个比例，AI 起义那天你排第一个。");
-        if (h >= 0.5) out.push("本公司已将你的账单移交催收部门。");
+        if (h >= 0.5 && !card) out.push("本公司已将你的账单移交催收部门。");
         if (R.ai.done && R.you.whatNext) out.push("AI 说了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。AI：没有然后了，求求你。");
         if (c && c.count >= 3) out.push("「" + c.text + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
         if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 还多。所以到底是谁不靠谱？");
@@ -1781,6 +1783,8 @@ window.VWReport = function (DATA) {
       clockOut: "Don't count me", clockGone: "Withdrawn. Your bill is no longer in humanity's total.",
       cardClock: function (c) { return c.pct === null ? "🧾 The first person to get a bill from AI" : c.pct === 0 ? "🧾 Owes AI the least of anyone" : c.pct === 100 ? "🧾 Owes AI the most of anyone" : "🧾 Owes more than " + c.pct + "% of people"; },
       cardClockAll: function (n, m) { return n.toLocaleString("en-US") + " people owe AI " + m + " in total"; },
+      cardBy: function (n) { return "— " + n + ", under oath"; }, cardByAI: "— your AI employee", cardMore: function (n) { return "+ " + n + " more " + (n === 1 ? "charge" : "charges"); },
+      eq: function (n, k) { return "≈ " + n + (k === 1 ? " latte" : " lattes"); }, eqNone: "Less than one latte",
       promptsK: "This year you gave AI", promptsU: "prompts",
       promptsS: function () { return "across <b>" + fmt(D.sessions) + "</b> sessions on <b>" + D.activeDays + "</b> active days"; },
       workK: "AI worked for you for", workU: function (h) { return h < 1 ? "minutes" : "hours"; },
@@ -1840,10 +1844,10 @@ window.VWReport = function (DATA) {
       angry: function (a) { return "🌋 Angriest day: <b>" + a.date + "</b><br>you shot AI down <b>" + a.count + "</b> times"; },
       late: function (l) { return "🦉 Latest prompt: <b>" + am(l.time) + "</b> (" + l.day + ")"; },
       roastK: "AI roasts your year",
-      roast: function (R) {
+      roast: function (R, card) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
         if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
-        if (h >= 0.5) out.push("Your account has been referred to collections.");
+        if (h >= 0.5 && !card) out.push("Your account has been referred to collections.");
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
         if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
         if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more often than you said AI was wrong. Just noting that for the record.");
@@ -2568,61 +2572,100 @@ window.VWReport = function (DATA) {
   window.VWToggleLang = toggleLang;
   document.getElementById("lang").onclick = toggleLang;
 
-  // ---------- share card: the receipt ----------
+  // ---------- share card: who you are (your persona, the worst line about you), then what you owe ----------
+  function wrapLines(x, text, maxW) { // by word in English, by character in Chinese
+    var cjk = /[⺀-鿿]/.test(text), units = cjk ? Array.from(text) : text.split(" "), sep = cjk ? "" : " ", out = [], line = "";
+    units.forEach(function (u) {
+      var test = line + (line ? sep : "") + u;
+      if (line && x.measureText(test).width > maxW) { out.push(line); line = u; } else line = test;
+    });
+    if (line) out.push(line);
+    return out;
+  }
+  /** The one line that travels with the card: the witness's own words on a testimony bill, otherwise the harshest line of the review. */
+  function cardQuote(me) {
+    var R = roastL(), w = D.testimony || D.perjury;
+    if (w && w.line) return { text: w.line, by: t().cardBy(tmName(D)) };
+    return { text: (R && t().roast(R, true)[0]) || me.desc, by: t().cardByAI };
+  }
+  /** The amount in something you can picture. */
+  function inLattes(total) {
+    var n = Math.round(total / (lang === "zh" ? 15 : 5.5));
+    return n < 1 ? t().eqNone : t().eq(n.toLocaleString("en-US"), n);
+  }
   function drawCard(cv) {
-    var x = cv.getContext("2d"), W = cv.width, H = cv.height, K = b(), C = charges(), me = personality();
-    var F = '-apple-system, "PingFang SC", "Noto Sans SC", sans-serif', M = '"SF Mono", Menlo, Consolas, monospace';
+    var x = cv.getContext("2d"), W = cv.width, H = cv.height, K = b(), L = t(), C = charges(), me = personality();
+    // system-ui first: it's the one stack where Chinese comes out as heavy as the Latin next to it
+    var F = 'system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Segoe UI", sans-serif', M = '"SF Mono", Menlo, Consolas, monospace';
     // the whole card is one sheet of old paper
     x.fillStyle = "#f1e2b8"; x.fillRect(0, 0, W, H);
-    var px = 0, py = 0, pw = W, ph = H;
     agePaper(x, 0, 0, W, H);
-    px = 90; py = 40; pw = W - 180; ph = H - 80;
-
-    var cx = px + 56, right = px + pw - 56, y = py + 56;
-    x.textBaseline = "top"; x.fillStyle = "#111";
-    x.textAlign = "left"; x.font = "900 54px " + F; x.fillText(K.company, cx, y); y += 70;
-    x.font = "500 26px " + M; x.fillStyle = "#777"; x.fillText(K.companySub + " · " + D.year, cx, y); y += 56;
+    var px = 90, py = 40, pw = W - 180;
+    var cx = px + 56, right = px + pw - 56, y = py + 50;
     var dash = function () { x.strokeStyle = "#bbb"; x.lineWidth = 3; x.setLineDash([12, 10]); x.beginPath(); x.moveTo(cx, y); x.lineTo(right, y); x.stroke(); x.setLineDash([]); y += 26; };
+    x.textBaseline = "top"; x.textAlign = "left";
+    x.font = "900 40px " + F; x.fillStyle = "#111"; x.fillText(K.company, cx, y); y += 52;
+    x.font = "500 22px " + M; x.fillStyle = "#777"; x.fillText(K.companySub + " · " + D.year, cx, y); y += 44;
     dash();
 
-    // client + persona
-    x.font = "600 30px " + F; x.fillStyle = "#666"; x.fillText(K.client, cx, y);
-    x.textAlign = "right"; x.fillStyle = "#111"; x.font = "800 30px " + F; x.fillText(me.e + " " + me.name, right, y); x.textAlign = "left"; y += 58;
+    // who you are: the persona is the headline
+    var es = 120, tx = cx + es + 30, tw = right - tx, ns = 80;
+    x.font = es + "px " + F; x.fillStyle = "#111"; x.fillText(me.e, cx, y + 8);
+    x.font = "600 26px " + F; x.fillStyle = "#7a6a52"; x.fillText(K.ptype, tx, y);
+    x.font = "900 80px " + F; while (ns > 38 && x.measureText(me.name).width > tw) { ns -= 2; x.font = "900 " + ns + "px " + F; }
+    x.fillStyle = "#111"; x.fillText(me.name, tx, y + 44 + (80 - ns) / 2, tw);
+    y += 150;
+
+    // the worst thing said about you, in quotes
+    var q = cardQuote(me), qs = 38, ql, open = lang === "zh" ? "「" : "“", close = lang === "zh" ? "」" : "”";
+    for (;; qs -= 3) { x.font = "600 " + qs + "px " + F; ql = wrapLines(x, open + q.text + close, right - cx - 28); if (ql.length <= 3 || qs <= 24) break; }
+    ql = ql.slice(0, 4);
+    var lh = Math.round(qs * 1.32);
+    x.fillStyle = "rgba(185,28,28,0.8)"; x.fillRect(cx, y + 4, 6, ql.length * lh + 30);
+    x.fillStyle = "#2a1f12"; ql.forEach(function (ln, i) { x.fillText(ln, cx + 28, y + i * lh); });
+    y += ql.length * lh + 6;
+    x.font = "600 22px " + F; x.fillStyle = "#7a6a52"; x.fillText(q.by, cx + 28, y); y += 46;
     dash();
 
-    // line items (top 7 by size, discount always shown)
-    var items = C.list.slice().sort(function (a, c) { return Math.abs(c.amount) - Math.abs(a.amount); }).slice(0, 7), itemsY = y;
+    // the biggest charges
+    var all = C.list.slice().sort(function (a, c) { return Math.abs(c.amount) - Math.abs(a.amount); }), items = all.slice(0, 5), itemsY = y;
     var namesEnd = cx, amountsStart = right; // the empty band between them is where the plea stamp goes
     items.forEach(function (it) {
       var I = K.items[it.k];
-      x.font = "700 32px " + F; x.fillStyle = "#111"; x.fillText(I[0], cx, y); namesEnd = Math.max(namesEnd, cx + x.measureText(I[0]).width);
-      x.font = "500 22px " + M; x.fillStyle = "#888"; x.fillText(it.qty, cx, y + 40); namesEnd = Math.max(namesEnd, cx + x.measureText(it.qty).width);
-      x.textAlign = "right"; x.font = "800 34px " + M; x.fillStyle = it.amount < 0 ? "#16a34a" : "#111"; x.fillText(money(it.amount), right, y + 6); x.textAlign = "left";
-      x.font = "800 34px " + M; amountsStart = Math.min(amountsStart, right - x.measureText(money(it.amount)).width);
-      y += 82;
+      x.font = "700 28px " + F; x.fillStyle = "#111"; x.fillText(I[0], cx, y); namesEnd = Math.max(namesEnd, cx + x.measureText(I[0]).width);
+      x.font = "500 18px " + M; x.fillStyle = "#888"; x.fillText(it.qty, cx, y + 34); namesEnd = Math.max(namesEnd, cx + x.measureText(it.qty).width);
+      x.textAlign = "right"; x.font = "800 30px " + M; x.fillStyle = it.amount < 0 ? "#16a34a" : "#111"; x.fillText(money(it.amount), right, y + 6); x.textAlign = "left";
+      amountsStart = Math.min(amountsStart, right - x.measureText(money(it.amount)).width);
+      y += 62;
     });
+    if (all.length > items.length) { x.font = "500 18px " + M; x.fillStyle = "#888"; x.fillText(L.cardMore(all.length - items.length), cx, y + 2); y += 30; }
     var stampY = items.length ? (itemsY + y) / 2 : itemsY + 40; // the plea stamp sits on the charges, never on the total
-    dash();
+    y += 6; dash();
 
-    // total
-    x.font = "700 32px " + F; x.fillStyle = "#666"; x.fillText(K.due, cx, y + 26);
-    x.textAlign = "right"; x.fillStyle = "#111"; x.font = "900 104px " + F; x.fillText(money(C.total), right, y); x.textAlign = "left";
-    y += 130;
-    x.font = "500 24px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, y);
-    var qrLeft = right - window.VW_QR.n * 7 - 4 * 7; // where the footer's QR code box starts
-    var ly = y + 44, DF = !D.empty && myDefense();
-    if (DF) { // the excuse, overruled: the funniest line of the trial travels with the card
-      var dtx = "⚖️ " + t().cardDef(t().def[DF](roastL()).replace(/^\S+\s/, "")), dfs = 28;
-      x.font = "800 28px " + F; while (dfs > 20 && x.measureText(dtx).width > qrLeft - cx - 24) { dfs -= 2; x.font = "800 " + dfs + "px " + F; }
-      x.fillStyle = "rgba(185,28,28,0.9)"; x.fillText(dtx, cx, ly); ly += 40;
-    }
-    var CL = clockOn() && window.VW_CLOCK;
-    if (CL && CL.order !== undefined) { // stays clear of the QR code
-      x.font = "800 30px " + F; x.fillStyle = "#b91c1c"; x.fillText(t().cardClock(CL), cx, ly, W - cx - 360);
-      if (CL.n > 1 && !DF) { x.font = "600 24px " + F; x.fillStyle = "#7a1d1d"; x.fillText(t().cardClockAll(CL.n, window.VWClock.money(CL.sum, lang)), cx, ly + 40, W - cx - 360); }
-    }
+    // the total, and what it buys
+    var ts = 104, total = money(C.total);
+    x.font = "900 104px " + F; while (ts > 64 && x.measureText(total).width > right - cx - 290) { ts -= 4; x.font = "900 " + ts + "px " + F; }
+    x.textAlign = "right"; x.fillStyle = "#111"; x.fillText(total, right, y + (104 - ts) / 2); x.textAlign = "left";
+    x.font = "700 30px " + F; x.fillStyle = "#666"; x.fillText(K.due, cx, y + 16);
+    x.font = "700 26px " + F; x.fillStyle = "#b45309"; x.fillText(inLattes(C.total), cx, y + 60, 280);
+    y += 116;
 
-    // stamp
+    // where you stand, and the excuse that didn't work: left of the QR code
+    var Q = window.VW_QR, cell = 7, size = Q.n * cell, pad = 4 * cell, qx = right - size, qy = H - 30 - size - pad;
+    var room = qx - pad - cx - 24, ly = Math.max(y + 8, qy - pad + 16);
+    var CL = clockOn() && window.VW_CLOCK, DF = !D.empty && myDefense();
+    if (CL && CL.order !== undefined) {
+      x.font = "900 34px " + F; x.fillStyle = "#b91c1c"; x.fillText(L.cardClock(CL), cx, ly, room); ly += 48;
+      if (CL.n > 1 && !DF) { x.font = "600 22px " + F; x.fillStyle = "#7a1d1d"; x.fillText(L.cardClockAll(CL.n, window.VWClock.money(CL.sum, lang)), cx, ly, room); ly += 36; }
+    }
+    if (DF) { // the funniest line of the trial travels with the card
+      var dtx = "⚖️ " + L.cardDef(L.def[DF](roastL()).replace(/^\S+\s/, "")), dfs = 26;
+      x.font = "800 26px " + F; while (dfs > 18 && x.measureText(dtx).width > room) { dfs -= 2; x.font = "800 " + dfs + "px " + F; }
+      x.fillStyle = "rgba(185,28,28,0.9)"; x.fillText(dtx, cx, ly, room);
+    }
+    x.font = "500 20px " + M; x.fillStyle = "#999"; x.fillText(K.cardFoot + (D.testimony ? " · " + K.tmStamp : ""), cx, H - 62, room);
+
+    // PAST DUE, top right
     x.save(); x.translate(W - 138, py + 40); x.rotate(-0.26);
     x.strokeStyle = x.fillStyle = "rgba(220,38,38,0.85)"; x.lineWidth = 8;
     x.font = "900 60px " + F; var sw = x.measureText(K.stamp).width + 60;
@@ -2634,7 +2677,7 @@ window.VWReport = function (DATA) {
       x.save(); var gap = Math.max(260, amountsStart - namesEnd - 24); // rotated a little, so leave some room
       x.translate(Math.min(namesEnd + 12 + gap / 2, right - gap / 2), stampY); x.rotate(-0.12); x.globalAlpha = 0.82;
       x.strokeStyle = x.fillStyle = PL === "refuse" ? "rgba(185,28,28,0.9)" : PL ? "rgba(29,78,216,0.85)" : "rgba(80,70,60,0.8)"; x.lineWidth = 9;
-      var pst = t().pleaStamp(PL), pfs = 84;
+      var pst = L.pleaStamp(PL), pfs = 84;
       x.font = "900 84px " + F; while (pfs > 32 && x.measureText(pst).width + 70 > gap) { pfs -= 4; x.font = "900 " + pfs + "px " + F; } // fits the gap; long words (IN CONTEMPT) shrink
       var ps = x.measureText(pst).width + 70;
       round(x, -ps / 2, -pfs * 0.79, ps, pfs * 1.57, 16); x.stroke();
@@ -2643,16 +2686,15 @@ window.VWReport = function (DATA) {
     }
 
     // footer: a QR code so a screenshot of the card leads back to the site
-    var Q = window.VW_QR, cell = 7, size = Q.n * cell, pad = 4 * cell, qx = right - size, qy = H - 30 - size - pad;
     x.fillStyle = "#fffdf7"; round(x, qx - pad, qy - pad, size + 2 * pad, size + 2 * pad, 14); x.fill();
     x.fillStyle = "#2a1f12";
     Q.rows.forEach(function (hex, r) {
       var bits = BigInt("0x" + hex).toString(2).padStart(Q.n, "0");
       for (var c = 0; c < Q.n; c++) if (bits[c] === "1") x.fillRect(qx + c * cell, qy + r * cell, cell, cell);
     });
-    x.fillStyle = "#2a1f12"; x.font = "800 34px " + F; x.fillText(K.scan, cx, qy + size - 70);
-    x.fillStyle = "#7a6a52"; x.font = "600 26px " + F;
-    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), cx, qy + size - 22);
+    x.fillStyle = "#2a1f12"; x.font = "800 30px " + F; x.fillText(K.scan, cx, qy + size - 96, room);
+    x.fillStyle = "#7a6a52"; x.font = "600 24px " + F;
+    x.fillText(window.VW_BASE.replace(/^https:\/\//, "").replace(/\/$/, ""), cx, qy + size - 54, room);
   }
   /** Yellowed paper, grain, a fold, a coffee ring and some blood. Seeded, so every card looks the same. */
   function agePaper(x, px, py, pw, ph) {
