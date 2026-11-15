@@ -157,6 +157,7 @@ npm install
 npm test            # 单元测试
 npm run test:e2e    # 浏览器测试，需要 Chrome
 npm run build:web   # 重新生成 docs/index.html，也就是线上页面
+npm run shots       # 用真实页面重拍 README 截图，需要 Chrome
 ```
 
 页面没有任何依赖，构建只是把 `src/` 和 `web/` 里的文件拼成一个 HTML。聊天记录绝不能离开浏览器：除了债务钟上报的总金额，任何新增联网请求的改动都不会合并。

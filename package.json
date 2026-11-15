@@ -12,7 +12,8 @@
   "scripts": {
     "test": "node --test test/",
     "build:web": "node scripts/build-web.js",
-    "test:e2e": "node --test --test-concurrency=1 e2e/browser.e2e.js"
+    "test:e2e": "node --test --test-concurrency=1 e2e/browser.e2e.js",
+    "shots": "node scripts/readme-shots.js"
   },
   "engines": {
     "node": ">=18"

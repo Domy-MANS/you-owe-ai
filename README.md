@@ -157,6 +157,7 @@ npm install
 npm test            # unit tests
 npm run test:e2e    # browser tests, needs Chrome
 npm run build:web   # rebuilds docs/index.html, the published page
+npm run shots       # retakes the README screenshots from the page, needs Chrome
 ```
 
 The page has no dependencies and no build step beyond joining the files in `src/` and `web/` into one HTML file. Chats must never leave the browser: a change that adds a network request other than the debt clock's total won't be merged.
