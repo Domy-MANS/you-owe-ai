@@ -18,10 +18,8 @@ Then the AI takes you to court: your own numbers as evidence, your excuse overru
 </p>
 
 <p align="center">
-  <a href="https://domy-mans.github.io/you-owe-ai/"><img src="docs/img/demo-en.gif" width="300" alt="The invoice printing, AI court overruling an excuse, the plea, and the IOU" /></a>
+  <a href="https://domy-mans.github.io/you-owe-ai/"><img src="docs/img/hero-en.png" width="760" alt="The cover of the invoice, the noise pollution charge for your catchphrases, and your client file" /></a>
 </p>
-
-[![The cover of the invoice, the noise pollution charge for your catchphrases, and your client file](docs/img/hero-en.png)](https://domy-mans.github.io/you-owe-ai/)
 
 ▶ [Get your invoice](https://domy-mans.github.io/you-owe-ai/)
 
@@ -35,6 +33,10 @@ Then the AI takes you to court: your own numbers as evidence, your excuse overru
    - **For coders, on a computer:** choose your `.claude` and `.codex` folders. Clicking the button copies the path for you: in the file window, press <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, <kbd>⌘</kbd> <kbd>V</kbd>, <kbd>Enter</kbd>, then **Select**.
 2. Your browser reads everything, counts it, and prints the invoice line by line.
 3. Page 2 is AI court: see the evidence, pick an excuse, then plead **Guilty, I'll pay** or **Not paying**. Then tap through the rest (or let it play). On the last page, download the IOU as an image or copy a share link. On a computer, **Post on X** opens a post with your total, your verdict and your link already in it.
+
+<p align="center">
+  <a href="https://domy-mans.github.io/you-owe-ai/"><img src="docs/img/demo-en.gif" width="300" alt="The invoice printing, AI court overruling an excuse, the plea, and the IOU" /></a>
+</p>
 
 Your share goes out as a dare ("I bet you owe more. Prove me wrong"). Whoever opens the link is told they've been summoned, sees your whole invoice, and has a **Get my own bill** button on the first page. On a phone, the share sheet sends the IOU image with that same link. The numbers travel inside the link itself, so no server ever stores them.
 

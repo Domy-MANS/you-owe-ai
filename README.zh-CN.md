@@ -18,10 +18,8 @@
 </p>
 
 <p align="center">
-  <a href="https://domy-mans.github.io/you-owe-ai/?lang=zh"><img src="docs/img/demo-zh.gif" width="300" alt="账单逐行打印、AI 法庭驳回辩解、表态，以及欠条" /></a>
+  <a href="https://domy-mans.github.io/you-owe-ai/?lang=zh"><img src="docs/img/hero-zh.png" width="760" alt="账单封面、口头禅的噪音污染费，以及你的客户档案" /></a>
 </p>
-
-[![账单封面、口头禅的噪音污染费，以及你的客户档案](docs/img/hero-zh.png)](https://domy-mans.github.io/you-owe-ai/?lang=zh)
 
 ▶ [看看你欠 AI 多少钱](https://domy-mans.github.io/you-owe-ai/?lang=zh)
 
@@ -35,6 +33,10 @@
    - **写代码的，在电脑上**：选择你的 `.claude` 和 `.codex` 文件夹。点按钮时路径会自动复制好：在弹出的选择窗口里按 <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>、<kbd>⌘</kbd> <kbd>V</kbd>、<kbd>回车</kbd>，再点「选择」。
 2. 浏览器读取记录，统计完后一行一行打印出账单。
 3. 第 2 页是 AI 法庭：看完证据，挑一个理由辩解，然后选「**认罪，我还**」还是「**就是不还**」。然后一页页往下翻（也可以让它自动播放）。最后一页可以把欠条下载成图片，或者复制分享链接。在电脑上还可以点「复制文案」，把金额、判决和你的链接一起复制，直接贴到朋友圈、小红书或微博。
+
+<p align="center">
+  <a href="https://domy-mans.github.io/you-owe-ai/?lang=zh"><img src="docs/img/demo-zh.gif" width="300" alt="账单逐行打印、AI 法庭驳回辩解、表态，以及欠条" /></a>
+</p>
 
 分享出去的文案是一句挑战（「我赌你欠得比我多，出庭自证」）。别人点开链接，会看到「你被传唤了」，能看到你的整张账单，第一页就有「算算我欠多少」的按钮。在手机上，分享面板发出去的是欠条图加同一个链接。数据就装在链接里，不经过任何服务器。
 
