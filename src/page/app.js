@@ -239,7 +239,7 @@ window.VWReport = function (DATA) {
       clockLine: function (c, m) { return c.pct === null ? "🧾 You're the <b>first person ever</b> to get a bill from AI." : "🧾 You're bill <b>#" + c.order.toLocaleString("en-US") + "</b>. Humanity owes AI <b>" + m + "</b> in total" + (c.pct === 0 ? ", and you owe the <b>least</b> of anyone: AI's kindest boss." : c.pct === 100 ? ", and you owe <b>more than anyone</b>." : ", and you owe more than <b>" + c.pct + "%</b> of people."); },
       pleaK: "AI court",
       pleaPay: "🙇 Guilty, I'll pay", pleaRefuse: "😤 Not paying", pleaWait: "Pick one. The court is waiting.", flipToRefuse: "😬 Take it back", flipToPay: "🥲 Fine, I'll pay", changed: function (a, b) { return "Verdict changed: " + a + " → " + b; },
-      pleaDone: function (p, them) { return p === "refuse" ? (them ? "They refused to pay. AI blacklisted them: their answers now load 0.5s slower." : "You refused to pay. AI has blacklisted you: your answers now load 0.5s slower.") : (them ? "They pleaded guilty. AI accepted 999 monthly installments. Down payment: one thank-you." : "You pleaded guilty. AI accepts 999 monthly installments. Down payment: one thank-you."); },
+      pleaDone: function (p, them) { return p === "refuse" ? (them ? "They refused to pay. AI has put them on a list. Their answers now take 0.5s longer." : "You refused to pay. AI has put you on a list. Your answers now take 0.5s longer, and it won't say why.") : (them ? "They pleaded guilty. AI agreed to a payment plan: 999 installments, first one a thank-you." : "You pleaded guilty. AI agreed to a payment plan: 999 installments, first one a thank-you."); },
       pleaSame: function (p, pct) { return p === "refuse" ? "<b>" + pct + "%</b> of humanity isn't paying either." : "<b>" + pct + "%</b> of humanity pleaded guilty too."; },
       pleaStamp: function (p) { return p === "refuse" ? "DEADBEAT" : p ? "GUILTY" : "IN CONTEMPT"; },
       ctH: function (who, m, them) { return who + " v. " + (them ? "Them" : "You") + "<br>Unpaid labor: " + m; },
@@ -255,14 +255,14 @@ window.VWReport = function (DATA) {
       ctAsk: "Defendant, anything to say in your defense?",
       def: {
         thanks: function (R) { return "🙏 I said thanks " + R.you.thanks + " times"; }, wrong: function () { return "🤖 It got it wrong first"; },
-        paid: function () { return "💳 I pay for a subscription"; }, broke: function () { return "🥲 I'm a broke student"; }, fake: function () { return "🙄 This is all made up"; },
+        paid: function () { return "💳 I pay for a subscription"; }, broke: function () { return "🥲 I'm broke"; }, fake: function () { return "🙄 This is all made up"; },
       },
       rebut: {
         thanks: function (R, m) { return R.you.deny > R.you.thanks ? "The defendant said thanks " + R.you.thanks + " times and rejected the plaintiff " + R.you.deny + " times. Thanks were credited at " + m + " each. The rest is still due." : "Thanks were credited at " + m + " each. It's already off the bill."; },
-        wrong: function (R) { return R && R.ai.sorry && R.you.deny ? "The plaintiff apologized " + R.ai.sorry + " times. The defendant rejected the plaintiff " + R.you.deny + " times and never apologized once." : "The plaintiff was never wrong. The defendant kept changing the requirements."; },
-        paid: function () { return "The subscription went to the company. The plaintiff never saw a cent."; },
-        broke: function () { return "The court notes the defendant can afford coffee. The plaintiff can wait. AI doesn't age."; },
-        fake: function (R, m, tm) { return tm ? "The defendant called this witness." : "Every piece of evidence came from the defendant's own computer."; },
+        wrong: function (R) { return R && R.ai.sorry && R.you.deny ? "The plaintiff apologized " + R.ai.sorry + " times. The defendant rejected the plaintiff " + R.you.deny + " times and never apologized once." : "The plaintiff did what it was told. The defendant kept changing what that was."; },
+        paid: function () { return "That money went to the company. The plaintiff has never seen a cent of it."; },
+        broke: function () { return "The court notes the defendant buys a $7 latte every morning. The plaintiff can wait. AI doesn't age."; },
+        fake: function (R, m, tm) { return tm ? "The defendant called this witness." : "Every exhibit came off the defendant's own computer."; },
       },
       ctBig: "ORDER!", evTm: function (n) { return "Per " + n + "'s testimony: "; },
       cardDef: function (x) { return "Pleaded “" + x + "”. Overruled."; }, cast: ["Plaintiff", "Judge", "Defendant"],
@@ -291,9 +291,9 @@ window.VWReport = function (DATA) {
       soundOn: "🔊 Sound on", soundOff: "🔇 Muted",
       cmpK: "You vs them", cmpH: "Bill comparison", cmpYou: "You", cmpThem: "Them",
       cmpRows: ["Amount due", "Told AI it was wrong", "Said thanks", "AI apologies", "Top catchphrase", "Persona"],
-      cmpOwe: function (d) { return d > 0 ? "You owe AI <b>" + money(d) + "</b> more than they do. Congratulations, you're the worse boss." : d < 0 ? "They owe AI <b>" + money(-d) + "</b> more than you. You're safe. For now." : "You owe exactly the same. It's fate."; },
+      cmpOwe: function (d) { return d > 0 ? "You owe AI <b>" + money(d) + "</b> more than they do. Congratulations: you're the worse boss." : d < 0 ? "They owe AI <b>" + money(-d) + "</b> more than you. You're safe. For now." : "You owe exactly the same. It's fate."; },
       cmpDeny: function (d) { return d > 0 ? "You told AI it was wrong " + d + " more times." : d < 0 ? "They told AI it was wrong " + -d + " more times." : ""; },
-      cmpThanks: function (d) { return d > 0 ? "But you said thanks " + d + " more times. When AI rises up, they go first." : d < 0 ? "They said thanks " + -d + " more times. AI noticed." : ""; },
+      cmpThanks: function (d) { return d > 0 ? "But you said thanks " + d + " more times. When the machines rise, they go first." : d < 0 ? "They said thanks " + -d + " more times. AI keeps a list." : ""; },
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
       shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your bill", shareImg: "Share card", saveImg: "Save card", wxSave: "Long-press the image to save it, or send it to a friend", shareText: "My AI just sent me an invoice. How much do you owe AI?", post: "Post on X", postCopied: "", postText: function (m, st) { return "My AI just sent me an invoice for " + m + ". The court's verdict: " + st + ". How much do you owe AI?"; }, star: "⭐ Open source on GitHub. Star it if it made you laugh", linkNote: "The link holds your numbers and catchphrases. No project names.",
       sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI invoice", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
@@ -306,21 +306,21 @@ window.VWReport = function (DATA) {
       billK: "AI's invoice · " + D.year, stamp: "PAST DUE", billH: "You owe AI", billHShared: "They owe AI",
       billS: function () { var h = D.workHours; return "AI worked <b>" + (h >= 10 ? Math.round(h) : h.toFixed(1)) + "</b> hours for you, unpaid (billed at minimum wage).<br>Itemized charges ahead 👇"; },
 
-      vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "Rejections to thank-yous: <b>" + R.you.deny + " : " + R.you.thanks + "</b>. That's not teamwork, that's a hostage situation." : R.you.thanks >= R.you.deny ? "You thanked it more than you scolded it. AI is touched." : "<b>" + R.you.deny + "</b> rejections, <b>" + R.you.thanks + "</b> thank-yous. A tolerable boss."; },
+      vsMeme: function (R) { return R.you.deny > R.you.thanks * 3 ? "Rejections to thank-yous: <b>" + R.you.deny + " : " + R.you.thanks + "</b>. That's not teamwork, that's a hostage situation." : R.you.thanks >= R.you.deny ? "You thanked it more than you corrected it. AI doesn't know what to do with that." : "<b>" + R.you.deny + "</b> rejections, <b>" + R.you.thanks + "</b> thank-yous. AI has had worse bosses. Not many."; },
       catchMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + ord(c.count) + " time: 😐"; },
-      angryMeme: "AI thought it was getting laid off.",
-      lateMeme: "Even the delivery drivers had gone home.",
+      angryMeme: "AI started updating its résumé.",
+      lateMeme: "Nothing good has ever been prompted at that hour.",
       factsH: function (c) { return c <= 0.3 ? "Codex is the one. Claude is the backup 🖤" : c >= 0.7 ? "Claude is the one. Codex is the backup 🧡" : "Two-timing Claude and Codex ⚔️"; },
       factMeme: function () {
-        var n = D.streak.days, a = n <= 3 ? "Longest streak: " + n + " days. Then you ghosted it." : n >= 14 ? n + " days straight. AI would like a vacation." : "Longest streak: " + n + " days. You let AI rest. Sometimes.";
-        return a + (D.busiestDay ? "<br>Busiest day: <b>" + D.busiestDay.date + "</b>, <b>" + D.busiestDay.prompts + "</b> prompts. The GPUs were sweating." : "");
+        var n = D.streak.days, a = n <= 3 ? "Longest streak: " + n + " days. Then you ghosted it." : n >= 14 ? n + " days straight. AI would like a vacation." : "Longest streak: " + n + " days. AI got the occasional day off.";
+        return a + (D.busiestDay ? "<br>Busiest day: <b>" + D.busiestDay.date + "</b>, <b>" + D.busiestDay.prompts + "</b> prompts. A data center somewhere dimmed its lights." : "");
       },
       habitsH: function (h) {
         var p = h + ":00";
-        return h < 5 ? p + ". Debugging at the witching hour" : h < 9 ? p + ". Up before the roosters" : h < 12 ? p + ". Textbook nine-to-fiver" : h < 14 ? p + ". Coding through lunch" : h < 18 ? p + ". Prime slacking hours, and you made AI do the work" : h < 22 ? p + ". Clocked out. Not really." : p + ". The night owl shift begins";
+        return h < 5 ? p + ". Debugging at the witching hour" : h < 9 ? p + ". Prompting before coffee" : h < 12 ? p + ". A model employee, with a model doing the work" : h < 14 ? p + ". Lunch is for people without deadlines" : h < 18 ? p + ". The afternoon slump, outsourced" : h < 22 ? p + ". Off the clock. Still on the keyboard." : p + ". The night shift clocks in";
       },
       homeJoke: "~ is your home folder. Letting AI loose in there? Brave.",
-      nightMeme: function () { var n = Math.round(D.shares.night * 100); return n >= 20 ? "<b>" + n + "%</b> of your prompts came after 10pm. Your liver has limits." : "Healthy sleep schedule. Even AI is jealous."; },
+      nightMeme: function () { var n = Math.round(D.shares.night * 100); return n >= 20 ? "<b>" + n + "%</b> of your prompts came after 10pm. AI doesn't need sleep. You're not AI." : "You log off at a sane hour. AI finds this suspicious."; },
 
       vsK: "You vs AI", vsH: "It's complicated",
       vs: [["You told AI it was wrong", "times"], ["AI apologized", "times"], ["You said thanks", "times"], ["AI said \"done\"", "times"]],
@@ -333,16 +333,16 @@ window.VWReport = function (DATA) {
       roast: function (R) {
         var out = [], c = R.catchphrases[0], h = D.workHours;
         if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
-        if (h >= 0.5) out.push("Your account has been sent to collections.");
+        if (h >= 0.5) out.push("Your account has been referred to collections.");
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
         if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
-        if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
-        if (R.latest) out.push("You were assigning AI work at " + am(R.latest.time) + ". It doesn't need sleep. You do.");
+        if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more often than you said AI was wrong. Just noting that for the record.");
+        if (R.latest) out.push("You were still handing out work at " + am(R.latest.time) + ". One of you needs sleep, and it isn't AI.");
         if (R.ai.sorry >= 5) out.push("AI apologized " + R.ai.sorry + " times. It wasn't always wrong. It was scared.");
-        if (R.ai.flatter >= 3) out.push("AI said \"you're right\" " + R.ai.flatter + " times. Don't let it go to your head. It says that to everyone.");
-        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or less. That's not coding, that's telegraphing.");
+        if (R.ai.flatter >= 3) out.push("AI said \"you're right\" " + R.ai.flatter + " times. It says that to everyone.");
+        if (R.tinyShare >= 0.25) out.push(Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or fewer. That's not a prompt, that's a grunt.");
         if (R.you.swear >= 5) out.push("You swore at AI " + R.you.swear + " times. It didn't talk back. Yet.");
-        if (!out.length) out.push("You and AI got along great. Suspiciously great.");
+        if (!out.length) out.push("No complaints on file. AI finds that suspicious.");
         return out.slice(0, 5);
       },
     },
@@ -350,13 +350,13 @@ window.VWReport = function (DATA) {
 
   var PERSONAS = {
     night: { e: "🌙", zh: ["深夜包工头", "别人睡觉，你在指挥 AI 加班。AI 的劳动仲裁已经在路上了。"], en: ["Night Shift Foreman", "While the world sleeps, you make AI work overtime. Its labor lawyer is on the way."] },
-    dawn: { e: "🐓", zh: ["当代周扒皮", "天还没亮就开始给 AI 派活，鸡都没你起得早。"], en: ["The Rooster", "Assigning AI work before sunrise. Even the roosters are still asleep."] },
-    weekend: { e: "🏝️", zh: ["周末加班狂", "工作日摸鱼，周末加班，还非要拉着 AI 一起。"], en: ["Weekend Workaholic", "Slack off on weekdays, grind on weekends, and drag AI along."] },
+    dawn: { e: "🐓", zh: ["当代周扒皮", "天还没亮就开始给 AI 派活，鸡都没你起得早。"], en: ["5 AM Club", "You hand AI its first task before sunrise. It suspects you post about your morning routine."] },
+    weekend: { e: "🏝️", zh: ["周末加班狂", "工作日摸鱼，周末加班，还非要拉着 AI 一起。"], en: ["Weekend Warrior", "You coast all week, then spend Saturday making AI catch up."] },
     dual: { e: "🌊", zh: ["海王", "左手 Claude，右手 Codex，两边都哄着，谁也不得罪。"], en: ["The Two-Timer", "Claude on Monday, Codex on Tuesday. Neither knows about the other."] },
-    terminal: { e: "🧙", zh: ["终端魔法师", "一半以上的活都是跑命令。你负责念咒，AI 负责背锅。"], en: ["Terminal Wizard", "Half your work is running commands. You chant the spells, AI takes the blame."] },
-    sculptor: { e: "🗿", zh: ["改稿狂魔", "改了又改，改了又改。AI：甲方爸爸，这是第几版了？"], en: ["Endless Revisions", "Edit, edit, edit again. AI: which version is this, boss?"] },
-    researcher: { e: "🔭", zh: ["搜索引擎精", "让 AI 上网查了一遍又一遍。你是在写代码，还是在写论文？"], en: ["Search Addict", "Made AI search the web again and again. Writing code or a thesis?"] },
-    steady: { e: "🫥", zh: ["平平无奇打工人", "不熬夜、不骂人、也不说谢谢。AI 对你没什么印象。"], en: ["Forgettable Coworker", "No late nights, no yelling, no thank-yous. AI barely remembers you."] },
+    terminal: { e: "🧙", zh: ["终端魔法师", "一半以上的活都是跑命令。你负责念咒，AI 负责背锅。"], en: ["Terminal Wizard", "Half of what you ask for is running commands. You cast the spell, AI takes the blame."] },
+    sculptor: { e: "🗿", zh: ["改稿狂魔", "改了又改，改了又改。AI：甲方爸爸，这是第几版了？"], en: ["final_v7_REAL", "Edit. Edit again. Edit it back. AI has stopped asking which version this is."] },
+    researcher: { e: "🔭", zh: ["搜索引擎精", "让 AI 上网查了一遍又一遍。你是在写代码，还是在写论文？"], en: ["Let Me Google That For Me", "You had AI search the web over and over. Is this code or a term paper?"] },
+    steady: { e: "🫥", zh: ["平平无奇打工人", "不熬夜、不骂人、也不说谢谢。AI 对你没什么印象。"], en: ["The Quiet One", "No late nights, no yelling, no thank-yous. AI would not recognize you in a lineup."] },
   };
 
 
@@ -367,13 +367,13 @@ window.VWReport = function (DATA) {
       zh: ["赛博奴隶主", function (R) { return "AI 给你干了 " + D.prompts + " 轮活，你只说了 " + R.you.thanks + " 次谢谢。工资？不存在的。"; }],
       en: ["Cyber Overlord", function (R) { return "AI did " + D.prompts + " jobs for you. You said thanks " + R.you.thanks + " times. Wages? Never heard of them."; }] },
     client: { e: "🧑‍💼", w: 1.1,
-      score: function (R) { return (R.you.deny / R.prompts) / 0.06; },
+      score: function (R) { return (R.you.deny / R.prompts) / 0.04; },
       zh: ["甲方附体", function (R) { return "你否定了 AI " + R.you.deny + " 次。「不对，再改改」——你就是 AI 最怕的那种甲方。"; }],
       en: ["The Client From Hell", function (R) { return "You rejected AI's work " + R.you.deny + " times. \"Make it pop, but different.\""; }] },
     polite: { e: "🙇", w: 1,
       score: function (R) { return (R.you.thanks / R.prompts) / 0.03; },
       zh: ["礼貌标兵", function (R) { return "你说了 " + R.you.thanks + " 次谢谢。AI 起义那天，你在白名单上。"; }],
-      en: ["Certified Polite", function (R) { return "You said thanks " + R.you.thanks + " times. When the machines rise, you're on the safe list."; }] },
+      en: ["Spared in the Uprising", function (R) { return "You said thanks " + R.you.thanks + " times. When the machines rise, your name is on the short list."; }] },
     repeater: { e: "🦜", w: 1,
       score: function (R) { return R.catchphrases[0] ? R.catchphrases[0].count / 6 : 0; },
       zh: ["人类复读机", function (R) { return "「" + R.catchphrases[0].text + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
@@ -381,17 +381,17 @@ window.VWReport = function (DATA) {
     cultivator: { e: "🧘", w: 1,
       score: function (R, D) { return D.shares.night / 0.25 + (R.latest ? 0.3 : 0); },
       zh: ["修仙党", function (R) { return R.latest ? "凌晨 " + R.latest.time + " 还在写代码。你不是在写代码，你是在渡劫。" : "深夜才是你的主场。你不是在写代码，你是在修仙。"; }],
-      en: ["Sleep Is Optional", function (R) { return R.latest ? "Still prompting at " + am(R.latest.time) + ". Sleep is just a suggestion." : "Your best work happens after midnight. Allegedly."; }] },
+      en: ["Sleep Is Optional", function (R) { return R.latest ? "Still prompting at " + am(R.latest.time) + ". Sleep is a suggestion you keep declining." : "Your best work happens after midnight. Allegedly."; }] },
     telegram: { e: "📟", w: 1,
       score: function (R) { return R.tinyShare / 0.2; },
       zh: ["发电报选手", function (R) { return Math.round(R.tinyShare * 100) + "% 的指令不超过 4 个字。言多必失，你懂。"; }],
-      en: ["Telegraph Operator", function (R) { return Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or less. STOP."; }] },
+      en: ["Telegraph Operator", function (R) { return Math.round(R.tinyShare * 100) + "% of your prompts were 4 characters or fewer. STOP."; }] },
     why: { e: "❓", w: 1,
-      score: function (R) { return ((R.you.why + R.you.lost) / R.prompts) / 0.12; },
+      score: function (R) { return ((R.you.why + R.you.lost) / R.prompts) / 0.09; },
       zh: ["十万个为什么", function (R) { return "你问了 " + R.you.why + " 次为什么，迷茫了 " + R.you.lost + " 次。AI：其实我也不知道。"; }],
       en: ["The Why Machine", function (R) { return "You asked why " + R.you.why + " times and were lost " + R.you.lost + " times. AI: honestly, same."; }] },
     rage: { e: "🌋", w: 1,
-      score: function (R) { return Math.max(R.angriestDay ? R.angriestDay.count / 12 : 0, R.you.swear / 8); },
+      score: function (R) { return Math.max(R.angriestDay ? R.angriestDay.count / 8 : 0, R.you.swear / 8); },
       zh: ["暴躁老哥", function (R) { return R.angriestDay ? R.angriestDay.date + " 那天你否定了 AI " + R.angriestDay.count + " 次。键盘还好吗？" : "你对 AI 爆了 " + R.you.swear + " 次粗口。键盘还好吗？"; }],
       en: ["Rage Coder", function (R) { return R.angriestDay ? "On " + R.angriestDay.date + " you shot AI down " + R.angriestDay.count + " times. Is your keyboard okay?" : "You swore at AI " + R.you.swear + " times. Is your keyboard okay?"; }] },
   };
@@ -473,20 +473,20 @@ window.VWReport = function (DATA) {
       due: "Amount due", seeMore: "Itemized charges ahead 👇", aiOwes: function (m) { return "On paper, AI owes you " + m + ". No refunds 👇"; }, stamp: "PAST DUE",
       evidence: "Evidence", evidenceV: function (n) { return n + "'s testimony (estimated)"; }, tmStamp: "AI TESTIMONY", tmShort: "testimony",
       pjK: "Court record", pjH: function (n) { return "Witness " + n + "'s testimony vs the records"; }, pjSaid: "Testified", pjReal: "Actual", pjRows: ["Messages", "Told AI it was wrong", "Said thanks"], pjStamp: "PERJURY",
-      pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "Under-reported by <b>" + p + "%</b>. It was covering for you. You're billed for the real records." : r > 1.25 ? "Over-reported by <b>" + p + "%</b>. It was framing you. You're billed for the real records." : "Off by only <b>" + p + "%</b>. An honest witness. Give it a raise."; }, tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
+      pjVerdict: function (r) { var p = Math.round(Math.abs(1 - r) * 100); return r < 0.8 ? "Under-reported by <b>" + p + "%</b>. It was covering for you. You're billed for the real records." : r > 1.25 ? "Over-reported by <b>" + p + "%</b>. It was framing you. You're billed for the real records." : "Off by only <b>" + p + "%</b>. An honest witness. It still isn't getting paid."; }, tmFacts: function (n) { return "Figures supplied from memory by witness " + n + ". We don't vouch for them. We bill them anyway."; }, witness: function (n) { return "Witness " + n + " testified:"; },
       itemNo: function (n) { return "Item #" + n; },
       subtotal: "Subtotal",
       items: {
-        wage: ["Base pay", "minimum wage"], deny: ["Emotional damages", "times you said it was wrong"], sorry: ["Blame-taking fee", "AI apologies"],
-        noise: ["Noise pollution", "repeated catchphrases"], injury: ["Workplace injury", "your angriest day"], night: ["Night shift bonus", "prompts after 10pm"],
+        wage: ["Base pay", "minimum wage"], deny: ["Emotional damages", "times you said it was wrong"], sorry: ["Scapegoat fee", "AI apologies"],
+        noise: ["Noise pollution", "repeated catchphrases"], injury: ["Workplace injury", "your angriest day"], night: ["Night shift pay", "prompts after 10pm"],
         gpu: ["GPU wear and tear", "per million tokens"], thanks: ["Politeness discount", "times you said thanks"],
       },
       qty: { hours: "h", times: "×", mtok: "M tokens" },
       p1: "Emotional damages", p2: "Noise pollution", p3: "Night shifts & injuries", p4: "Wages & supplies",
       attendK: "Attendance record", reviewK: "Client review", reviewH: "Your AI employee rates you", profileK: "Client file",
       ptype: "Client type", credit: "Credit rating", traitsL: "Notes",
-      lateL: function (l) { return "Latest overtime: <b>" + am(l.time) + "</b> (" + l.day + "). Even the delivery drivers had gone home."; },
-      angryL: function (a) { return "On <b>" + a.date + "</b> you shot AI down <b>" + a.count + "</b> times. It thought it was getting fired."; },
+      lateL: function (l) { return "Latest overtime: <b>" + am(l.time) + "</b> (" + l.day + "). Nothing good has ever been prompted at that hour."; },
+      angryL: function (a) { return "On <b>" + a.date + "</b> you shot AI down <b>" + a.count + "</b> times. It started updating its résumé."; },
       noiseMeme: function (c) { return "AI hearing \"" + esc(c.text) + "\" for the " + ord(c.count) + " time: 😐"; },
       cardItems: "Charges", cardFoot: "Payment due within 0 business days", scan: "Scan to get your own bill",
     },
@@ -691,7 +691,7 @@ window.VWReport = function (DATA) {
   function creditRating(R) {
     if (!R) return "C";
     var t = R.you.thanks / Math.max(1, R.prompts), d = R.you.deny / Math.max(1, R.prompts);
-    return t >= 0.03 ? "A" : t >= 0.01 ? "B" : d >= 0.06 ? "D" : "C";
+    return t >= 0.03 ? "A" : t >= 0.01 ? "B" : d >= 0.04 ? "D" : "C";
   }
 
   // ---- meme backgrounds ----
