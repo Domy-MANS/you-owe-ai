@@ -32,6 +32,12 @@
     for (var i = tail.length - 22; i >= 0; i--) if (tv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
     if (eocd < 0) throw new Error("not a zip file");
     var count = tv.getUint16(eocd + 10, true), cdSize = tv.getUint32(eocd + 12, true), cdOff = tv.getUint32(eocd + 16, true);
+    // ZIP64 (an export over 4 GB, or with more than 65,535 files): the real numbers are in a second record, found through a locator just before this one
+    var big = function (dv, o) { return Number(dv.getBigUint64(o, true)); };
+    if ((count === 0xffff || cdSize === 0xffffffff || cdOff === 0xffffffff) && eocd >= 20 && tv.getUint32(eocd - 20, true) === 0x07064b50) {
+      var at = big(tv, eocd - 12), z = view(await src.read(at, at + 56));
+      if (z.byteLength >= 56 && z.getUint32(0, true) === 0x06064b50) { count = big(z, 32); cdSize = big(z, 40); cdOff = big(z, 48); }
+    }
     var cd = await src.read(cdOff, cdOff + cdSize), dv = view(cd), off = 0, out = [];
     var dec = new TextDecoder();
     for (var n = 0; n < count; n++) {
@@ -39,6 +45,20 @@
       var method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true);
       var nlen = dv.getUint16(off + 28, true), xlen = dv.getUint16(off + 30, true), clen = dv.getUint16(off + 32, true);
       var local = dv.getUint32(off + 42, true), name = dec.decode(cd.subarray(off + 46, off + 46 + nlen));
+      if (csize === 0xffffffff || local === 0xffffffff || dv.getUint32(off + 24, true) === 0xffffffff) {
+        // ZIP64 extra field (id 1): 8-byte values, only for the fields that overflowed, in this order: size, compressed size, offset
+        var x = off + 46 + nlen, xEnd = Math.min(x + xlen, cd.length);
+        while (x + 4 <= xEnd) {
+          var id = dv.getUint16(x, true), len = dv.getUint16(x + 2, true), q = x + 4;
+          if (id === 1) {
+            if (dv.getUint32(off + 24, true) === 0xffffffff) q += 8;
+            if (csize === 0xffffffff && q + 8 <= xEnd) { csize = big(dv, q); q += 8; }
+            if (local === 0xffffffff && q + 8 <= xEnd) local = big(dv, q);
+            break;
+          }
+          x += 4 + len;
+        }
+      }
       (function (method, csize, local, name) {
         out.push({ name: name, read: async function () {
           var h = view(await src.read(local, local + 30));

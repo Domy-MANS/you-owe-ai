@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const W = require("../src/core/webchat");
 const { computeStats } = require("../src/core/stats");
 
-const { makeZip } = require("./helpers/zip");
+const { makeZip, makeZip64 } = require("./helpers/zip");
 
 const t = (iso) => Date.parse(iso) / 1000;
 const chatgpt = [{
@@ -24,6 +24,14 @@ const claudeai = [{
     { sender: "human", created_at: "2026-04-02T09:01:00Z", text: "然后呢" },
   ],
 }];
+
+test("reads a ZIP64 export (over 4 GB, or more than 65,535 files): sizes and offsets in 8-byte fields", async () => {
+  const zip = makeZip64({ "user.json": "{}", "conversations.json": JSON.stringify(chatgpt), "chat.html": "<html>" });
+  assert.deepEqual((await W.listZip(zip)).map((f) => f.name), ["user.json", "conversations.json", "chat.html"]);
+  const r = await W.readExport(new Blob([zip]));
+  assert.equal(r.kind, "chatgpt");
+  assert.equal(r.prompts.length, 2);
+});
 
 test("reads a ChatGPT export zip", async () => {
   const zip = makeZip({ "user.json": "{}", "conversations.json": JSON.stringify(chatgpt), "chat.html": "<html>" });

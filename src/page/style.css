@@ -433,3 +433,7 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 @keyframes bang { 0% { opacity: 0; transform: translate(-50%,-50%) rotate(-10deg) scale(3); } 18%, 75% { opacity: 1; transform: translate(-50%,-50%) rotate(-10deg) scale(1); } 100% { opacity: 0; transform: translate(-50%,-50%) rotate(-10deg) scale(0.92); } }
 .still .ct-open, .still .ct-bang { display: none; }
 @media (prefers-reduced-motion: reduce) { .ct-open, .ct-bang { display: none !important; } .ct-p.talk .ct-face, .pop.shake { animation: none !important; } }
+
+/* the way to the source (and the star button) */
+.star { display: block; text-align: center; margin-top: 12px; font: 700 13px var(--font); color: #7a6a52; text-decoration: underline; text-underline-offset: 3px; }
+.star:hover { color: #2a1f12; }

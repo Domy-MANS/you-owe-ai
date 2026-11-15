@@ -15,7 +15,7 @@ function collectPrompts(claudeHome = CLAUDE_HOME, codexHome = CODEX_HOME) {
 }
 
 function collectReplies(claudeHome = CLAUDE_HOME, codexHome = CODEX_HOME) {
-  return P.replyTexts(load(listFiles(path.join(claudeHome, "projects"))), load(listFiles(path.join(codexHome, "sessions"))));
+  return P.replyTexts(load(listFiles(path.join(claudeHome, "projects"))), load([...listFiles(path.join(codexHome, "sessions")), ...listFiles(path.join(codexHome, "archived_sessions"))]));
 }
 
 module.exports = { collectPrompts, collectReplies, computeRoast, isCatchphrase, YOU, AI };

@@ -49,7 +49,7 @@
 
   var T = {
     zh: {
-      title: "你欠 AI 多少钱？", sub: "你和 AI 的年度账单 · " + new Date().getFullYear(),
+      title: "你欠 AI 多少钱？", sub: "你和 AI 的年度账单 · " + VWTestimony.billYear(),
       pickClaude: "选择 .claude 文件夹", pickCodex: "选择 .codex 文件夹",
       copied: function (kind) { return "📋 已复制 <code>" + pathFor(kind) + "</code>。<b>等选择窗口弹出来后</b>，在窗口里按 " + keysHtml() + "，然后点「" + (isMac ? "选择" : "选择文件夹") + "」"; },
       where: "两个文件夹都在你的用户文件夹里，是隐藏的。点上面的按钮，<b>等选择窗口弹出来之后</b>，按 " + keysHtml() + "，再点「选择」。",
@@ -59,7 +59,7 @@
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       privacyClock: "🔒 所有计算都在你的浏览器里完成，聊天内容发不出去。页面只会匿名上报你的账单总额，用来算全人类欠 AI 多少，看完账单可以撤回。",
       clockHome: function (n, m, r) { return "🧾 已有 <b>" + n.toLocaleString("en-US") + "</b> 人收到 AI 的账单，共欠 AI <b>" + m + "</b>" + (r === null ? "" : "，其中 <b>" + r + "%</b> 表示就是不还"); },
-      cli: "习惯用终端？", lang: "EN",
+      cli: "习惯用终端？", lang: "EN", star: "⭐ 开源在 GitHub，觉得好玩就点个 Star",
       importWeb: "📦 导入 ChatGPT / Claude 聊天记录",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
       webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
@@ -67,7 +67,7 @@
       secFast: "⚡ 最快 · 30 秒，AI 凭记忆估算", secWeb: "📦 最准 · 导入网页聊天记录，要等一封邮件", secCode: "💻 写代码的 · Claude Code / Codex", secCodePhone: "💻 写代码的 · Claude Code / Codex 的记录在电脑上",
     },
     en: {
-      title: "How much do you owe AI?", sub: "Your year with AI, itemized · " + new Date().getFullYear(),
+      title: "How much do you owe AI?", sub: "Your year with AI, itemized · " + VWTestimony.billYear(),
       pickClaude: "Choose your .claude folder", pickCodex: "Choose your .codex folder",
       copied: function (kind) { return "📋 Copied <code>" + pathFor(kind) + "</code>. <b>Once the file window is open</b>, press " + keysHtml() + " inside it, then click Select."; },
       where: "Both are hidden in your home folder. Click a button above, <b>wait for the file window to open</b>, then press " + keysHtml() + " and click Select.",
@@ -77,7 +77,7 @@
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       privacyClock: "🔒 Everything is computed in your browser, and your chats can't leave it. Only your bill's total is sent, anonymously, to add up what humanity owes AI. You can withdraw it after.",
       clockHome: function (n, m, r) { return "🧾 <b>" + n.toLocaleString("en-US") + "</b> people got their AI bill. Together they owe AI <b>" + m + "</b>" + (r === null ? "" : ", and <b>" + r + "%</b> refuse to pay"); },
-      cli: "Prefer the terminal?", lang: "中文",
+      cli: "Prefer the terminal?", lang: "中文", star: "⭐ Open source on GitHub. Star it if it made you laugh",
       importWeb: "📦 Import ChatGPT / Claude chats",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
       webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
@@ -235,7 +235,7 @@
       '<div class="sec">' + L.secCodePhone + '</div><button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       "</div>" +
-      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
+      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" + starLink(L) +
       "</div>";
     document.getElementById("pc").onclick = async function () {
       var code = friendCode(), url = window.VW_BASE + (code ? "#vs=" + code : "");
@@ -246,6 +246,8 @@
       var st = document.getElementById("st-pc"); st.textContent = L.pcCopied; st.className = "st ok";
     };
   }
+
+  function starLink(L) { return '<a class="star" href="' + window.VW_REPO + '" target="_blank" rel="noopener noreferrer">' + L.star + "</a>"; }
 
   var reopened = false; // the testimony sheet comes back once after a reload, not on every re-render
   function render() {
@@ -269,6 +271,7 @@
       "</div>" +
       '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
+      starLink(L) +
       "</div>";
     wire(L);
   }

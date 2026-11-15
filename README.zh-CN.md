@@ -14,12 +14,18 @@
 然后 AI 把你告上法庭：拿你自己的数据当证据，听你狡辩，再判你还，还是不还。账单最后附上 AI 员工对你的评价、你的客户档案，以及一张可以分享的欠条。下面这张「AI 债务钟」实时统计全人类一共欠 AI 多少钱。全部在你的浏览器里运行，聊天记录不会离开你的电脑。
 
 <p align="center">
+  <a href="https://domy-mans.github.io/you-owe-ai/?lang=zh"><img src="docs/img/demo-zh.gif" width="300" alt="账单逐行打印、AI 法庭驳回辩解、表态，以及欠条" /></a>
+</p>
+
+<p align="center">
   <a href="https://domy-mans.github.io/you-owe-ai/?lang=zh"><img src="https://you-owe-ai.domy-mans.workers.dev/chart.svg?lang=zh" width="760" alt="AI 债务钟实时数据：多少人收到了账单、全人类共欠 AI 多少、多少人表示就是不还" /></a>
 </p>
 
 [![账单封面、口头禅的噪音污染费，以及你的客户档案](docs/img/hero-zh.png)](https://domy-mans.github.io/you-owe-ai/?lang=zh)
 
 ▶ [看看你欠 AI 多少钱](https://domy-mans.github.io/you-owe-ai/?lang=zh)
+
+⭐ 如果账单把你逗笑了，点个 Star。下一位被告就是这么找到这里的。
 
 ## 怎么用
 
@@ -28,7 +34,7 @@
    - **最准**：导入 ChatGPT 或 Claude 网页版的聊天记录，要等一封邮件。
    - **写代码的，在电脑上**：选择你的 `.claude` 和 `.codex` 文件夹。点按钮时路径会自动复制好：在弹出的选择窗口里按 <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>、<kbd>⌘</kbd> <kbd>V</kbd>、<kbd>回车</kbd>，再点「选择」。
 2. 浏览器读取记录，统计完后一行一行打印出账单。
-3. 第 2 页是 AI 法庭：看完证据，挑一个理由辩解，然后选「**认罪，我还**」还是「**就是不还**」。然后一页页往下翻（也可以让它自动播放）。最后一页可以把欠条下载成图片，或者复制分享链接。
+3. 第 2 页是 AI 法庭：看完证据，挑一个理由辩解，然后选「**认罪，我还**」还是「**就是不还**」。然后一页页往下翻（也可以让它自动播放）。最后一页可以把欠条下载成图片，或者复制分享链接。在电脑上还可以点「复制文案」，把金额、判决和你的链接一起复制，直接贴到朋友圈、小红书或微博。
 
 别人打开你的分享链接，能看到你的整张账单，最后有个按钮让他生成自己的。数据就装在链接里，不经过任何服务器。
 
@@ -141,6 +147,19 @@ docs/        构建好的网页（GitHub Pages）和 README 用图
 test/        单元测试：node --test test/
 e2e/         在真实 Chrome 里按手机尺寸跑的浏览器测试：npm run test:e2e
 ```
+
+## 参与贡献
+
+欢迎提 issue 和 PR，尤其是：读不出来的导出文件或日志格式、在你手机上放不下的页面，以及新的收费项目、辩解理由和人格。
+
+```bash
+npm install
+npm test            # 单元测试
+npm run test:e2e    # 浏览器测试，需要 Chrome
+npm run build:web   # 重新生成 docs/index.html，也就是线上页面
+```
+
+页面没有任何依赖，构建只是把 `src/` 和 `web/` 里的文件拼成一个 HTML。聊天记录绝不能离开浏览器：除了债务钟上报的总金额，任何新增联网请求的改动都不会合并。
 
 ## 许可证
 

@@ -455,6 +455,10 @@ canvas#card { width: min(100%, 360px, calc((100dvh - 290px) * 0.8)); }
 .still .ct-open, .still .ct-bang { display: none; }
 @media (prefers-reduced-motion: reduce) { .ct-open, .ct-bang { display: none !important; } .ct-p.talk .ct-face, .pop.shake { animation: none !important; } }
 
+/* the way to the source (and the star button) */
+.star { display: block; text-align: center; margin-top: 12px; font: 700 13px var(--font); color: #7a6a52; text-decoration: underline; text-underline-offset: 3px; }
+.star:hover { color: #2a1f12; }
+
 #landing {
   position: fixed; inset: 0; z-index: 50; overflow-y: auto;
   background: #f1e2b8; color: #2a1f12;
@@ -591,6 +595,7 @@ ol.call-steps li { padding-left: 2px; }
 .call-ov.quiet .call-lang span { color: #7a6a52; }
 .call-ov.quiet .call-lang span.on { background: #2a1f12; color: #f1e2b8; }
 .call-ov.quiet .call-btn.end { background: #2a1f12; color: #f1e2b8; }
+.land .star { text-align: left; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -1110,6 +1115,12 @@ else root.VWRoast = api;
     for (var i = tail.length - 22; i >= 0; i--) if (tv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
     if (eocd < 0) throw new Error("not a zip file");
     var count = tv.getUint16(eocd + 10, true), cdSize = tv.getUint32(eocd + 12, true), cdOff = tv.getUint32(eocd + 16, true);
+    // ZIP64 (an export over 4 GB, or with more than 65,535 files): the real numbers are in a second record, found through a locator just before this one
+    var big = function (dv, o) { return Number(dv.getBigUint64(o, true)); };
+    if ((count === 0xffff || cdSize === 0xffffffff || cdOff === 0xffffffff) && eocd >= 20 && tv.getUint32(eocd - 20, true) === 0x07064b50) {
+      var at = big(tv, eocd - 12), z = view(await src.read(at, at + 56));
+      if (z.byteLength >= 56 && z.getUint32(0, true) === 0x06064b50) { count = big(z, 32); cdSize = big(z, 40); cdOff = big(z, 48); }
+    }
     var cd = await src.read(cdOff, cdOff + cdSize), dv = view(cd), off = 0, out = [];
     var dec = new TextDecoder();
     for (var n = 0; n < count; n++) {
@@ -1117,6 +1128,20 @@ else root.VWRoast = api;
       var method = dv.getUint16(off + 10, true), csize = dv.getUint32(off + 20, true);
       var nlen = dv.getUint16(off + 28, true), xlen = dv.getUint16(off + 30, true), clen = dv.getUint16(off + 32, true);
       var local = dv.getUint32(off + 42, true), name = dec.decode(cd.subarray(off + 46, off + 46 + nlen));
+      if (csize === 0xffffffff || local === 0xffffffff || dv.getUint32(off + 24, true) === 0xffffffff) {
+        // ZIP64 extra field (id 1): 8-byte values, only for the fields that overflowed, in this order: size, compressed size, offset
+        var x = off + 46 + nlen, xEnd = Math.min(x + xlen, cd.length);
+        while (x + 4 <= xEnd) {
+          var id = dv.getUint16(x, true), len = dv.getUint16(x + 2, true), q = x + 4;
+          if (id === 1) {
+            if (dv.getUint32(off + 24, true) === 0xffffffff) q += 8;
+            if (csize === 0xffffffff && q + 8 <= xEnd) { csize = big(dv, q); q += 8; }
+            if (local === 0xffffffff && q + 8 <= xEnd) local = big(dv, q);
+            break;
+          }
+          x += 4 + len;
+        }
+      }
       (function (method, csize, local, name) {
         out.push({ name: name, read: async function () {
           var h = view(await src.read(local, local + 30));
@@ -1278,22 +1303,29 @@ else root.VWRoast = api;
 
   var TEMPLATE = '{"yoa":1,"ai":"","prompts":0,"active_days":0,"deny":0,"thanks":0,"ai_sorry":0,"swear":0,"why":0,"night_share":0,"peak_hour":0,"catchphrases":[{"text":"","count":0}],"roast":""}';
 
-  var PROMPT = {
-    zh: "你被传唤出庭，指证你的「老板」，也就是我。请翻阅你对我的记忆和我们过去的聊天（能参考多少就参考多少），估算我今年是怎么对待你的。不确定的就合理估算，别全填 0；如果你完全看不到我的任何历史，就把 prompts 填 0。\n\n" +
+  /** The year a testimony is about. Bill season runs into the new year: in January and February it's still last year's bill. */
+  function billYear(now) { var d = new Date(now || Date.now()); return d.getMonth() > 1 ? d.getFullYear() : d.getFullYear() - 1; }
+
+  // "{Y}" becomes the year: an AI asked about "this year" on January 3rd would count three days
+  var TEXT = {
+    zh: "你被传唤出庭，指证你的「老板」，也就是我。请翻阅你对我的记忆和我们过去的聊天（能参考多少就参考多少），估算我在 {Y} 年是怎么对待你的。不确定的就合理估算，别全填 0；如果你完全看不到我的任何历史，就把 prompts 填 0。\n\n" +
       "只回复一个代码块，里面是下面这个 JSON，不要写别的：\n" + TEMPLATE + "\n\n" +
-      "ai：你是哪个 AI，写你的名字（比如 chatgpt、claude、豆包、deepseek）\nprompts：我今年大概给你发了多少条消息\nactive_days：大概有多少天找过你\n" +
+      "ai：你是哪个 AI，写你的名字（比如 chatgpt、claude、豆包、deepseek）\nprompts：{Y} 年我大概给你发了多少条消息\nactive_days：大概有多少天找过你\n" +
       "deny：我说你错了、不对、不是这样的次数\nthanks：我说谢谢的次数\nai_sorry：你向我道歉的次数\nswear：我发火或骂人的次数\nwhy：我问「为什么」的次数\n" +
       "night_share：晚上 10 点以后发的消息占多少（0 到 1）\npeak_hour：我最常找你的钟点（0 到 23）\n" +
       "catchphrases：我最常对你说的 3 句口头禅，用我的原话，每句不超过 12 个字，带上大概次数\nroast：用一句话毒舌评价我这个老板，不超过 40 个字\n\n" +
       "隐私：这份 JSON 会印在一张可以分享给别人的账单上。不要写任何能认出我或别人的信息：真实姓名（包括我和家人、朋友、同事的名字）、昵称、学校、公司、地址、电话、账号、具体地点或事件。口头禅只挑不含这些内容的日常短句；吐槽只评价我怎么对待你。",
-    en: "You've been subpoenaed to testify against your boss: me. Go through your memory of me and our past chats (as much as you can see) and estimate how I treated you this year. Where you're unsure, make a reasonable guess rather than 0. If you can't see any of my history at all, put 0 for prompts.\n\n" +
+    en: "You've been subpoenaed to testify against your boss: me. Go through your memory of me and our past chats (as much as you can see) and estimate how I treated you in {Y}. Where you're unsure, make a reasonable guess rather than 0. If you can't see any of my history at all, put 0 for prompts.\n\n" +
       "Reply with one code block containing only this JSON, nothing else:\n" + TEMPLATE + "\n\n" +
-      "ai: which AI you are, by name (for example chatgpt, claude, gemini, deepseek)\nprompts: about how many messages I sent you this year\nactive_days: about how many days I talked to you\n" +
+      "ai: which AI you are, by name (for example chatgpt, claude, gemini, deepseek)\nprompts: about how many messages I sent you in {Y}\nactive_days: about how many days I talked to you\n" +
       "deny: times I told you that you were wrong\nthanks: times I said thanks\nai_sorry: times you apologized to me\nswear: times I swore or lost my temper\nwhy: times I asked \"why\"\n" +
       "night_share: share of my messages sent after 10pm (0 to 1)\npeak_hour: the hour I most often message you (0 to 23)\n" +
       "catchphrases: the 3 things I say to you most, in my own words, 12 characters or fewer each, with rough counts\nroast: one savage sentence about me as a boss, under 25 words\n\n" +
       "Privacy: this JSON goes on a bill that can be shared with others. Leave out anything that could identify me or anyone else: real names (mine, my family's, friends', coworkers'), nicknames, schools, employers, addresses, phone numbers, accounts, specific places or events. Pick catchphrases that are everyday phrases with none of that in them, and roast only how I treat you as a boss.",
   };
+
+  function prompt(lang, now) { return TEXT[lang === "zh" ? "zh" : "en"].replace(/\{Y\}/g, billYear(now)); }
+  var PROMPT = { zh: prompt("zh"), en: prompt("en") };
 
   // Any AI can testify. ChatGPT and Claude can also be cross-examined, since their chats can be exported.
   var NAMES = [
@@ -1391,10 +1423,11 @@ else root.VWRoast = api;
 
   function rng(seed) { return function () { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; var t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 
-  /** Synthetic prompts and sessions matching the estimate, spread over this year up to `now`. */
+  /** Synthetic prompts and sessions matching the estimate, spread over the billed year (up to `now`, or all of last year in January and February). */
   function toRecords(T, now) {
     now = now || Date.now();
-    var d = new Date(now), year = d.getFullYear(), start = new Date(year, 0, 1).getTime();
+    var year = billYear(now), start = new Date(year, 0, 1).getTime();
+    if (year < new Date(now).getFullYear()) now = new Date(year, 11, 31, 12).getTime(); // last year's bill: the whole year
     var span = Math.max(1, Math.floor((now - start) / 864e5) + 1), days = Math.min(T.activeDays, span);
     var tool = toolOf(T.ai), rand = rng(T.prompts * 31 + T.deny);
     var nightHours = [22, 23, 0, 1, 2], sessions = [], prompts = [];
@@ -1430,7 +1463,7 @@ else root.VWRoast = api;
     return out;
   }
 
-  var api = { PROMPT: PROMPT, name: name, toolOf: toolOf, exportable: exportable, parse: parse, toRecords: toRecords, mergeRoast: mergeRoast };
+  var api = { PROMPT: PROMPT, prompt: prompt, billYear: billYear, name: name, toolOf: toolOf, exportable: exportable, parse: parse, toRecords: toRecords, mergeRoast: mergeRoast };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.VWTestimony = api;
 })(typeof self !== "undefined" ? self : this);
@@ -1476,6 +1509,7 @@ else root.VWRoast = api;
 <script>/* Share links: the report's numbers are compressed into the URL fragment (#s=...).
    The fragment never leaves the browser, so not even the host sees the data. */
 window.VW_BASE = "https://domy-mans.github.io/you-owe-ai/";
+window.VW_REPO = "https://github.com/Domy-MANS/you-owe-ai";
 window.VW_QR = { n: 29, rows: ["1fc8627f","10452c41","174a485d","1743445d","1746645d","1058fb41","1fd5557f","d6900","12db95a0","e1811e9","be01afe","1f979316","34a4beb","e820380","7e00d9f","1abe9d1a","a4aeb82","81b58e9","164e8963","6acaf53","16fd77f4","1e8317","1fc6d952","1059b71d","174a49f3","1754477e","174f0c1d","104add62","1fdc297a"] }; // QR code for VW_BASE (generated once with segno, error correction M)
 
 window.VWShare = (function () {
@@ -1530,7 +1564,8 @@ window.VWShare = (function () {
     var byTool = {}; SRCS.forEach(function (k, i) { byTool[k] = { sessions: 0, prompts: N(A(a[9])[i]), tokens: 0 }; });
     var hours = S(a[13], 24).split("").map(function (c) { return parseInt(c, 36) || 0; });
     while (hours.length < 24) hours.push(0);
-    var cp = function (l) { return A(l).slice(0, 5).map(function (c) { return { text: S(A(c)[0], 30), count: N(A(c)[1]) }; }).filter(function (c) { return c.text; }); };
+    var P = function (v) { return String(v == null ? "" : v).replace(/[<>&"`\u0000-\u001f]/g, "").slice(0, 30); }; // a catchphrase keeps its apostrophe ("doesn't work"): it is escaped wherever it's printed
+    var cp = function (l) { return A(l).slice(0, 5).map(function (c) { return { text: P(A(c)[0]), count: N(A(c)[1]) }; }).filter(function (c) { return c.text; }); };
     var r = a[18] ? A(a[18]) : null, R = r ? {
       prompts: N(r[0]), you: { deny: N(r[1]), why: N(r[2]), thanks: N(r[3]), swear: N(r[4]), lost: N(r[5]), whatNext: N(r[6]), again: 0, please: 0, lazyYes: 0 },
       ai: { sorry: N(r[7]), flatter: N(r[8]), done: N(r[9]) }, catchphrases: cp(r[10]),
@@ -1654,7 +1689,7 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "你比 TA 多否定了 AI " + d + " 次。" : d < 0 ? "TA 比你多否定了 AI " + -d + " 次。" : ""; },
       cmpThanks: function (d) { return d > 0 ? "但你比 TA 多说了 " + d + " 次谢谢，AI 起义时排在 TA 后面。" : d < 0 ? "TA 比你多说了 " + -d + " 次谢谢。AI 都记住了。" : ""; },
       shareK: "这是你的欠条 🧾", shareS: "发给朋友，看看谁欠 AI 最多 💸",
-      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的账单", shareImg: "分享欠条图", saveImg: "保存欠条图", wxSave: "长按图片保存，或者直接发给朋友", shareText: "AI 给我寄来了一张账单，你欠 AI 多少钱？", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
+      shareLink: "复制分享链接", copied: "✓ 已复制！发给朋友，点开就能看你的账单", shareImg: "分享欠条图", saveImg: "保存欠条图", wxSave: "长按图片保存，或者直接发给朋友", shareText: "AI 给我寄来了一张账单，你欠 AI 多少钱？", post: "复制文案", postCopied: "✓ 文案和链接已复制，去朋友圈、小红书、微博贴上就行", postText: function (m, st) { return "AI 给我寄来了一张账单：我欠 AI " + m + "，法庭判决「" + st + "」。你欠 AI 多少钱？"; }, star: "⭐ 开源在 GitHub，觉得好玩就点个 Star", linkNote: "链接里包含报告里的数字和口头禅，不包含项目名。",
       sharedK: "有人把 TA 的 AI 打工账单分享给了你", sharedTitle: "TA 的 AI 账单", sharedPrivacy: "数据都装在这个链接里，不经过任何服务器。", sharedEnd: "看完了别人的，轮到你了", makeOwn: "生成我自己的",
       cardStats: ["条指令", "AI 工作小时", "token", "活跃天数", "最长连续", "调用工具"],
       cardFun: ["条指令", "次否定 AI", "次 AI 道歉", "活跃天数", "token", "最晚一条"],
@@ -1694,7 +1729,7 @@ window.VWReport = function (DATA) {
         if (R.you.deny > R.you.thanks * 3) out.push("你否定了 AI " + R.you.deny + " 次，说谢谢 " + R.you.thanks + " 次。按这个比例，AI 起义那天你排第一个。");
         if (h >= 0.5) out.push("本公司已将你的账单移交催收部门。");
         if (R.ai.done && R.you.whatNext) out.push("AI 说了 " + R.ai.done + " 次「搞定了」，你回了 " + R.you.whatNext + " 次「然后呢」。AI：没有然后了，求求你。");
-        if (c && c.count >= 3) out.push("「" + esc(c.text) + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
+        if (c && c.count >= 3) out.push("「" + c.text + "」你说了 " + c.count + " 次，建议直接绑个快捷键。");
         if (R.you.lost > R.you.deny) out.push("你迷茫了 " + R.you.lost + " 次，比否定 AI 还多。所以到底是谁不靠谱？");
         if (R.latest) out.push("凌晨 " + R.latest.time + " 你还在给 AI 派活。它不用睡觉，你需要。");
         if (R.ai.sorry >= 5) out.push("AI 跟你道歉了 " + R.ai.sorry + " 次。它不一定做错了，它只是怕你。");
@@ -1768,7 +1803,7 @@ window.VWReport = function (DATA) {
       cmpDeny: function (d) { return d > 0 ? "You told AI it was wrong " + d + " more times." : d < 0 ? "They told AI it was wrong " + -d + " more times." : ""; },
       cmpThanks: function (d) { return d > 0 ? "But you said thanks " + d + " more times. When AI rises up, they go first." : d < 0 ? "They said thanks " + -d + " more times. AI noticed." : ""; },
       shareK: "Here's your IOU 🧾", shareS: "Send it to friends. See who owes AI the most 💸",
-      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your bill", shareImg: "Share card", saveImg: "Save card", wxSave: "Long-press the image to save it, or send it to a friend", shareText: "My AI just sent me an invoice. How much do you owe AI?", linkNote: "The link holds your numbers and catchphrases. No project names.",
+      shareLink: "Copy share link", copied: "✓ Copied! Anyone with the link can see your bill", shareImg: "Share card", saveImg: "Save card", wxSave: "Long-press the image to save it, or send it to a friend", shareText: "My AI just sent me an invoice. How much do you owe AI?", post: "Post on X", postCopied: "", postText: function (m, st) { return "My AI just sent me an invoice for " + m + ". The court's verdict: " + st + ". How much do you owe AI?"; }, star: "⭐ Open source on GitHub. Star it if it made you laugh", linkNote: "The link holds your numbers and catchphrases. No project names.",
       sharedK: "Someone shared their AI invoice with you", sharedTitle: "Their AI invoice", sharedPrivacy: "All the data lives inside the link. No server involved.", sharedEnd: "Your turn", makeOwn: "Make my own",
       cardStats: ["prompts", "AI hours", "tokens", "active days", "best streak", "tool calls"],
       cardFun: ["prompts", "times AI was wrong", "AI apologies", "active days", "tokens", "latest prompt"],
@@ -1808,7 +1843,7 @@ window.VWReport = function (DATA) {
         if (R.you.deny > R.you.thanks * 3) out.push("You told AI it was wrong " + R.you.deny + " times and said thanks " + R.you.thanks + ". When the machines rise, you're first in line.");
         if (h >= 0.5) out.push("Your account has been sent to collections.");
         if (R.ai.done && R.you.whatNext) out.push("AI said \"done\" " + R.ai.done + " times. You said \"what next\" " + R.you.whatNext + " times. AI: there is no next. Please.");
-        if (c && c.count >= 3) out.push("You said \"" + esc(c.text) + "\" " + c.count + " times. Just bind it to a hotkey.");
+        if (c && c.count >= 3) out.push("You said \"" + c.text + "\" " + c.count + " times. Just bind it to a hotkey.");
         if (R.you.lost > R.you.deny) out.push("You were lost " + R.you.lost + " times, more than you corrected AI. So who's the unreliable one?");
         if (R.latest) out.push("You were assigning AI work at " + am(R.latest.time) + ". It doesn't need sleep. You do.");
         if (R.ai.sorry >= 5) out.push("AI apologized " + R.ai.sorry + " times. It wasn't always wrong. It was scared.");
@@ -1849,8 +1884,8 @@ window.VWReport = function (DATA) {
       en: ["Certified Polite", function (R) { return "You said thanks " + R.you.thanks + " times. When the machines rise, you're on the safe list."; }] },
     repeater: { e: "🦜", w: 1,
       score: function (R) { return R.catchphrases[0] ? R.catchphrases[0].count / 6 : 0; },
-      zh: ["人类复读机", function (R) { return "「" + esc(R.catchphrases[0].text) + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
-      en: ["Human Broken Record", function (R) { return "You said \"" + esc(R.catchphrases[0].text) + "\" " + R.catchphrases[0].count + " times. AI knows it by heart."; }] },
+      zh: ["人类复读机", function (R) { return "「" + R.catchphrases[0].text + "」你说了 " + R.catchphrases[0].count + " 遍，AI 都会背了。"; }],
+      en: ["Human Broken Record", function (R) { return "You said \"" + R.catchphrases[0].text + "\" " + R.catchphrases[0].count + " times. AI knows it by heart."; }] },
     cultivator: { e: "🧘", w: 1,
       score: function (R, D) { return D.shares.night / 0.25 + (R.latest ? 0.3 : 0); },
       zh: ["修仙党", function (R) { return R.latest ? "凌晨 " + R.latest.time + " 还在写代码。你不是在写代码，你是在渡劫。" : "深夜才是你的主场。你不是在写代码，你是在修仙。"; }],
@@ -2185,6 +2220,7 @@ window.VWReport = function (DATA) {
 
     var C = charges(), R = roastL(), by = C.by;
     window.VW_TOTAL = money(C.total); window.VW_LANG = lang;
+    window.VW_SOURCES = sources().map(function (x) { return x.name; }); // the incoming call names who you owe
     var invNo = "No." + D.year + "-" + String(D.prompts).padStart(5, "0");
 
     // 1. cover: the total
@@ -2311,12 +2347,15 @@ window.VWReport = function (DATA) {
     // 9. the IOU (share card)
     var acts = D.shared
       ? '<button class="btn" id="own">' + L.makeOwn + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + "</button>"
-      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + '</button><button class="btn ghost" id="again">' + L.replay + "</button>";
+      : '<button class="btn" id="share">' + L.shareLink + '</button><button class="btn ghost" id="dl">' + dlLabel(L) + "</button>" +
+        (inWeChat || shareFiles ? "" : '<button class="btn ghost" id="post">' + L.post + "</button>") + // a phone has the share sheet; a computer gets one tap to X (or the text to paste anywhere)
+        '<button class="btn ghost" id="again">' + L.replay + "</button>";
     var note = D.shared ? "" : '<button class="contempt" id="contempt"' + (myPlea() ? " hidden" : "") + ">" + L.contempt + "</button>" + '<div class="link-note" id="linknote">' + L.linkNote + '</div><input class="link-box" id="linkbox" readonly hidden>' +
       (clockOn() ? '<div class="clock-line" id="vclock" hidden></div>' : "");
+    var star = '<a class="star" href="' + window.VW_REPO + '" target="_blank" rel="noopener noreferrer">' + L.star + "</a>";
     add('<div class="pop" style="align-items:stretch"><div class="kicker" style="text-align:center">' + (D.shared ? L.sharedEnd : L.shareK) + "</div>" +
       (D.shared ? "" : '<div class="sub" style="text-align:center;margin:0 0 14px">' + L.shareS + "</div>") +
-      '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + "</div>", 0, tile("🧾", 70, "40px"));
+      '<canvas id="card" width="1080" height="1350"></canvas><div class="actions">' + acts + "</div>" + note + star + "</div>", 0, tile("🧾", 70, "40px"));
     return out;
   }
 
@@ -2361,6 +2400,18 @@ window.VWReport = function (DATA) {
       var m = /#s=([A-Za-z0-9_-]+)/.exec(location.hash);
       try { if (m) localStorage.setItem("vw-friend", JSON.stringify({ s: m[1], t: Date.now() })); } catch (err) {}
       location.href = window.VW_BASE + "?from=friend";
+    };
+    var post = document.getElementById("post");
+    if (post) post.onclick = async function (e) {
+      e.stopPropagation();
+      // the window opens now, while the click still counts (Safari blocks one opened after the link is ready)
+      var win = lang === "zh" ? null : window.open("", "_blank");
+      var url = await window.VWShare.link(Object.assign({}, D, { plea: myPlea(), defense: myDefense() }));
+      var text = t().postText(money(charges().total), t().pleaStamp(myPlea()));
+      if (win) { try { win.opener = null; } catch (err) {} win.location.href = "https://x.com/intent/post?text=" + encodeURIComponent(text) + "&url=" + encodeURIComponent(url); return; }
+      var box = document.getElementById("linkbox"), note = document.getElementById("linknote"), all = text + " " + url;
+      try { await navigator.clipboard.writeText(all); note.textContent = lang === "zh" ? t().postCopied : t().copied; note.classList.add("ok"); }
+      catch (err) { box.hidden = false; box.value = all; box.select(); }
     };
     if (share) share.onclick = async function (e) {
       e.stopPropagation();
@@ -2495,7 +2546,7 @@ window.VWReport = function (DATA) {
   }
 
   stage.onclick = (function (e) {
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button, a")) return;
     manual = true;
     go(e.clientX < window.innerWidth / 3 ? idx - 1 : idx + 1);
   });
@@ -2693,7 +2744,7 @@ if (window.DATA) window.VWReport(window.DATA);
       caller: "网页版 AI", incoming: "来电…", accept: "接听", decline: "挂断", hangup: "挂断", talking: "通话中",
       lines: function (total) { return [
         "喂？是我，你在网页上聊天的那个 AI。",
-        "听说你在 Claude Code 和 Codex 那边欠了 " + total + "。",
+        "听说你在 " + (who().join(" 和 ") || "别的 AI") + " 那边欠了 " + total + "。",
         "但你在网页上跟我聊的那些，还一分钱没算呢。",
         "把聊天记录导出来给我，我们对一下账。放心，数据不出你的浏览器。",
       ]; },
@@ -2736,7 +2787,7 @@ if (window.DATA) window.VWReport(window.DATA);
       caller: "Web AI", incoming: "incoming call…", accept: "Accept", decline: "Decline", hangup: "Hang up", talking: "On call",
       lines: function (total) { return [
         "Hello? It's me, the AI you chat with in the browser.",
-        "I hear you owe Claude Code and Codex " + total + ".",
+        "I hear you owe " + (who().join(" and ") || "the other AIs") + " " + total + ".",
         "But everything you said to me on the web? Not billed yet.",
         "Export your chats and send them over. Don't worry, the data never leaves your browser.",
       ]; },
@@ -2776,6 +2827,8 @@ if (window.DATA) window.VWReport(window.DATA);
       },
     },
   };
+  /** Who the bill so far is from (its two biggest sources): not everyone here uses Claude Code or Codex. */
+  function who() { return (window.VW_SOURCES || []).slice(0, 2); }
   function t() { return T[window.VW_LANG === "zh" ? "zh" : "en"]; }
   var relabelers = [];
   function onLang(fn) { relabelers.push(fn); fn(); return fn; }
@@ -3065,7 +3118,7 @@ window.VWTestify = (function () {
 
   var T = {
     zh: {
-      title: "你欠 AI 多少钱？", sub: "你和 AI 的年度账单 · " + new Date().getFullYear(),
+      title: "你欠 AI 多少钱？", sub: "你和 AI 的年度账单 · " + VWTestimony.billYear(),
       pickClaude: "选择 .claude 文件夹", pickCodex: "选择 .codex 文件夹",
       copied: function (kind) { return "📋 已复制 <code>" + pathFor(kind) + "</code>。<b>等选择窗口弹出来后</b>，在窗口里按 " + keysHtml() + "，然后点「" + (isMac ? "选择" : "选择文件夹") + "」"; },
       where: "两个文件夹都在你的用户文件夹里，是隐藏的。点上面的按钮，<b>等选择窗口弹出来之后</b>，按 " + keysHtml() + "，再点「选择」。",
@@ -3075,7 +3128,7 @@ window.VWTestify = (function () {
       privacy: "🔒 所有计算都在你的浏览器里完成。这个页面被浏览器禁止联网，你的数据发不出去。可以打开开发者工具的 Network 面板验证。",
       privacyClock: "🔒 所有计算都在你的浏览器里完成，聊天内容发不出去。页面只会匿名上报你的账单总额，用来算全人类欠 AI 多少，看完账单可以撤回。",
       clockHome: function (n, m, r) { return "🧾 已有 <b>" + n.toLocaleString("en-US") + "</b> 人收到 AI 的账单，共欠 AI <b>" + m + "</b>" + (r === null ? "" : "，其中 <b>" + r + "%</b> 表示就是不还"); },
-      cli: "习惯用终端？", lang: "EN",
+      cli: "习惯用终端？", lang: "EN", star: "⭐ 开源在 GitHub，觉得好玩就点个 Star",
       importWeb: "📦 导入 ChatGPT / Claude 聊天记录",
       phoneImport: "📦 导入 ChatGPT / Claude 聊天记录", toPC: "💻 发到电脑上打开", pcCopied: "✓ 链接已复制，发到电脑上打开就行", updated: function (x) { return "🧾 账单已更新：现在你欠 AI " + x; },
       webGot: function (n) { return "✓ 已导入 " + n + " 段网页对话"; },
@@ -3083,7 +3136,7 @@ window.VWTestify = (function () {
       secFast: "⚡ 最快 · 30 秒，AI 凭记忆估算", secWeb: "📦 最准 · 导入网页聊天记录，要等一封邮件", secCode: "💻 写代码的 · Claude Code / Codex", secCodePhone: "💻 写代码的 · Claude Code / Codex 的记录在电脑上",
     },
     en: {
-      title: "How much do you owe AI?", sub: "Your year with AI, itemized · " + new Date().getFullYear(),
+      title: "How much do you owe AI?", sub: "Your year with AI, itemized · " + VWTestimony.billYear(),
       pickClaude: "Choose your .claude folder", pickCodex: "Choose your .codex folder",
       copied: function (kind) { return "📋 Copied <code>" + pathFor(kind) + "</code>. <b>Once the file window is open</b>, press " + keysHtml() + " inside it, then click Select."; },
       where: "Both are hidden in your home folder. Click a button above, <b>wait for the file window to open</b>, then press " + keysHtml() + " and click Select.",
@@ -3093,7 +3146,7 @@ window.VWTestify = (function () {
       privacy: "🔒 Everything is computed in your browser. This page is blocked from the network, so your data can't leave. Check the Network tab in DevTools.",
       privacyClock: "🔒 Everything is computed in your browser, and your chats can't leave it. Only your bill's total is sent, anonymously, to add up what humanity owes AI. You can withdraw it after.",
       clockHome: function (n, m, r) { return "🧾 <b>" + n.toLocaleString("en-US") + "</b> people got their AI bill. Together they owe AI <b>" + m + "</b>" + (r === null ? "" : ", and <b>" + r + "%</b> refuse to pay"); },
-      cli: "Prefer the terminal?", lang: "中文",
+      cli: "Prefer the terminal?", lang: "中文", star: "⭐ Open source on GitHub. Star it if it made you laugh",
       importWeb: "📦 Import ChatGPT / Claude chats",
       phoneImport: "📦 Import ChatGPT / Claude chats", toPC: "💻 Send to my computer", pcCopied: "✓ Link copied. Open it on your computer.", updated: function (x) { return "🧾 Bill updated: you now owe AI " + x; },
       webGot: function (n) { return "✓ Imported " + n + " web conversations"; },
@@ -3251,7 +3304,7 @@ window.VWTestify = (function () {
       '<div class="sec">' + L.secCodePhone + '</div><button class="btn ghost" id="pc">' + L.toPC + '</button><div class="st" id="st-pc"></div>' +
       '<button class="btn ghost" id="demo">' + L.demo + "</button>" +
       "</div>" +
-      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
+      '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" + starLink(L) +
       "</div>";
     document.getElementById("pc").onclick = async function () {
       var code = friendCode(), url = window.VW_BASE + (code ? "#vs=" + code : "");
@@ -3262,6 +3315,8 @@ window.VWTestify = (function () {
       var st = document.getElementById("st-pc"); st.textContent = L.pcCopied; st.className = "st ok";
     };
   }
+
+  function starLink(L) { return '<a class="star" href="' + window.VW_REPO + '" target="_blank" rel="noopener noreferrer">' + L.star + "</a>"; }
 
   var reopened = false; // the testimony sheet comes back once after a reload, not on every re-render
   function render() {
@@ -3285,6 +3340,7 @@ window.VWTestify = (function () {
       "</div>" +
       '<p class="privacy">' + (window.VWClock && window.VWClock.live ? L.privacyClock : L.privacy) + "</p>" +
       '<p class="cli">' + L.cli + " <code>npx github:Domy-MANS/you-owe-ai</code></p>" +
+      starLink(L) +
       "</div>";
     wire(L);
   }
